@@ -1,15 +1,31 @@
+@import url("https://use.typekit.net/eef1cbb.css");
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #ffffff; /* main page background */
+  --foreground: #000000; /* primary text */
+  --muted: #e5e5e5; /* subtle backgrounds, borders */
+  --primary: #1d3557; /* main brand color (blue) */
+  --secondary: #ffd60a; /* supporting color (yellow) */
+  --accent: #e63946;
+}
+
+.dark {
+  --background: #121212; /* dark background */
+  --foreground: #ffffff; /* light text */
+  --muted: #2a2a2a; /* neutral dark gray */
+  --primary: #0a192f; /* deep midnight blue */
+  --secondary: #ffb703; /* warm golden yellow */
+  --accent: #ff4d6d; /* pop accent red */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +39,39 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+.kabel-light {
+  font-family: "neue-kabel", "Josefin Sans", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.kabel-reg {
+  font-family: "neue-kabel", "Josefin Sans", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+.kabel-bold {
+  font-family: "neue-kabel", "Josefin Sans", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+.kabel-ita {
+  font-family: neue-kabel, "Josefin Sans", sans-serif;
+  font-weight: 400;
+  font-style: italic;
+}
+.onboard-input {
+  border: #ff4d6d 2px solid;
+  background-color: white;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 16px;
+  width: 100%;
+  color: var(--primary);
+  outline: none; /* focus:outline-none */
+  transition: box-shadow 0.2s ease;
+}
+.onboard-input:focus {
+  border: #ffd60a 2px solid;
 }
