@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import SessionWrapper from "@/components/SessionWrapper";
 import { Josefin_Sans } from "next/font/google";
-
+import Navbar from "@/components/Navbar";
+import { ThemeProvider } from "next-themes";
 const josefin = Josefin_Sans({
   subsets: ["latin"],
   variable: "--font-josefin",
@@ -18,9 +19,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${josefin.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${josefin.variable}`}>
       <body className="kabel-reg">
-        <SessionWrapper>{children}</SessionWrapper>
+        <ThemeProvider>
+          <SessionWrapper>
+            <Navbar />
+            {children}
+          </SessionWrapper>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    console.log(error);
+    console.log(error, "niga");
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   return NextResponse.json({ user: data }, { status: 200 });

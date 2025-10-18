@@ -6,8 +6,10 @@ export default function AnimatedSVG() {
 
   useEffect(() => {
     const paths = svgRef.current?.querySelectorAll(".draw-me");
-
     if (!paths) return;
+
+    // Create a master timeline that repeats infinitely
+    const master = gsap.timeline({ repeat: -1, repeatDelay: 1 });
 
     paths.forEach((path, i) => {
       const length = (path as SVGPathElement).getTotalLength();
@@ -21,27 +23,23 @@ export default function AnimatedSVG() {
         scale: 1,
       });
 
-      // Create timeline per path
-      const tl = gsap.timeline({
-        delay: i * 0.3, // stagger each path
-      });
+      // Create a timeline per path
+      const tl = gsap.timeline({ delay: i * 0.3 });
 
       tl.to(path, {
         strokeDashoffset: 0,
         duration: 1.5,
         ease: "power2.inOut",
       })
-        // fill after stroke animation completes
         .to(
           path,
           {
-            fill: (path as SVGPathElement).style.stroke, // use stroke color
+            fill: (path as SVGPathElement).style.stroke,
             duration: 0.6,
             ease: "power1.inOut",
           },
           "+=0.1"
         )
-        // bounce scale animation
         .to(path, {
           scale: 1.1,
           duration: 0.3,
@@ -51,7 +49,18 @@ export default function AnimatedSVG() {
           scale: 1,
           duration: 0.4,
           ease: "elastic.out(1, 0.5)",
+        })
+        // fade out before restarting
+        .to(path, {
+          strokeDashoffset: length,
+          fill: "none",
+          duration: 0.8,
+          ease: "power1.inOut",
+          delay: 0.3,
         });
+
+      // Add the individual timeline to the master
+      master.add(tl, i * 0.5);
     });
   }, []);
 

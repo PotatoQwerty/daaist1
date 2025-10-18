@@ -12,6 +12,7 @@ declare module "next-auth" {
       isDaa?: boolean;
       onboarded?: boolean;
       username?: string;
+      bio?: string;
     };
   }
 

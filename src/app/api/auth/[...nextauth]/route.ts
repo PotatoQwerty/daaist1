@@ -23,6 +23,7 @@ export const authOptions = {
       session.user.studyyear = user.studyyear;
       session.user.onboarded = user.onboarded;
       session.user.username = user.username;
+      session.user.bio = user.bio;
       return session;
     },
   },

@@ -2,17 +2,22 @@ import { supabaseCli } from "../../../../lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
 import PfpPlaceholder from "../../../../public/images/placeholder.png";
-import IsDaa from "../../../../public/images/isdaa.svg";
 import DaaistLogo from "../../../../public/images/DAAIST-LOGO.svg";
+import { getServerSession } from "next-auth";
+import { Heart, File, Stars, User } from "lucide-react";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
 interface ProfilePageProps {
   params: Promise<{ username: string }>;
 }
 export async function generateMetadata({ params }: ProfilePageProps) {
+  const { username } = await params;
   return {
-    title: `${params.username}'s Profile | DAA’ist`,
+    title: `${username}'s Profile | DAA’ist`,
   };
 }
 export default async function UserProfile({ params }: ProfilePageProps) {
+  const session = await getServerSession(authOptions);
   const { username } = await params;
 
   const { data: user, error } = await supabaseCli
@@ -54,10 +59,19 @@ export default async function UserProfile({ params }: ProfilePageProps) {
                 5th Year (M2)
               </span>
               <span className="flex items-center gap-1 text-sm">
-                <Image src={IsDaa} width={18} height={18} alt="isdaa" />
-                <span>DAA’ist</span>
+                {user?.isdaa ? (
+                  <Stars fill="var(--secondary)" stroke="none" />
+                ) : (
+                  <User fill="var(--primary)" stroke="none" />
+                )}
+
+                <span>{user?.isdaa ? `DAA'ist` : "Guest"}</span>
               </span>
             </div>
+          </div>
+          <div className="">
+            <h4 className="font-bold text-accent">Bio:</h4>
+            <p>{user?.bio}</p>
           </div>
         </div>
 
@@ -81,9 +95,14 @@ export default async function UserProfile({ params }: ProfilePageProps) {
           <h2 className="text-2xl font-semibold text-primary uppercase tracking-wide">
             Uploaded Projects
           </h2>
-          <button className="text-sm bg-secondary hover:bg-[#e6b800] text-black font-semibold px-4 py-2 rounded-full shadow cursor-pointer transition duration-300 ease-in-out">
-            + Upload New
-          </button>
+          {session ? (
+            <Link
+              href={"/upload"}
+              className="text-sm bg-secondary hover:bg-[#e6b800] text-black font-semibold px-4 py-2 rounded-full shadow cursor-pointer transition duration-300 ease-in-out"
+            >
+              + Upload New
+            </Link>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -125,19 +144,14 @@ export default async function UserProfile({ params }: ProfilePageProps) {
             >
               <div className="relative">
                 <Image
-                  src="/assets/sample-file.png"
+                  src={"/assets/sample-file.png"}
                   alt="Liked File"
                   width={400}
                   height={200}
                   className="object-cover w-full h-40"
                 />
                 <div className="absolute top-2 right-2 bg-white rounded-full p-2 shadow">
-                  <Image
-                    src="/assets/heart-filled.svg"
-                    width={18}
-                    height={18}
-                    alt="liked"
-                  />
+                  <Heart fill="var(--accent)" stroke="none" />
                 </div>
               </div>
               <div className="p-4">

@@ -7,9 +7,10 @@ export default async function ProfileRedirectPage() {
 
   // If not logged in → go to login
   if (!session) {
-    redirect("/login");
+    redirect("/");
   }
 
-  // Redirect logged-in user to their public profile
+  // Redirect logged-in user to their public profile even if there is no session it will show the public profile but do we actually want that?
+
   redirect(`/profile/${session.user.username}`);
 }
