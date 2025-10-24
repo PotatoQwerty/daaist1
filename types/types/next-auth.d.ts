@@ -13,13 +13,18 @@ declare module "next-auth" {
       onboarded?: boolean;
       username?: string;
       bio?: string;
+      likedPosts: string[];
+      ownPosts: string[];
     };
   }
-
   interface User {
     role?: string;
     studyYear?: string;
     isDaa?: boolean;
     username?: string;
+    onboarded?: boolean;
+    bio?: string;
+    likedPosts: string[];
+    ownPosts: string[];
   }
 }

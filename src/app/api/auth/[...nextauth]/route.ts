@@ -1,11 +1,10 @@
 import { SupabaseAdapter } from "@auth/supabase-adapter";
-import NextAuth from "next-auth";
+import NextAuth, { Session, User } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-
 export const authOptions = {
   adapter: SupabaseAdapter({
-    url: process.env.supabaseUrl as string,
-    secret: process.env.supabaseServiceRoleKey as string,
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    secret: process.env.SUPABASE_SERVICE_ROLE_KEY as string,
   }),
   providers: [
     GoogleProvider({
@@ -15,15 +14,17 @@ export const authOptions = {
   ],
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async session({ session, user }) {
+    async session({ session, user }: { session: Session; user: User }) {
       // Add your custom fields here:
       session.user.id = user.id;
       session.user.role = user.role;
-      session.user.isdaa = user.isdaa;
-      session.user.studyyear = user.studyyear;
-      session.user.onboarded = user.onboarded;
+      session.user.isDaa = user.isDaa;
+      session.user.studyYear = user.studyYear;
       session.user.username = user.username;
       session.user.bio = user.bio;
+      session.user.onboarded = user.onboarded;
+      session.user.likedPosts = user.likedPosts;
+      session.user.ownPosts = user.ownPosts;
       return session;
     },
   },

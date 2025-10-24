@@ -1,10 +1,11 @@
-import { supabaseCli } from "../../../../lib/supabase";
+import { supabaseCli } from "../../../../../lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
-import PfpPlaceholder from "../../../../public/images/placeholder.png";
-import DaaistLogo from "../../../../public/images/DAAIST-LOGO.svg";
+import PfpPlaceholder from "../../../../../public/images/placeholder.png";
+import DaaistLogo from "../../../../../public/images/DAAIST-LOGO.svg";
+import DaaistLogoDark from "../../../../../public/images/daalogodark.svg";
 import { getServerSession } from "next-auth";
-import { Heart, File, Stars, User } from "lucide-react";
+import { Heart, File, Stars, User, ShieldUser, Edit } from "lucide-react";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 interface ProfilePageProps {
@@ -44,13 +45,19 @@ export default async function UserProfile({ params }: ProfilePageProps) {
 
         {/* Profile Info */}
         <div className="flex items-center gap-6">
-          <Image
-            src={user?.image || PfpPlaceholder}
-            alt="Profile"
-            width={100}
-            height={100}
-            className="rounded-full border-4 border-primary shadow-md"
-          />
+          <div className="relative inline-block">
+            <Image
+              src={user?.image || PfpPlaceholder}
+              alt="Profile"
+              width={180}
+              height={180}
+              className="rounded-full border-4 border-primary shadow-md"
+            />
+            <button className="absolute top-0 right-2 bg-primary text-white p-1 rounded-full hover:opacity-80">
+              <Edit className="size-5" />
+            </button>
+          </div>
+
           <div className="w-full">
             <h1 className="text-3xl font-bold tracking-tight">{user?.name}</h1>
             <p className="text-gray-500">@{user?.username}</p>
@@ -59,19 +66,39 @@ export default async function UserProfile({ params }: ProfilePageProps) {
                 5th Year (M2)
               </span>
               <span className="flex items-center gap-1 text-sm">
-                {user?.isdaa ? (
-                  <Stars fill="var(--secondary)" stroke="none" />
+                {user?.isDaa ? (
+                  <Stars
+                    className="size-6"
+                    fill="var(--secondary)"
+                    stroke="none"
+                  />
+                ) : user?.role == "admin" ? (
+                  <ShieldUser
+                    className="size-6"
+                    fill="var(--secondary)"
+                    stroke="var(--primary)"
+                    strokeWidth="1px"
+                  />
                 ) : (
-                  <User fill="var(--primary)" stroke="none" />
+                  <User
+                    className="size-6"
+                    fill="var(--primary)"
+                    stroke="none"
+                  />
                 )}
-
-                <span>{user?.isdaa ? `DAA'ist` : "Guest"}</span>
+                <span>
+                  {user?.isDaa
+                    ? `DAA'ist`
+                    : user?.role == "admin"
+                    ? `Admin`
+                    : "Guest"}
+                </span>
               </span>
             </div>
           </div>
           <div className="">
             <h4 className="font-bold text-accent">Bio:</h4>
-            <p>{user?.bio}</p>
+            <p>{user?.bio || "User does not have a bio yet!"}</p>
           </div>
         </div>
 
@@ -95,7 +122,7 @@ export default async function UserProfile({ params }: ProfilePageProps) {
           <h2 className="text-2xl font-semibold text-primary uppercase tracking-wide">
             Uploaded Projects
           </h2>
-          {session ? (
+          {session && session.user.username === username ? (
             <Link
               href={"/upload"}
               className="text-sm bg-secondary hover:bg-[#e6b800] text-black font-semibold px-4 py-2 rounded-full shadow cursor-pointer transition duration-300 ease-in-out"
@@ -143,13 +170,7 @@ export default async function UserProfile({ params }: ProfilePageProps) {
               className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition"
             >
               <div className="relative">
-                <Image
-                  src={"/assets/sample-file.png"}
-                  alt="Liked File"
-                  width={400}
-                  height={200}
-                  className="object-cover w-full h-40"
-                />
+                <File className="size-10" />
                 <div className="absolute top-2 right-2 bg-white rounded-full p-2 shadow">
                   <Heart fill="var(--accent)" stroke="none" />
                 </div>

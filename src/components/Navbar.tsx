@@ -1,34 +1,43 @@
 "use client";
+
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { signIn, signOut, useSession } from "next-auth/react";
 import DaaistLogoHor from "../../public/images/DAAIST-LOGO-HOR.svg";
 import DaaistLogoHorDark from "../../public/images/daalogodarkhor.svg";
-import { Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
+import { ThemeSwitch } from "./ThemeSwitch";
 
 function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const [mounted, setMounted] = useState(false);
   const { theme, setTheme, resolvedTheme } = useTheme();
-  const [usedTheme, setUsedTheme] = useState(resolvedTheme || null);
-  // const [menuOpen, setMenuOpen] = useState(false);  add the functionality for mobile later
+
+  const [mounted, setMounted] = useState(false);
+  const [usedTheme, setUsedTheme] = useState<string | null>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
-  if (!mounted) {
-    // Return a placeholder or `null` to avoid rendering anything on the server
-    return null;
-  }
+
+  useEffect(() => {
+    if (resolvedTheme) {
+      setUsedTheme(resolvedTheme);
+      console.log(resolvedTheme);
+    }
+  }, [resolvedTheme]);
+
+  if (!mounted) return null;
 
   const isActive = (href: string) => {
     if (!pathname) return false;
     if (href === "/") return pathname === "/";
     return pathname === href || pathname.startsWith(href + "/");
   };
+
   return (
     <nav className="w-full flex justify-between items-center border-b-4 border-foreground bg-background px-8 py-4 uppercase font-bold tracking-wide">
       {/* LEFT: Logo */}
@@ -38,7 +47,7 @@ function Navbar() {
           className="hover:scale-110 transition duration-300 ease-in-out"
         >
           <Image
-            src={theme === "dark" ? DaaistLogoHorDark : DaaistLogoHor}
+            src={usedTheme === "dark" ? DaaistLogoHorDark : DaaistLogoHor}
             height={100}
             width={150}
             alt="Daaist Logo"
@@ -63,7 +72,7 @@ function Navbar() {
               className={`transition duration-300 ease-in-out ${
                 active
                   ? "text-accent scale-110 text-lg font-extrabold"
-                  : "hover:text-accent hover:scale-115"
+                  : "hover:text-accent hover:scale-105"
               }`}
             >
               {link.label}
@@ -74,36 +83,66 @@ function Navbar() {
 
       {/* RIGHT: Actions */}
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => setTheme((e) => (e == "dark" ? "light" : "dark"))}
-          aria-label="Toggle dark mode"
-          className="p-1"
-        >
-          {theme == "dark" ? <Sun /> : <Moon />}
-        </button>
+        {/* Theme Toggle */}
+        <ThemeSwitch />
         {session?.user ? (
           <>
+            {" "}
+            <button
+              onClick={() => signOut()}
+              className="w-full text-left px-4 py-2 hover:bg-red-500 hover:text-white"
+            >
+              Sign Out
+            </button>
             <Link
               href="/upload"
-              className="bg-primary text-white px-4 py-2 hover:bg-accent transition"
+              className="bg-primary text-white px-4 py-2 hover:bg-accent transition rounded-md"
             >
               + Upload
             </Link>
-            <div className="dropdown">
-              <div className="relative inline-block">
-                <div className="dropdown-content">
-                  <button onClick={() => signOut()}>Sign Out</button>
-                </div>
-              </div>
-              <Link href="/profile" className="hover:text-accent">
-                Profile
+            {/* Dropdown */}
+            <div className="relative group">
+              <Link
+                href="/profile"
+                className="hover:text-accent flex items-center gap-2"
+              >
+                <Image
+                  src={session.user.image || "/default-avatar.png"}
+                  alt="Profile"
+                  width={32}
+                  height={32}
+                  className="rounded-full border border-foreground"
+                />
+                <span>{session.user.name?.split(" ")[0]}</span>
               </Link>
+
+              {/* Dropdown Content */}
+              <div
+                className={`absolute right-0 mt-2 hidden group-hover:block rounded-md overflow-hidden shadow-lg ${
+                  usedTheme === "dark"
+                    ? "bg-neutral-800 text-white"
+                    : "bg-white text-black"
+                }`}
+              >
+                <Link
+                  href="/profile"
+                  className="block px-4 py-2 hover:bg-accent hover:text-background"
+                >
+                  Profile
+                </Link>
+                <button
+                  onClick={() => signOut()}
+                  className="w-full text-left px-4 py-2 hover:bg-red-500 hover:text-white"
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
           </>
         ) : (
           <button
             onClick={() => signIn("google")}
-            className="p-2 bg-accent font-bold text-background hover:bg-accent/80 hover:text-white"
+            className="p-2 bg-accent font-bold text-background hover:bg-accent/80 hover:text-white rounded-md"
           >
             Log In
           </button>

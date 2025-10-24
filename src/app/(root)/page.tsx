@@ -1,6 +1,7 @@
 "use client";
 
 import Loading from "@/components/Loading";
+import Link from "next/link";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -43,29 +44,6 @@ function Home() {
 
   // authenticated
   return (
-    // <div className="w-full h-screen flex flex-col justify-center items-center">
-    //   <Loading />
-    //   <h1 className="font-bold text-2xl">
-    //     Welcome back, {session?.user?.username}
-    //   </h1>
-    //   <p className="mt-2">
-    //     You&apos;re signed in — go to your profile or sign out.
-    //   </p>
-    //   <div className="mt-4">
-    //     <button
-    //       onClick={() => router.push("/profile")}
-    //       className="mr-2 px-4 py-2 bg-accent text-white rounded"
-    //     >
-    //       Profile
-    //     </button>
-    //     <button
-    //       onClick={() => signOut()}
-    //       className="px-4 py-2 bg-red-500 text-white rounded"
-    //     >
-    //       Sign out
-    //     </button>
-    //   </div>
-    // </div>
     <main className="min-h-screen bg-background text-foreground">
       {/* HERO SECTION */}
       <section className="relative flex flex-col items-center justify-center text-center py-24 px-6 bg-gradient-to-tl from-primary to-accent text-white">
@@ -77,12 +55,18 @@ function Home() {
           community-driven space.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
-          <button className="px-6 py-3 bg-white text-primary font-semibold rounded-xl shadow hover:bg-gray-100 transition">
+          <Link
+            href="/courses"
+            className="px-6 py-3 bg-white text-primary font-semibold rounded-xl shadow hover:bg-gray-100 transition"
+          >
             Explore Courses
-          </button>
-          <button className="px-6 py-3 border border-white font-semibold rounded-xl hover:bg-white/10 transition">
+          </Link>
+          <Link
+            href="/club"
+            className="px-6 py-3 border border-white font-semibold rounded-xl hover:bg-white/10 transition"
+          >
             Join a Club
-          </button>
+          </Link>
         </div>
       </section>
 

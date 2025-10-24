@@ -12,9 +12,9 @@ export default function Onboarding() {
     firstName: "",
     lastName: "",
     username: "",
-    studyyear: "",
+    studyYear: "",
     registrationNumber: "",
-    isdaa: false,
+    isDaa: false,
   });
 
   const handleChange = (
@@ -25,7 +25,7 @@ export default function Onboarding() {
 
   // new boolean handler for the selector
   const handleIsDaaChange = (val: boolean) => {
-    setForm((prev) => ({ ...prev, isdaa: val }));
+    setForm((prev) => ({ ...prev, isDaa: val }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -109,7 +109,7 @@ export default function Onboarding() {
             <select
               name="studyyear"
               id="studyyear"
-              value={form.studyyear}
+              value={form.studyYear}
               onChange={handleChange}
               className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             >

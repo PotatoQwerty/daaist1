@@ -6,7 +6,6 @@ export async function GET(
   { params }: { params: Promise<{ username: string }> }
 ) {
   const { username } = await params;
-  console.log(username);
 
   const { data, error } = await supabaseCli
     .from("users")
@@ -23,3 +22,5 @@ export async function GET(
 
   return NextResponse.json({ user: data });
 }
+
+

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "@/app/globals.css";
 import SessionWrapper from "@/components/SessionWrapper";
 import { Josefin_Sans } from "next/font/google";
 import Navbar from "@/components/Navbar";
@@ -21,7 +21,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${josefin.variable}`}>
       <body className="kabel-reg">
-        <ThemeProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem={true}
+        >
           <SessionWrapper>
             <Navbar />
             {children}

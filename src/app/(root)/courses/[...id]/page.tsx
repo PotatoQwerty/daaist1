@@ -1,11 +1,11 @@
 "use client";
-import React, { useState, use, useEffect } from "react";
-import Image from "next/image";
+import React, { useState, use } from "react";
 import Link from "next/link";
 import {
   subjectOptions,
   type LevelKey,
-} from "../../../../constants/uploadConstants";
+} from "../../../../../constants/uploadConstants";
+
 import { SearchIcon } from "lucide-react";
 export default function CoursesPage({
   params,
