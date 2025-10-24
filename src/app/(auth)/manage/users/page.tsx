@@ -1,12 +1,12 @@
 "use client";
-
+import type { User } from "next-auth";
 import { useEffect, useState } from "react";
 import { Edit } from "lucide-react";
 import EditUserModal from "@/components/EditUserModal";
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -43,7 +43,7 @@ export default function AdminUsersPage() {
               <td className="p-2">
                 {user.registration_number || "Not mentioned"}
               </td>
-              <td className="px-4 py-2">{user.isdaa ? "Yes" : "no"}</td>
+              <td className="px-4 py-2">{user.isDaa ? "Yes" : "no"}</td>
               <td
                 className={`px-4 py-2 font-bold text-white text-center
     ${

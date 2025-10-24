@@ -6,7 +6,7 @@ export async function PATCH(req: Request) {
     const { registration_number, ...updateFields } = body;
 
     if (!registration_number) {
-      NextResponse.json({ error: "Missing Matricule" }, { staus: 400 });
+      NextResponse.json({ error: "Missing Matricule" }, { status: 400 });
     }
 
     const { data, error } = await supabaseCli

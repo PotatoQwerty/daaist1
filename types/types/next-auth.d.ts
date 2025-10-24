@@ -15,13 +15,18 @@ declare module "next-auth" {
       bio?: string;
       likedPosts: string[];
       ownPosts: string[];
+      firstname?: string;
+      lastname?: string;
     };
   }
-  interface User {
+  export interface User {
+    firstname?: string;
+    lastname: string;
     role?: string;
     studyYear?: string;
     isDaa?: boolean;
     username?: string;
+    registration_number?: string;
     onboarded?: boolean;
     bio?: string;
     likedPosts: string[];

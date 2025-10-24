@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-
+import type { User } from "next-auth";
 export default function EditUserModal({
   user,
   onClose,
   onSave,
 }: {
-  user: object;
+  user: User;
   onClose: () => void;
-  onSave: (user: object) => void;
+  onSave: (user: User) => void;
 }) {
   const [formData, setFormData] = useState({
     firstname: user.firstname,
@@ -20,6 +20,7 @@ export default function EditUserModal({
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
   const handleSave = async () => {
     try {
       const res = await fetch(`/api/users/update`, {
@@ -45,7 +46,7 @@ export default function EditUserModal({
       }
     } catch (error) {
       console.error("Request error:", error);
-      alert("Something went wrong: " + error.message);
+      alert("Something went wrong: ");
     }
   };
 
