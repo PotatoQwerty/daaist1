@@ -56,13 +56,13 @@ export default function Onboarding() {
       {/* Left Section */}
       <div className="w-1/2 justify-center items-center hidden md:flex relative overflow-hidden">
         {/* Abstract Bauhaus shapes */}
-        {/* <div className="absolute top-10 left-10 w-32 h-32 bg-yellow-400 rounded-full"></div>
+        <div className="absolute top-10 left-10 w-32 h-32 bg-yellow-400 rounded-full"></div>
         <div className="absolute bottom-20 right-10 w-40 h-40 bg-primary "></div>
         <div className="absolute bottom-20 left-10 w-40 h-40 bg-primary "></div>
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-48 h-6 bg-white"></div>
 
-        <h1 className="text-white text-5xl font-bold z-10">DAA’ist</h1> */}
-        <Loading />
+        <h1 className="text-white text-5xl font-bold z-10">DAA’ist</h1>
+        {/* <Loading /> */}
       </div>
 
       {/* Right Section */}

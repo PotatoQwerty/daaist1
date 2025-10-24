@@ -90,7 +90,7 @@ function Navbar() {
           <>
             <Link
               href="/upload"
-              className="bg-primary text-white px-4 py-2 hover:bg-accent transition rounded-md"
+              className="bg-primary text-white px-4 py-2 hidden md:block hover:bg-accent transition rounded-md"
             >
               + Upload
             </Link>
