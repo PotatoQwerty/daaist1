@@ -47,6 +47,7 @@ export default function Onboarding() {
     }
   };
   useEffect(() => {
+    if (!session) router.replace("/");
     if (session?.user.onboarded) {
       router.replace("/");
     }
@@ -62,6 +63,7 @@ export default function Onboarding() {
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-48 h-6 bg-white"></div>
 
         <h1 className="text-white text-5xl font-bold z-10">DAA’ist</h1>
+        {/* the loading component is causing a problem when its hidden for smaller screens  */}
         {/* <Loading /> */}
       </div>
 

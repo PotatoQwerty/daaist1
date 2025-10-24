@@ -24,14 +24,9 @@ function Home() {
   // not signed in
   if (status === "unauthenticated") {
     return (
-      <div className="w-full h-screen flex flex-col justify-center items-center relative p-4">
-        {/* Background */}
-        <div className="absolute inset-0 flex justify-center items-center -z-10">
-          <div className="w-[90%] sm:w-3/4 h-[80%] bg-accent opacity-20 rounded-2xl" />
-        </div>
-
-        {/* Content wrapper matches background width */}
-        <div className="w-[90%] sm:w-3/4 flex flex-col items-center text-center space-y-4">
+      <div className="w-full min-h-screen flex justify-center items-center p-4">
+        {/* Background container that wraps content */}
+        <div className="relative w-[90%] sm:w-3/4 rounded-2xl bg-accent/20 flex flex-col items-center text-center space-y-4 p-6 sm:p-10">
           <MessageCard
             type="info"
             message="Please note that this website is developed and maintained by the club Archibenvoles. 
@@ -39,7 +34,7 @@ function Home() {
       If you notice anything odd, please contact us."
           />
 
-          <h1 className="font-bold text-2xl sm:text-3xl">
+          <h1 className="font-bold text-2xl sm:text-3xl text-foreground">
             Daa&apos;ist — Built by Students, For Students.
           </h1>
 
@@ -50,7 +45,7 @@ function Home() {
 
           <button
             onClick={() => signIn("google")}
-            className="w-48 h-48 sm:w-32 sm:h-32 rounded-full bg-primary text-white font-bold hover:scale-110 transition-all ease-in-out duration-200 m-3"
+            className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-primary text-white font-bold hover:scale-110 transition-all ease-in-out duration-200"
           >
             Let&apos;s get you started!
           </button>
