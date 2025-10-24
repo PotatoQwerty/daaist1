@@ -63,7 +63,7 @@ export default function Onboarding() {
       </div>
 
       {/* Right Section */}
-      <div className="w-1/2 bg-white flex flex-col justify-center items-center px-10">
+      <div className="w-full md:w-1/2 bg-white flex flex-col justify-center items-center px-10">
         <div className="w-full max-w-md space-y-6">
           <h2 className="text-3xl font-bold text-primary uppercase text-center">
             Student Sign Up
