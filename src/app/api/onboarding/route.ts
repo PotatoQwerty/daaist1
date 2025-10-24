@@ -4,10 +4,10 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   const { form, id } = await request.json();
   const {
-    firstName,
-    lastName,
+    firstname,
+    lastname,
     username,
-    registrationNumber,
+    registration_number,
     studyyear,
     isdaa,
   } = form || {};
@@ -15,11 +15,11 @@ export async function POST(request: Request) {
   const { data, error } = await supabaseCli
     .from("users")
     .update({
-      firstname: firstName,
-      lastname: lastName,
+      firstname,
+      lastname,
       username,
       studyyear,
-      registrationNumber,
+      registration_number,
       isdaa,
       onboarded: true,
     })
@@ -28,6 +28,8 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
+    console.log(error);
+
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
   return NextResponse.json({ user: data }, { status: 200 });

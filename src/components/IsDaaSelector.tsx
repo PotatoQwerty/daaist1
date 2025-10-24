@@ -19,8 +19,8 @@ const RadioOption = ({ id, label, value, onChange }: RadioOptionProps) => (
       onChange={() => onChange(value)}
       required
     />
-    <div className="w-full p-3 rounded-md bg-white text-gray-500 ring-2 ring-transparent transition-all hover:shadow peer-checked:text-primary peer-checked:ring-primary peer-checked:ring-offset-2">
-      <div className="flex flex-col gap-1 items-center">
+    <div className="w-full min-w-full p-3 rounded-md bg-background text-gray-500 ring-2 ring-transparent transition-all hover:shadow peer-checked:text-primary peer-checked:ring-primary peer-checked:ring-offset-2">
+      <div className="flex flex-col gap-1 items-center justify-center">
         <p>{label}</p>
         <svg width="20" height="20" viewBox="0 0 24 24">
           <path

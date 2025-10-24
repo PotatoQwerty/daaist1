@@ -10,14 +10,15 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import { ThemeSwitch } from "./ThemeSwitch";
+import { useCurrentRole } from "@/hooks/use-current-role";
 
 function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { theme, setTheme, resolvedTheme } = useTheme();
-
   const [mounted, setMounted] = useState(false);
   const [usedTheme, setUsedTheme] = useState<string | null>(null);
+  const role = useCurrentRole();
 
   useEffect(() => {
     setMounted(true);
@@ -87,13 +88,6 @@ function Navbar() {
         <ThemeSwitch />
         {session?.user ? (
           <>
-            {" "}
-            <button
-              onClick={() => signOut()}
-              className="w-full text-left px-4 py-2 hover:bg-red-500 hover:text-white"
-            >
-              Sign Out
-            </button>
             <Link
               href="/upload"
               className="bg-primary text-white px-4 py-2 hover:bg-accent transition rounded-md"
@@ -101,7 +95,7 @@ function Navbar() {
               + Upload
             </Link>
             {/* Dropdown */}
-            <div className="relative group">
+            <div className="dropdown">
               <Link
                 href="/profile"
                 className="hover:text-accent flex items-center gap-2"
@@ -117,19 +111,21 @@ function Navbar() {
               </Link>
 
               {/* Dropdown Content */}
-              <div
-                className={`absolute right-0 mt-2 hidden group-hover:block rounded-md overflow-hidden shadow-lg ${
-                  usedTheme === "dark"
-                    ? "bg-neutral-800 text-white"
-                    : "bg-white text-black"
-                }`}
-              >
+              <div className="dropdown-content">
                 <Link
                   href="/profile"
                   className="block px-4 py-2 hover:bg-accent hover:text-background"
                 >
                   Profile
                 </Link>
+                {role === "admin" || role === "club" ? (
+                  <Link
+                    href="/admin"
+                    className="block px-4 py-2 hover:bg-accent hover:text-background"
+                  >
+                    Admin Dashboard
+                  </Link>
+                ) : null}
                 <button
                   onClick={() => signOut()}
                   className="w-full text-left px-4 py-2 hover:bg-red-500 hover:text-white"

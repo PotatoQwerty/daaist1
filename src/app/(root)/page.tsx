@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import MessageCard from "@/components/MessageCard";
 
 function Home() {
   const { data: session, status } = useSession();
@@ -23,21 +24,37 @@ function Home() {
   // not signed in
   if (status === "unauthenticated") {
     return (
-      <div className="w-full h-screen flex flex-col justify-center items-center relative">
-        <div className="w-3/4 h-3/4 bg-accent opacity-20 absolute -z-10" />
-        <h1 className="font-bold text-2xl max-w-3xs sm:text-3xl sm:max-w-full">
-          Daa&apos;ist — Built by Students, For Students.
-        </h1>
-        <p className="font-light text-xl sm:text-2xl max-w-3xs text-accent sm:max-w-full">
-          Find documentation, past exams, and events at the Département
-          d&apos;Architecture d&apos;Alger and more!
-        </p>
-        <button
-          onClick={() => signIn("google")}
-          className="w-32 h-32 rounded-full bg-primary text-white font-bold hover:scale-110 transition-all ease-in-out duration-200 m-3"
-        >
-          Let&apos;s get you Started!
-        </button>
+      <div className="w-full h-screen flex flex-col justify-center items-center relative p-4">
+        {/* Background */}
+        <div className="absolute inset-0 flex justify-center items-center -z-10">
+          <div className="w-[90%] sm:w-3/4 h-[80%] bg-accent opacity-20 rounded-2xl" />
+        </div>
+
+        {/* Content wrapper matches background width */}
+        <div className="w-[90%] sm:w-3/4 flex flex-col items-center text-center space-y-4">
+          <MessageCard
+            type="info"
+            message="Please note that this website is developed and maintained by the club Archibenvoles. 
+      You might encounter some errors and bugs since you’re using one of the earliest versions of this website. 
+      If you notice anything odd, please contact us."
+          />
+
+          <h1 className="font-bold text-2xl sm:text-3xl">
+            Daa&apos;ist — Built by Students, For Students.
+          </h1>
+
+          <p className="font-light text-lg sm:text-xl text-accent">
+            Find documentation, past exams, and events at the Département
+            d&apos;Architecture d&apos;Alger and more!
+          </p>
+
+          <button
+            onClick={() => signIn("google")}
+            className="w-48 h-48 sm:w-32 sm:h-32 rounded-full bg-primary text-white font-bold hover:scale-110 transition-all ease-in-out duration-200 m-3"
+          >
+            Let&apos;s get you started!
+          </button>
+        </div>
       </div>
     );
   }

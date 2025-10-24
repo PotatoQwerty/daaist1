@@ -44,18 +44,22 @@ export default async function UserProfile({ params }: ProfilePageProps) {
         <div className="absolute bottom-4 left-6 w-10 h-10 bg-primary rotate-45" />
 
         {/* Profile Info */}
-        <div className="flex items-center gap-6">
+        <div className="flex-col md-flex items-center justify-center gap-6">
           <div className="relative inline-block">
             <Image
               src={user?.image || PfpPlaceholder}
               alt="Profile"
               width={180}
               height={180}
-              className="rounded-full border-4 border-primary shadow-md"
+              className="rounded-full border-4 border-primary max-w-[96px] md:max-w-full shadow-md"
             />
-            <button className="absolute top-0 right-2 bg-primary text-white p-1 rounded-full hover:opacity-80">
-              <Edit className="size-5" />
-            </button>
+            {session?.user.username == username ? (
+              <button className="absolute top-0 right-2 bg-primary text-white p-1 rounded-full hover:opacity-80">
+                <Edit className="size-5" />
+              </button>
+            ) : (
+              ""
+            )}
           </div>
 
           <div className="w-full">
@@ -98,7 +102,13 @@ export default async function UserProfile({ params }: ProfilePageProps) {
           </div>
           <div className="">
             <h4 className="font-bold text-accent">Bio:</h4>
-            <p>{user?.bio || "User does not have a bio yet!"}</p>
+            {}
+            <p>
+              {user?.bio ||
+                `${
+                  session?.user.username == username ? "You" : username
+                } does not have a bio yet!`}
+            </p>
           </div>
         </div>
 

@@ -9,11 +9,11 @@ export default function Onboarding() {
   const { data: session } = useSession();
   const router = useRouter();
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
+    firstname: "",
+    lastname: "",
     username: "",
-    studyYear: "",
-    registrationNumber: "",
+    studyyear: "",
+    registration_number: "",
     isDaa: false,
   });
 
@@ -30,15 +30,18 @@ export default function Onboarding() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     try {
-      const res = await fetch("./api/onboarding", {
+      const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ form, id: session?.user.id }),
       });
 
       if (!res.ok) throw new Error("Failed to submit onboarding data");
-      router.replace("/");
+      else if (res.ok) {
+        router.replace("/");
+      }
     } catch (err) {
       console.error(err);
     }
@@ -63,55 +66,61 @@ export default function Onboarding() {
       </div>
 
       {/* Right Section */}
-      <div className="w-full md:w-1/2 bg-white flex flex-col justify-center items-center px-10">
+      <div className="w-full md:w-1/2 flex flex-col justify-center items-center px-10">
         <div className="w-full max-w-md space-y-6">
           <h2 className="text-3xl font-bold text-primary uppercase text-center">
             Student Sign Up
           </h2>
-          <p className="text-gray-500 text-center">
+          <p className="text-gray-500 text-center text-xl">
             Complete your profile to start using DAA’ist
           </p>
 
           <form
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-4 bg-white p-5 rounded-lg"
             method="POST"
             onSubmit={handleSubmit}
           >
             <input
               onChange={handleChange}
               type="text"
-              name="firstName"
+              name="firstname"
+              required
               placeholder="First name"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="border border-gray-300 p-3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <input
               onChange={handleChange}
               type="text"
-              name="lastName"
+              name="lastname"
+              required
               placeholder="Last name"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black"
             />
             <input
               onChange={handleChange}
               type="text"
               name="username"
+              required
               placeholder="Username"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black"
             />
             <input
               onChange={handleChange}
-              type="text"
-              name="registrationNumber"
+              type="string"
+              required
+              maxLength={8}
+              name="registration_number"
               placeholder="Registration number"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary gap-1"
+              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary gap-1 text-black"
             />
 
             <select
               name="studyyear"
+              required
               id="studyyear"
-              value={form.studyYear}
+              value={form.studyyear}
               onChange={handleChange}
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black"
             >
               <option value="" disabled>
                 Please select which year you study
@@ -123,7 +132,7 @@ export default function Onboarding() {
               <option value="M2">5th year (M2)</option>
             </select>
 
-            <div className="flex justify-between items-center">
+            <div className="flex justify-center items-center">
               <span className="text-gray-600">Do you study in DAA?</span>
               <IsDaaSelector handleFormChanges={handleIsDaaChange} />
             </div>
