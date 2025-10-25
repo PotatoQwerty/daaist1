@@ -1,4 +1,4 @@
-import { supabaseCli } from "../../../../../lib/supabase";
+import { supabaseServer } from "@/lib/supabase/server";
 import Image from "next/image";
 import Link from "next/link";
 import PfpPlaceholder from "../../../../../public/images/placeholder.png";
@@ -6,7 +6,12 @@ import DaaistLogo from "../../../../../public/images/DAAIST-LOGO.svg";
 import DaaistLogoDark from "../../../../../public/images/daalogodark.svg";
 import { getServerSession } from "next-auth";
 import { Heart, File, Stars, User, ShieldUser, Edit } from "lucide-react";
+import EditProfileButton from "@/components/EditProfileButton";
+import ProfileBio from "@/components/EditProfileBio";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import DaaLogo from "@/components/DaaLogo";
+import UploadedCard from "@/components/UploadedCard";
+import LikedCard from "@/components/LikedCard";
 
 interface ProfilePageProps {
   params: Promise<{ username: string }>;
@@ -21,7 +26,7 @@ export default async function UserProfile({ params }: ProfilePageProps) {
   const session = await getServerSession(authOptions);
   const { username } = await params;
 
-  const { data: user, error } = await supabaseCli
+  const { data: user, error } = await supabaseServer
     .from("users")
     .select("*")
     .eq("username", username)
@@ -38,54 +43,54 @@ export default async function UserProfile({ params }: ProfilePageProps) {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-primary to-[#f3f3f3] text-gray-900 flex flex-col items-center px-6 py-10">
       {/* ================= Header / Profile ================= */}
-      <div className="relative w-full max-w-5xl bg-white shadow-lg rounded-3xl p-10 mb-10 flex flex-col md:flex-row justify-between items-center gap-8">
-        {/* Decorative shapes (Bauhaus) */}
-        <div className="absolute top-6 left-6 w-8 h-8 bg-secondary rounded-full" />
-        <div className="absolute bottom-4 left-6 w-10 h-10 bg-primary rotate-45" />
-
+      <div className="relative w-full max-w-5xl bg-background shadow-lg rounded-3xl p-10 mb-10 flex flex-col md:flex-row justify-between items-center gap-8">
         {/* Profile Info */}
-        <div className="flex-col md-flex items-center justify-center gap-6">
-          <div className="relative inline-block">
+        <div className="flex flex-col items-center justify-center gap-6 md:flex-row md:items-start md:gap-10">
+          {/* Profile Image + Edit Button */}
+          <div className="relative w-36 h-36 shrink-0">
             <Image
-              src={user?.image || PfpPlaceholder}
+              src={session?.user.image || PfpPlaceholder}
               alt="Profile"
-              width={180}
-              height={180}
-              className="rounded-full border-4 border-primary max-w-[96px] md:max-w-full shadow-md"
+              fill
+              className="object-cover rounded-full border-4 border-accent shadow-lg"
+              sizes="144px"
+              priority
             />
-            {session?.user.username == username ? (
-              <button className="absolute top-0 right-2 bg-primary text-white p-1 rounded-full hover:opacity-80">
-                <Edit className="size-5" />
-              </button>
-            ) : (
-              ""
-            )}
+            <div className="absolute bottom-2 right-2">
+              <EditProfileButton />
+            </div>
           </div>
 
-          <div className="w-full">
-            <h1 className="text-3xl font-bold tracking-tight">{user?.name}</h1>
-            <p className="text-gray-500">@{user?.username}</p>
-            <div className="mt-2 flex items-center gap-3 w-full">
-              <span className="text-sm font-medium bg-primary text-white px-3 py-1 rounded-full">
+          {/* User Info */}
+          <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-3 w-full">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground tracking-tight">
+                {user?.name}
+              </h1>
+              <p className="text-gray-600">@{user?.username}</p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+              <span className="text-sm font-medium bg-primary text-white px-3 py-1 rounded-full shadow-sm">
                 5th Year (M2)
               </span>
-              <span className="flex items-center gap-1 text-sm">
+              <span className="flex items-center gap-1 text-sm text-gray-300">
                 {user?.isDaa ? (
                   <Stars
-                    className="size-6"
+                    className="size-5"
                     fill="var(--secondary)"
                     stroke="none"
                   />
-                ) : user?.role == "admin" ? (
+                ) : user?.role === "admin" ? (
                   <ShieldUser
-                    className="size-6"
+                    className="size-5"
                     fill="var(--secondary)"
                     stroke="var(--primary)"
                     strokeWidth="1px"
                   />
                 ) : (
                   <User
-                    className="size-6"
+                    className="size-5"
                     fill="var(--primary)"
                     stroke="none"
                   />
@@ -93,36 +98,26 @@ export default async function UserProfile({ params }: ProfilePageProps) {
                 <span>
                   {user?.isDaa
                     ? `DAA'ist`
-                    : user?.role == "admin"
+                    : user?.role === "admin"
                     ? `Admin`
                     : "Guest"}
                 </span>
               </span>
             </div>
-          </div>
-          <div className="">
-            <h4 className="font-bold text-accent">Bio:</h4>
-            {}
-            <p>
-              {user?.bio ||
-                `${
-                  session?.user.username == username ? "You" : username
-                } does not have a bio yet!`}
-            </p>
+
+            {/* Bio Section */}
+            <div className="mt-3 w-full max-w-sm">
+              <ProfileBio
+                actualBio={user?.bio}
+                isOwnProfile={session?.user.username === username}
+              />
+            </div>
           </div>
         </div>
 
         {/* Logo */}
         <div className="hidden md:block">
-          <Link href="/">
-            <Image
-              src={DaaistLogo}
-              width={250}
-              height={120}
-              alt="DAA’ist Logo"
-              className="opacity-90 hover:opacity-100 hover:scale-110 transition-all duration-300 ease-in-out"
-            />
-          </Link>
+          <DaaLogo />
         </div>
       </div>
 
@@ -143,25 +138,19 @@ export default async function UserProfile({ params }: ProfilePageProps) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 border border-gray-100"
-            >
-              <h3 className="text-lg font-bold mb-2">
-                Poster Design Guide.pdf
-              </h3>
-              <p className="text-gray-500 text-sm mb-2">
-                Uploaded 2 days ago · M1 Year
+          {session?.user.ownPosts?.length ? (
+            <>
+              {session.user.ownPosts.map((i) => {
+                return <UploadedCard title={i.name} key={i.id} />;
+              })}
+            </>
+          ) : (
+            <>
+              <p className="text-gray-300 font-medium">
+                Nothing posted yet 😔.
               </p>
-              <div className="flex justify-between items-center mt-4">
-                <span className="text-xs text-gray-400">File type: PDF</span>
-                <button className="text-primary font-medium hover:underline">
-                  View
-                </button>
-              </div>
-            </div>
-          ))}
+            </>
+          )}
         </div>
       </section>
 
@@ -174,25 +163,17 @@ export default async function UserProfile({ params }: ProfilePageProps) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition"
-            >
-              <div className="relative">
-                <File className="size-10" />
-                <div className="absolute top-2 right-2 bg-white rounded-full p-2 shadow">
-                  <Heart fill="var(--accent)" stroke="none" />
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-lg mb-1">
-                  “Lighting Project.zip”
-                </h3>
-                <p className="text-sm text-gray-500">3rd year (L3)</p>
-              </div>
-            </div>
-          ))}
+          {session?.user.likedPosts?.length ? (
+            <>
+              {session.user.likedPosts.map((i) => {
+                return <LikedCard key={i} />;
+              })}
+            </>
+          ) : (
+            <>
+              <p className="text-gray-300 font-medium">Nothing liked yet 😔.</p>
+            </>
+          )}
         </div>
       </section>
 

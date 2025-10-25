@@ -6,7 +6,8 @@ import Image from "next/image";
 import { signIn, signOut, useSession } from "next-auth/react";
 import DaaistLogoHor from "../../public/images/DAAIST-LOGO-HOR.svg";
 import DaaistLogoHorDark from "../../public/images/daalogodarkhor.svg";
-import { Moon, Sun } from "lucide-react";
+import PfpPlaceholder from "../../public/images/placeholder.png";
+
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import { ThemeSwitch } from "./ThemeSwitch";
@@ -15,7 +16,7 @@ import { useCurrentRole } from "@/hooks/use-current-role";
 function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [usedTheme, setUsedTheme] = useState<string | null>(null);
   const role = useCurrentRole();
@@ -94,19 +95,22 @@ function Navbar() {
             >
               + Upload
             </Link>
+
             {/* Dropdown */}
             <div className="dropdown">
               <Link
                 href="/profile"
                 className="hover:text-accent flex items-center gap-2"
               >
-                <Image
-                  src={session.user.image || "/default-avatar.png"}
-                  alt="Profile"
-                  width={32}
-                  height={32}
-                  className="rounded-full border border-foreground"
-                />
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-accent">
+                  <Image
+                    src={session.user.image || PfpPlaceholder}
+                    alt="Profile"
+                    width={32}
+                    height={32}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
                 <span>{session.user.name?.split(" ")[0]}</span>
               </Link>
 

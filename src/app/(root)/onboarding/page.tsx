@@ -47,11 +47,13 @@ export default function Onboarding() {
     }
   };
   useEffect(() => {
-    if (!session) router.replace("/");
+    if (!session) {
+      router.replace("/");
+    }
     if (session?.user.onboarded) {
       router.replace("/");
     }
-  });
+  }, [session, session?.user.onboarded]);
   return (
     <div className="flex min-h-screen">
       {/* Left Section */}

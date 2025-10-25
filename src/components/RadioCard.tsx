@@ -30,7 +30,7 @@ const RadioCard: React.FC<RadioCardProps> = ({
         onChange={onChange}
         required={required}
       />
-      <div className="w-32 h-24 p-3 flex flex-col justify-center items-center rounded-md bg-foreground text-background ring-2 ring-transparent transition-all hover:shadow peer-checked:text-secondary peer-checked:ring-primary peer-checked:ring-offset-1">
+      <div className="w-32 h-24 p-3 flex flex-col justify-center items-center rounded-md bg-primary text-white ring-2 ring-transparent transition-all hover:shadow peer-checked:text-secondary peer-checked:ring-primary peer-checked:ring-offset-1">
         <p className="text-sm font-bold">{label}</p>
         <div className="mt-1">{icon}</div>
       </div>

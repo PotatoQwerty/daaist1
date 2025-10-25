@@ -85,11 +85,11 @@ export default function UploadForm() {
       <div className="absolute bottom-20 left-20 w-48 h-4 bg-accent"></div>
 
       {/* Main Card */}
-      <div className="relative z-10 bg-white dark:bg-neutral-900 rounded-2xl shadow-lg border-4 border-foreground p-10 w-full max-w-xl">
+      <div className="relative z-10 bg-accent/30 rounded-2xl shadow-lg border-4 border-foreground p-10 w-full max-w-xl">
         <h1 className="text-3xl font-bold uppercase text-center text-primary mb-6">
           Upload a File
         </h1>
-        <p className="text-center text-gray-600 dark:text-gray-300 mb-8">
+        <p className="text-center mb-8">
           Help our architecture database grow by sharing your documents 📐
         </p>
 
@@ -122,7 +122,7 @@ export default function UploadForm() {
               onChange={(e) =>
                 SetFormData({ ...formData, title: e.target.value })
               }
-              className="w-full border-2 border-accent rounded-md p-3 text-primary focus:outline-none focus:border-primary transition"
+              className="w-full border-2 border-accent rounded-md p-3 focus:outline-none focus:border-primary transition"
             />
           </div>
 
@@ -135,6 +135,7 @@ export default function UploadForm() {
                 onChange={(selectedValue) =>
                   SetFormData({ ...formData, level: selectedValue })
                 }
+                className="text-black"
                 placeholder="Select study year"
               />
 
@@ -144,6 +145,7 @@ export default function UploadForm() {
                 onChange={(selectedValue) =>
                   SetFormData({ ...formData, subject: selectedValue })
                 }
+                className="text-black"
                 placeholder={
                   formData.level
                     ? `Select a subject for ${formData.level.value}`
@@ -162,7 +164,7 @@ export default function UploadForm() {
             <input
               type="file"
               name="file"
-              className="w-full border-2 border-dashed border-accent rounded-md p-3 bg-gray-50 hover:bg-gray-100 cursor-pointer file:cursor-pointer file:border-none file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-primary file:text-white"
+              className="w-full border-2 border-dashed border-accent rounded-md p-3 bg-primary/50 hover:bg-primary/80 cursor-pointer file:cursor-pointer file:border-none file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-primary file:text-white"
               onChange={(e) => SetFile(e.target.files?.[0] || null)}
             />
           </div>
