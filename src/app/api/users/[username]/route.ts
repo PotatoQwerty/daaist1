@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseCli } from "../../../../../lib/supabase";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export async function GET(
   req: Request,
@@ -7,7 +7,7 @@ export async function GET(
 ) {
   const { username } = await params;
 
-  const { data, error } = await supabaseCli
+  const { data, error } = await supabaseServer
     .from("users")
     .select("*")
     .eq("username", username)

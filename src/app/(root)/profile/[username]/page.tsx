@@ -49,7 +49,7 @@ export default async function UserProfile({ params }: ProfilePageProps) {
           {/* Profile Image + Edit Button */}
           <div className="relative w-36 h-36 shrink-0">
             <Image
-              src={session?.user.image || PfpPlaceholder}
+              src={user.image || PfpPlaceholder}
               alt="Profile"
               fill
               className="object-cover rounded-full border-4 border-accent shadow-lg"
@@ -57,7 +57,9 @@ export default async function UserProfile({ params }: ProfilePageProps) {
               priority
             />
             <div className="absolute bottom-2 right-2">
-              <EditProfileButton />
+              <EditProfileButton
+                isOwnProfile={session?.user.username === username}
+              />
             </div>
           </div>
 
@@ -138,9 +140,9 @@ export default async function UserProfile({ params }: ProfilePageProps) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {session?.user.ownPosts?.length ? (
+          {user.ownPosts?.length ? (
             <>
-              {session.user.ownPosts.map((i) => {
+              {user.ownPosts.map((i) => {
                 return <UploadedCard title={i.name} key={i.id} />;
               })}
             </>

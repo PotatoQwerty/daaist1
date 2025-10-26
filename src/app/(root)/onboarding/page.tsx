@@ -1,13 +1,22 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import IsDaaSelector from "@/components/IsDaaSelector";
-import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useIsOnBoarded } from "@/hooks/use-is-onboarded";
+import MessageCard from "@/components/MessageCard";
 
 export default function Onboarding() {
+  const { loading, onboarded } = useIsOnBoarded();
   const { data: session } = useSession();
   const router = useRouter();
+
+  const [error, setError] = useState({
+    usererr: "",
+    fnameerr: "",
+    lnameerr: "",
+    matriculeerr: "",
+  });
   const [form, setForm] = useState({
     firstname: "",
     lastname: "",
@@ -20,10 +29,43 @@ export default function Onboarding() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+    const { name, value } = e.target;
 
-  // new boolean handler for the selector
+    // Update the form state
+    setForm((prev) => ({ ...prev, [name]: value }));
+
+    let errorMsg = "";
+
+    // Validation rules
+    if (name === "username") {
+      if (value.length < 5 || value.length > 15) {
+        errorMsg = "Username should be between 5 and 15 characters.";
+      }
+    } else if (name === "fname" || name === "lname") {
+      if (value.length < 4 || value.length > 15) {
+        errorMsg = `${
+          name === "fname" ? "First" : "Last"
+        } should be between 5 and 15 characters.`;
+      }
+    } else if (name === "matricule") {
+      if (!/^[0-9]+$/.test(value)) {
+        errorMsg = "Matricule should contain only numbers.";
+      }
+    }
+
+    // Map input name → error key
+    const errorKey = {
+      username: "usererr",
+      fname: "fnameerr",
+      lname: "lnameerr",
+      matricule: "matriculeerr",
+    }[name] as keyof typeof error;
+
+    // Update only that specific error
+    setError((prev) => ({ ...prev, [errorKey]: errorMsg }));
+  };
+  const visibleError = Object.values(error).find((msg) => msg !== "");
+
   const handleIsDaaChange = (val: boolean) => {
     setForm((prev) => ({ ...prev, isDaa: val }));
   };
@@ -47,13 +89,9 @@ export default function Onboarding() {
     }
   };
   useEffect(() => {
-    if (!session) {
-      router.replace("/");
-    }
-    if (session?.user.onboarded) {
-      router.replace("/");
-    }
-  }, [session, session?.user.onboarded]);
+    if (!session && !loading) router.replace("/");
+    if (onboarded === true && !loading) router.replace("/");
+  }, [session, onboarded, loading, router]);
   return (
     <div className="flex min-h-screen">
       {/* Left Section */}
@@ -88,7 +126,11 @@ export default function Onboarding() {
               onChange={handleChange}
               type="text"
               name="firstname"
+              title="First Name"
               required
+              minLength={4}
+              maxLength={16}
+              pattern="[a-zA-Z0-9]{4,16}"
               placeholder="First name"
               className="border border-gray-300 p-3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
@@ -97,17 +139,24 @@ export default function Onboarding() {
               type="text"
               name="lastname"
               required
+              minLength={4}
+              maxLength={16}
+              pattern="[a-zA-Z0-9]{4,16}"
+              title="Last Name"
               placeholder="Last name"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black"
+              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black "
             />
             <input
               onChange={handleChange}
               type="text"
               name="username"
+              title="username"
+              pattern="[a-zA-Z0-9]{5,16}"
               required
               placeholder="Username"
               className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black"
             />
+
             <input
               onChange={handleChange}
               type="string"
@@ -140,6 +189,9 @@ export default function Onboarding() {
               <span className="text-gray-600">Do you study in DAA?</span>
               <IsDaaSelector handleFormChanges={handleIsDaaChange} />
             </div>
+            {visibleError && (
+              <MessageCard message={visibleError} type="error" />
+            )}
 
             <button
               type="submit"

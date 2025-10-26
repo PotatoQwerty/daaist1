@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseCli } from "../../../../../lib/supabase";
+import { supabaseServer } from "@/lib/supabase/server";
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
@@ -9,7 +9,7 @@ export async function PATCH(req: Request) {
       NextResponse.json({ error: "Missing Matricule" }, { status: 400 });
     }
 
-    const { data, error } = await supabaseCli
+    const { data, error } = await supabaseServer
       .from("users")
       .update(updateFields)
       .eq("registration_number", registration_number)

@@ -6,13 +6,16 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import MessageCard from "@/components/MessageCard";
+import { useIsOnBoarded } from "@/hooks/use-is-onboarded";
 
 function Home() {
-  const { data: session, status } = useSession();
+  const { onboarded, loading } = useIsOnBoarded();
+
+  const { status } = useSession();
 
   const router = useRouter();
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.onboarded === false) {
+    if (status === "authenticated" && !loading && onboarded === false) {
       router.push("/onboarding");
     }
   });
@@ -45,7 +48,7 @@ function Home() {
 
           <button
             onClick={() => signIn("google")}
-            className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-primary text-white font-bold hover:scale-110 transition-all ease-in-out duration-200"
+            className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-primary text-white font-bold hover:scale-110 transition-all p-1 ease-in-out duration-200"
           >
             Let&apos;s get you started!
           </button>
@@ -87,10 +90,15 @@ function Home() {
         <h2 className="text-2xl font-bold mb-8 text-center">Quick Access</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { name: "Courses", color: "bg-primary", icon: "📘" },
-            { name: "Projects", color: "bg-accent", icon: "🏗️" },
-            { name: "Clubs", color: "bg-primary", icon: "🎨" },
-            { name: "Exams", color: "bg-accent", icon: "📝" },
+            {
+              name: "Courses",
+              color: "bg-primary",
+              icon: "📘",
+              link: "/courses",
+            },
+            { name: "Projects", color: "bg-accent", icon: "🏗️", link: "" },
+            { name: "Clubs", color: "bg-primary", icon: "🎨", link: "/clubs" },
+            { name: "Exams", color: "bg-accent", icon: "📝", link: "" },
           ].map((item) => (
             <div
               key={item.name}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
-import { supabaseCli } from "../../../../lib/supabase";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   }
 
   // 3️⃣ Fetch users from Supabase
-  const { data, error } = await supabaseCli
+  const { data, error } = await supabaseServer
     .from("users")
     .select("firstname, lastname, registration_number,role,isdaa");
 

@@ -28,7 +28,6 @@ function Navbar() {
   useEffect(() => {
     if (resolvedTheme) {
       setUsedTheme(resolvedTheme);
-      console.log(resolvedTheme);
     }
   }, [resolvedTheme]);
 

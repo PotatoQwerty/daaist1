@@ -1,4 +1,4 @@
-import { supabaseCli } from "../../../../lib/supabase";
+import { supabaseServer } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     isdaa,
   } = form || {};
 
-  const { data, error } = await supabaseCli
+  const { data, error } = await supabaseServer
     .from("users")
     .update({
       firstname,

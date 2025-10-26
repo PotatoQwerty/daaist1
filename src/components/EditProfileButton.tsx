@@ -3,7 +3,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Edit3 } from "lucide-react";
 
-export default function EditProfileButton() {
+export default function EditProfileButton({
+  isOwnProfile,
+}: {
+  isOwnProfile: boolean;
+}) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -28,6 +32,10 @@ export default function EditProfileButton() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!isOwnProfile) {
+    return null;
   }
 
   return (
