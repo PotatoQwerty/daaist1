@@ -37,7 +37,7 @@ export default function CoursesPage({
           name="search"
           id="search"
           className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none"
-          placeholder={`Search among ${subjectsForLevel.length} subjects`}
+          placeholder={`Search among ${subjectsForLevel.length} entries`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -59,9 +59,15 @@ export default function CoursesPage({
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground mt-10 text-center">
-          No subjects found for "{search}".
-        </p>
+        <>
+          {search.length == 0 ? (
+            <></>
+          ) : (
+            <p className="text-muted-foreground mt-10 text-center">
+              No subjects found for &quot;{search}&quot;.
+            </p>
+          )}
+        </>
       )}
     </div>
   );

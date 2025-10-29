@@ -35,13 +35,16 @@ export default function ProfileBio({
       console.error("Upload failed:", error);
     }
   };
-
+  const handleCancel = () => {
+    setBio(actualBio);
+    setIsEditing(false);
+  };
   return (
     <div className="w-full p-1 bg-background/25 rounded-lg">
       <h4 className="font-bold text-accent">Bio:</h4>
       {!isEditing ? (
         <>
-          <p className="text-sm text-gray-300">{bio || "No bio yet"}</p>
+          <p className="text-sm text-foreground">{bio || "No bio yet"}</p>
           {isOwnProfile ? (
             <button
               onClick={() => setIsEditing(true)}
@@ -61,14 +64,14 @@ export default function ProfileBio({
             name="bio"
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="w-full rounded-md border border-gray-300 bg-transparent p-1 text-sm outline-none"
+            className="w-full rounded-md border border-gray-300 bg-transparent p-1 text-foreground text-sm outline-none"
             maxLength={80}
           />
           <div className="flex justify-between items-center mt-2">
             <p className="text-xs text-gray-400">{bio?.length}/80</p>
             <div className="space-x-2">
               <button
-                onClick={() => setIsEditing(false)}
+                onClick={handleCancel}
                 className="text-xs text-gray-400 hover:text-gray-200"
               >
                 Cancel

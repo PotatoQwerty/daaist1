@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import { useSession } from "next-auth/react";
 export function useIsOnBoarded() {
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
 
   useEffect(() => {
+    if (!session) return;
+
     const fetchStatus = async () => {
       try {
         const res = await fetch("/api/users/onboarded", { cache: "no-store" });
@@ -23,7 +26,7 @@ export function useIsOnBoarded() {
     };
 
     fetchStatus();
-  }, []);
+  }, [session]);
 
   return { onboarded, loading };
 }

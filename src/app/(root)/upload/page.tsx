@@ -1,8 +1,15 @@
+"use client";
 import UploadForm from "@/components/UploadForm";
-import React from "react";
+import { useCurrentRole } from "@/hooks/use-current-role";
+import { redirect, RedirectType } from "next/navigation";
+import { useSession } from "next-auth/react";
 
-function page() {
-  return <UploadForm />;
+function UploadPage() {
+  const { data: session } = useSession();
+  const role = useCurrentRole();
+  if (role == "student" || !session) redirect("/", RedirectType.replace);
+
+  return <UploadForm userId={session.user.id} />;
 }
 
-export default page;
+export default UploadPage;

@@ -1,38 +1,92 @@
-import { supabaseServer } from "@/lib/supabase/server";
+"use client";
+
+import { useEffect, useState, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import PfpPlaceholder from "../../../../../public/images/placeholder.png";
-import DaaistLogo from "../../../../../public/images/DAAIST-LOGO.svg";
-import DaaistLogoDark from "../../../../../public/images/daalogodark.svg";
-import { getServerSession } from "next-auth";
-import { Heart, File, Stars, User, ShieldUser, Edit } from "lucide-react";
+import { Stars, User, ShieldUser, Loader2Icon } from "lucide-react";
 import EditProfileButton from "@/components/EditProfileButton";
 import ProfileBio from "@/components/EditProfileBio";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import DaaLogo from "@/components/DaaLogo";
 import UploadedCard from "@/components/UploadedCard";
 import LikedCard from "@/components/LikedCard";
-
-interface ProfilePageProps {
+import { useSession } from "next-auth/react";
+import toast, { Toaster } from "react-hot-toast";
+export default function UserProfile({
+  params,
+}: {
   params: Promise<{ username: string }>;
-}
-export async function generateMetadata({ params }: ProfilePageProps) {
-  const { username } = await params;
-  return {
-    title: `${username}'s Profile | DAA’ist`,
+}) {
+  const { username } = use(params);
+  const { data: session } = useSession();
+  const [user, setUser] = useState<any>(null);
+  // const [files, setFiles] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`/api/users/${username}`);
+        const data = await res.json();
+
+        if (!res.ok) throw new Error("User fetch failed");
+
+        // Keep a local variable
+        const userData = data.user;
+
+        const response = await fetch(`/api/files/${userData.id}`);
+        const filesData = await response.json();
+
+        // Merge both correctly
+        setUser({ ...userData, uploads: filesData.files });
+        // setFiles(filesData);
+      } catch (err) {
+        console.error("Error fetching user:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [username]);
+  const handleDelete = async (fileUrl: string) => {
+    try {
+      toast.promise(
+        (async () => {
+          const res = await fetch(`/api/files/${fileUrl}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) throw new Error("Failed to delete file");
+          return res.json();
+        })(),
+        {
+          loading: "Deleting file...",
+          success: "File deleted successfully!",
+          error: "Something went wrong!",
+        }
+      );
+
+      // Remove the deleted file from user.uploads
+      setUser((prev) => ({
+        ...prev,
+        uploads: prev.uploads.filter((file) => file.url !== fileUrl),
+      }));
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete file ❌");
+    }
   };
-}
-export default async function UserProfile({ params }: ProfilePageProps) {
-  const session = await getServerSession(authOptions);
-  const { username } = await params;
 
-  const { data: user, error } = await supabaseServer
-    .from("users")
-    .select("*")
-    .eq("username", username)
-    .single();
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen gap-2 text-gray-400">
+        <Loader2Icon className="animate-spin size-6" />
+        <p>Loading profile...</p>
+      </div>
+    );
+  }
 
-  if (error || !user) {
+  if (!user) {
     return (
       <div className="flex items-center justify-center h-screen text-gray-600">
         <p>User not found 😕</p>
@@ -42,11 +96,11 @@ export default async function UserProfile({ params }: ProfilePageProps) {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-primary to-[#f3f3f3] text-gray-900 flex flex-col items-center px-6 py-10">
-      {/* ================= Header / Profile ================= */}
+      {/* Header */}
       <div className="relative w-full max-w-5xl bg-background shadow-lg rounded-3xl p-10 mb-10 flex flex-col md:flex-row justify-between items-center gap-8">
         {/* Profile Info */}
         <div className="flex flex-col items-center justify-center gap-6 md:flex-row md:items-start md:gap-10">
-          {/* Profile Image + Edit Button */}
+          {/* Profile Image */}
           <div className="relative w-36 h-36 shrink-0">
             <Image
               src={user.image || PfpPlaceholder}
@@ -56,11 +110,11 @@ export default async function UserProfile({ params }: ProfilePageProps) {
               sizes="144px"
               priority
             />
-            <div className="absolute bottom-2 right-2">
-              <EditProfileButton
-                isOwnProfile={session?.user.username === username}
-              />
-            </div>
+            {session?.user.username === username && (
+              <div className="absolute bottom-2 right-2">
+                <EditProfileButton isOwnProfile />
+              </div>
+            )}
           </div>
 
           {/* User Info */}
@@ -107,7 +161,6 @@ export default async function UserProfile({ params }: ProfilePageProps) {
               </span>
             </div>
 
-            {/* Bio Section */}
             <div className="mt-3 w-full max-w-sm">
               <ProfileBio
                 actualBio={user?.bio}
@@ -123,40 +176,44 @@ export default async function UserProfile({ params }: ProfilePageProps) {
         </div>
       </div>
 
-      {/* ================= Uploaded Posts ================= */}
+      {/* Uploaded Projects */}
       <section className="w-full max-w-5xl mb-10">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-primary uppercase tracking-wide">
             Uploaded Projects
           </h2>
-          {session && session.user.username === username ? (
+          {session?.user.username === username && (
             <Link
-              href={"/upload"}
-              className="text-sm bg-secondary hover:bg-[#e6b800] text-black font-semibold px-4 py-2 rounded-full shadow cursor-pointer transition duration-300 ease-in-out"
+              href="/upload"
+              className="text-sm bg-secondary hover:bg-[#e6b800] text-black font-semibold px-4 py-2 rounded-full shadow transition duration-300"
             >
               + Upload New
             </Link>
-          ) : null}
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {user.ownPosts?.length ? (
-            <>
-              {user.ownPosts.map((i) => {
-                return <UploadedCard title={i.name} key={i.id} />;
-              })}
-            </>
+          {user?.uploads.length ? (
+            user?.uploads.map((i: any) => (
+              <UploadedCard
+                type={i.type}
+                title={i.file_name}
+                key={i.id}
+                link={i.url}
+                category={i.category}
+                level={i.level}
+                subject={i.subject}
+                size={i.size}
+                onDelete={() => handleDelete(i.url)}
+              />
+            ))
           ) : (
-            <>
-              <p className="text-gray-300 font-medium">
-                Nothing posted yet 😔.
-              </p>
-            </>
+            <p className="text-gray-300 font-medium">Nothing posted yet 😔.</p>
           )}
         </div>
       </section>
 
-      {/* ================= Liked Posts ================= */}
+      {/* Favorites */}
       <section className="w-full max-w-5xl mb-16">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-primary uppercase tracking-wide">
@@ -165,21 +222,14 @@ export default async function UserProfile({ params }: ProfilePageProps) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {session?.user.likedPosts?.length ? (
-            <>
-              {session.user.likedPosts.map((i) => {
-                return <LikedCard key={i} />;
-              })}
-            </>
+          {user.likedPosts?.length ? (
+            user.likedPosts.map((i: any) => <LikedCard key={i} />)
           ) : (
-            <>
-              <p className="text-gray-300 font-medium">Nothing liked yet 😔.</p>
-            </>
+            <p className="text-gray-300 font-medium">Nothing liked yet 😔.</p>
           )}
         </div>
       </section>
 
-      {/* ================= Footer ================= */}
       <footer className="text-center text-sm text-gray-500 py-8">
         © 2025 DAA’ist
       </footer>
