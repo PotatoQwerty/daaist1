@@ -9,22 +9,24 @@ import {
   YearOption,
   SubjectOption,
 } from "../../constants/uploadConstants";
+import { supabaseClient } from "@/lib/supabase/client";
 
-export default function UploadForm() {
+export default function UploadForm({ userId }: { userId: string }) {
   const [cat, setCat] = useState("");
   const [subjectOption, setSubjectOption] = useState<SubjectOption[] | null>(
     null
   );
-  const [formData, SetFormData] = useState<{
+  const [formData, setFormData] = useState<{
     title: string;
     level: YearOption | null;
     subject: SubjectOption | null;
   }>({ title: "", subject: null, level: null });
 
-  const [file, SetFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  // 🧠 Update subject options dynamically
   useEffect(() => {
     if (formData.level) {
       setSubjectOption(subjectOptions[formData.level.value]);
@@ -37,46 +39,66 @@ export default function UploadForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
-      setMessage("❌ Please select a file first");
+      setMessage("Please select a file to upload");
+      return;
+    }
+
+    if (!userId) {
+      setMessage("You must be logged in to upload files");
       return;
     }
 
     setIsUploading(true);
-    setMessage(null);
+    setMessage("");
 
     try {
-      const data = new FormData();
-      data.append("file", file);
-      data.append("year", formData.level?.value || "unknown");
-      data.append("cat", cat || "misc");
-      data.append("level", formData.level?.value || "");
-      data.append("title", formData.title || "");
-      data.append("subject", formData.subject?.value || "");
+      // 🧩 Prepare form data for API route
+      const body = new FormData();
+      body.append("file", file);
+      body.append("title", formData.title);
+      body.append("category", cat);
+      body.append("level", formData.level?.value || "");
+      body.append("subject", formData.subject?.value || "");
 
-      const response = await fetch(
-        "https://neural-climbing-ampland-requests.trycloudflare.com/upload",
-        {
-          method: "POST",
-          body: data,
-        }
-      );
+      // 📡 Upload to /api/upload (R2)
+      const res = await fetch("/api/upload", { method: "POST", body });
+      const dataR2 = await res.json();
 
-      const result = await response.json();
+      if (!res.ok) throw new Error(dataR2.message || "Upload failed");
 
-      if (response.ok) {
-        setMessage(`✅ Uploaded successfully: ${result.metadata.title}`);
-        //add functionality to reset after successful
-      } else {
-        setMessage(`❌ Upload failed: ${result.message || "Unknown error"}`);
-      }
-    } catch (err) {
-      console.error("Upload error:", err);
-      setMessage("⚠️ Failed to upload. Please try again.");
+      const fileUrl = dataR2.fileUrl;
+      const fileType = dataR2.fileType;
+      const fileSize = dataR2.fileSize;
+
+      // 💾 Save metadata to Supabase
+      const { error } = await supabaseClient.from("files").insert({
+        file_name: formData.title,
+        url: fileUrl,
+        size: fileSize,
+        type: fileType,
+        category: cat,
+        level: formData.level?.value || null,
+        subject: formData.subject?.value || null,
+        uploaded_by: userId,
+      });
+
+      if (error) throw new Error(error.message);
+
+      setMessage("✅ File uploaded successfully!");
+
+      // ♻️ Reset form
+      setFile(null);
+      setCat("");
+      setFormData({ title: "", subject: null, level: null });
+    } catch (err: any) {
+      console.error(err);
+      setMessage(`❌ ${err.message}`);
     } finally {
       setIsUploading(false);
     }
   };
 
+  // 🎨 UI (unchanged)
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-10 relative overflow-hidden">
       {/* Background shapes */}
@@ -120,7 +142,7 @@ export default function UploadForm() {
               placeholder="Enter a title for your file"
               value={formData.title}
               onChange={(e) =>
-                SetFormData({ ...formData, title: e.target.value })
+                setFormData({ ...formData, title: e.target.value })
               }
               className="w-full border-2 border-accent rounded-md p-3 focus:outline-none focus:border-primary transition"
             />
@@ -133,7 +155,7 @@ export default function UploadForm() {
                 options={yearOptions}
                 value={formData.level}
                 onChange={(selectedValue) =>
-                  SetFormData({ ...formData, level: selectedValue })
+                  setFormData({ ...formData, level: selectedValue })
                 }
                 className="text-black"
                 placeholder="Select study year"
@@ -143,7 +165,7 @@ export default function UploadForm() {
                 options={subjectOption || []}
                 value={formData.subject}
                 onChange={(selectedValue) =>
-                  SetFormData({ ...formData, subject: selectedValue })
+                  setFormData({ ...formData, subject: selectedValue })
                 }
                 className="text-black"
                 placeholder={
@@ -165,7 +187,7 @@ export default function UploadForm() {
               type="file"
               name="file"
               className="w-full border-2 border-dashed border-accent rounded-md p-3 bg-primary/50 hover:bg-primary/80 cursor-pointer file:cursor-pointer file:border-none file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-primary file:text-white"
-              onChange={(e) => SetFile(e.target.files?.[0] || null)}
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
             />
           </div>
 

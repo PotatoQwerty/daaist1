@@ -3,6 +3,7 @@ import "@/app/globals.css";
 import SessionWrapper from "@/components/SessionWrapper";
 import { Josefin_Sans } from "next/font/google";
 import Navbar from "@/components/Navbar";
+import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "next-themes";
 const josefin = Josefin_Sans({
   subsets: ["latin"],
@@ -27,6 +28,7 @@ export default function RootLayout({
           enableSystem={true}
         >
           <SessionWrapper>
+            <Toaster position="top-right" />
             <Navbar />
             {children}
           </SessionWrapper>
