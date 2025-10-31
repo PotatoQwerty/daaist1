@@ -1,6 +1,14 @@
 import React from "react";
 import { Heart, File } from "lucide-react";
-function LikedCard() {
+function LikedCard({
+  title,
+  link,
+  year,
+}: {
+  title: string;
+  link: string;
+  year: string;
+}) {
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition">
       <div className="relative">
@@ -10,8 +18,8 @@ function LikedCard() {
         </div>
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-lg mb-1">“Lighting Project.zip”</h3>
-        <p className="text-sm text-gray-500">3rd year (L3)</p>
+        <h3 className="font-semibold text-lg mb-1">{title}</h3>
+        <p className="text-sm text-gray-500">{year}</p>
       </div>
     </div>
   );

@@ -9,9 +9,10 @@ import EditProfileButton from "@/components/EditProfileButton";
 import ProfileBio from "@/components/EditProfileBio";
 import DaaLogo from "@/components/DaaLogo";
 import UploadedCard from "@/components/UploadedCard";
-import LikedCard from "@/components/LikedCard";
 import { useSession } from "next-auth/react";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+import FileCard from "@/components/FileCard";
+import { useCurrentRole } from "@/hooks/use-current-role";
 export default function UserProfile({
   params,
 }: {
@@ -20,9 +21,8 @@ export default function UserProfile({
   const { username } = use(params);
   const { data: session } = useSession();
   const [user, setUser] = useState<any>(null);
-  // const [files, setFiles] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
+  const role = useCurrentRole();
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -35,10 +35,17 @@ export default function UserProfile({
         const userData = data.user;
 
         const response = await fetch(`/api/files/${userData.id}`);
+        const liked = await fetch(`/api/files/like/user/${userData.id}`);
+        const likedData = await liked.json();
+
         const filesData = await response.json();
 
         // Merge both correctly
-        setUser({ ...userData, uploads: filesData.files });
+        setUser({
+          ...userData,
+          uploads: filesData.files,
+          likes: likedData.likedFiles,
+        });
         // setFiles(filesData);
       } catch (err) {
         console.error("Error fetching user:", err);
@@ -49,6 +56,8 @@ export default function UserProfile({
 
     fetchUser();
   }, [username]);
+  console.log(user);
+
   const handleDelete = async (fileUrl: string) => {
     try {
       toast.promise(
@@ -74,6 +83,50 @@ export default function UserProfile({
     } catch (err) {
       console.error(err);
       toast.error("Failed to delete file ❌");
+    }
+  };
+  const handleLike = async (fileId: string) => {
+    if (!user) return;
+
+    const isLiked = user.likes?.some((item) => item.id === fileId);
+
+    // 🔹 Optimistic UI update (instant toggle)
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            likes: isLiked
+              ? prev.likes.filter((item) => item.id !== fileId) // unlike
+              : [...prev.likes, { id: fileId }], // like
+          }
+        : prev
+    );
+
+    try {
+      const res = await fetch(`/api/files/like`, {
+        method: "POST",
+        body: JSON.stringify({ userId: user.id, fileId }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      // 🔹 Optional: sync with backend response
+      if (res.ok) {
+        const data = await res.json();
+        if (data.likedposts) {
+          setUser((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  likes: Array.isArray(data.likedposts)
+                    ? data.likedposts
+                    : prev.likes,
+                }
+              : prev
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Like/unlike failed:", err);
     }
   };
 
@@ -182,7 +235,7 @@ export default function UserProfile({
           <h2 className="text-2xl font-semibold text-primary uppercase tracking-wide">
             Uploaded Projects
           </h2>
-          {session?.user.username === username && (
+          {(session?.user.username === username || role === "admin") && (
             <Link
               href="/upload"
               className="text-sm bg-secondary hover:bg-[#e6b800] text-black font-semibold px-4 py-2 rounded-full shadow transition duration-300"
@@ -221,18 +274,25 @@ export default function UserProfile({
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {user.likedPosts?.length ? (
-            user.likedPosts.map((i: any) => <LikedCard key={i} />)
+        <div className="grid justify-items-center grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {user.likes?.length ? (
+            user.likes.map((i: any) => (
+              <FileCard
+                key={i.id}
+                size={i.size}
+                title={i.file_name}
+                subject={i.subject}
+                type={i.type}
+                link={i.url}
+                handleLike={() => handleLike(i.id)}
+                isLiked={user.likes.some((i) => i.id === i.id)}
+              />
+            ))
           ) : (
             <p className="text-gray-300 font-medium">Nothing liked yet 😔.</p>
           )}
         </div>
       </section>
-
-      <footer className="text-center text-sm text-gray-500 py-8">
-        © 2025 DAA’ist
-      </footer>
     </div>
   );
 }

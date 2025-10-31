@@ -13,7 +13,7 @@ declare module "next-auth" {
       onboarded?: boolean;
       username?: string;
       bio?: string;
-      likedPosts: string[];
+      likedposts: string[];
       ownPosts: string[];
       firstname?: string;
       lastname?: string;
@@ -29,7 +29,7 @@ declare module "next-auth" {
     registration_number?: string;
     onboarded?: boolean;
     bio?: string;
-    likedPosts: string[];
+    likedposts: string[];
     ownPosts: string[];
   }
 }
