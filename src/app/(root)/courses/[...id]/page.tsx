@@ -1,74 +1,131 @@
 "use client";
-import React, { useState, use } from "react";
-import Link from "next/link";
-import {
-  subjectOptions,
-  type LevelKey,
-} from "../../../../../constants/uploadConstants";
-import { SearchIcon } from "lucide-react";
 
-export default function CoursesPage({
-  params,
-}: {
-  params: Promise<{ id: string[] }>;
-}) {
-  const { id: idArray } = use(params);
-  const idFromPromise = idArray.join("/");
-  const key = idFromPromise as LevelKey;
-  const subjectsForLevel = subjectOptions[key] ?? [];
-  const [search, setSearch] = useState("");
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import FileCard from "@/components/FileCard";
+import { useSession } from "next-auth/react";
+import Loading from "@/components/Loading";
+import MessageCard from "@/components/MessageCard";
 
-  const filteredSubjects = subjectsForLevel.filter((item) =>
-    item.label.toLowerCase().includes(search.toLowerCase())
-  );
+export default function CoursesPage() {
+  const params = useParams();
+  const id = params.id as string[];
+  const year = id[0];
+  const subject = id[1];
+
+  const { data: session, status } = useSession();
+  const userId = session?.user?.id;
+
+  const [courses, setCourses] = useState<any[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
+  const [liked, setLiked] = useState<{ id: string }[]>([]);
+
+  // 🧠 Fetch all courses for the year
+  useEffect(() => {
+    // if (status !== "authenticated") return;
+
+    const fetchCourses = async () => {
+      const res = await fetch(`/api/files/level/${year}`);
+      const data = await res.json();
+      setCourses(data.data || []);
+      setFilteredCourses(data.data || []);
+    };
+
+    fetchCourses();
+  }, [status, year]);
+  console.log(courses);
+
+  // 🧠 Filter by subject (if selected)
+  useEffect(() => {
+    if (subject) {
+      setFilteredCourses(
+        courses.filter((course) => course.subject === subject)
+      );
+    } else {
+      setFilteredCourses(courses);
+    }
+  }, [subject, courses]);
+
+  // 🧠 Fetch liked files for user
+  useEffect(() => {
+    if (status !== "authenticated" || !userId) return;
+
+    const fetchLikedPosts = async () => {
+      const res = await fetch(`/api/files/like/user/${userId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+
+      setLiked(Array.isArray(data.likedFiles) ? data.likedFiles : []);
+    };
+
+    fetchLikedPosts();
+  }, [status, userId]);
+
+  // ❤️ Like/unlike handler
+  const handleLike = async (fileId: string) => {
+    if (!userId) return;
+
+    const isLiked = liked.some((item) => item.id === fileId);
+
+    // 🔹 Optimistic UI update (instant feedback)
+    setLiked((prev) =>
+      isLiked
+        ? prev.filter((item) => item.id !== fileId)
+        : [...prev, { id: fileId }]
+    );
+
+    try {
+      const res = await fetch(`/api/files/like`, {
+        method: "POST",
+        body: JSON.stringify({ userId, fileId }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      // Optionally reconcile with server if backend returns updated list
+      if (res.ok) {
+        const data = await res.json();
+        if (data.likedposts) {
+          setLiked(Array.isArray(data.likedposts) ? data.likedposts : []);
+        }
+      }
+    } catch (err) {
+      console.error("Like/unlike failed:", err);
+    }
+  };
+
+  if (status === "loading") {
+    return <Loading />;
+  }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-background to-accent/10 flex flex-col items-center px-4 py-10">
-      {/* Title */}
-      <h1 className="text-3xl md:text-4xl font-bold text-center mb-8 text-foreground">
-        {idArray.join(" / ")} Courses
-      </h1>
-
-      {/* Search Bar */}
-      <div className="w-full max-w-lg flex items-center gap-2 rounded-2xl border border-accent/40 focus-within:border-primary bg-card px-4 py-3 shadow-sm transition-all duration-200 mb-10">
-        <SearchIcon className="w-5 h-5 text-muted-foreground" />
-        <input
-          type="text"
-          name="search"
-          id="search"
-          className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none"
-          placeholder={`Search among ${subjectsForLevel.length} entries`}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+    <div className=" w-full h-screen flex items-center justify-center p-6 flex-col">
+      <h1 className="text-2xl font-bold mb-4">Courses for {year}</h1>
+      {subject && <h2 className="text-lg mb-2">Subject: {subject}</h2>}
+      {/* work for pagination later */}
+      <div className="w-full h-full grid justify-items-center grid-cols-1 md:grid-cols-4">
+        {courses.length ? (
+          courses.map((course) => (
+            <FileCard
+              key={course.id}
+              subject={course.subject}
+              size={course.size}
+              title={course.file_name}
+              type={course.type}
+              link={course.url}
+              handleLike={() => handleLike(course.id)}
+              isLiked={liked.some((i) => i.id === course.id)}
+            />
+          ))
+        ) : (
+          <>
+            <MessageCard
+              type="error"
+              message="There is nothing uploaded here"
+              key="err-msg"
+            />
+          </>
+        )}
       </div>
-
-      {/* Subjects Grid */}
-      {filteredSubjects.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 w-full max-w-6xl">
-          {filteredSubjects.map((item) => (
-            <Link
-              key={item.value}
-              href={`/courses/${idFromPromise}/${item.value}`}
-              className="relative flex flex-col items-center justify-center w-full h-[220px] rounded-2xl bg-card border border-accent/30 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 group hover:bg-accent/5"
-            >
-              <span className="text-lg font-semibold text-foreground">
-                {item.label}
-              </span>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <>
-          {search.length == 0 ? (
-            <></>
-          ) : (
-            <p className="text-muted-foreground mt-10 text-center">
-              No subjects found for &quot;{search}&quot;.
-            </p>
-          )}
-        </>
-      )}
     </div>
   );
 }

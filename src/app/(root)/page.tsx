@@ -96,23 +96,24 @@ function Home() {
               icon: "📘",
               link: "/courses",
             },
-            { name: "Projects", color: "bg-accent", icon: "🏗️", link: "" },
-            { name: "Clubs", color: "bg-primary", icon: "🎨", link: "/clubs" },
-            { name: "Exams", color: "bg-accent", icon: "📝", link: "" },
+            { name: "Projects", color: "bg-accent", icon: "🏗️", link: "/" },
+            { name: "Clubs", color: "bg-primary", icon: "🎨", link: "/club" },
+            { name: "Exams", color: "bg-accent", icon: "📝", link: "/" },
           ].map((item) => (
-            <div
+            <Link
+              href={item.link}
               key={item.name}
               className={`${item.color} rounded-2xl p-8 flex flex-col items-center text-center hover:scale-105 transition`}
             >
               <span className="text-4xl mb-3">{item.icon}</span>
               <h3 className="font-semibold text-lg">{item.name}</h3>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
 
       {/* LATEST UPLOADS */}
-      <section className="bg-background py-16 px-6 border-t border-gray-200">
+      {/* <section className="bg-background py-16 px-6 border-t border-gray-200">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl font-bold mb-8 text-center">
             Latest Uploads
@@ -134,10 +135,10 @@ function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* UPCOMING EVENTS */}
-      <section className="max-w-6xl mx-auto py-16 px-6">
+      {/* <section className="max-w-6xl mx-auto py-16 px-6">
         <h2 className="text-2xl font-bold mb-8 text-center">Upcoming Events</h2>
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
@@ -155,10 +156,10 @@ function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* FEATURED STUDENT / CLUB */}
-      <section className="bg-gradient-to-r from-purple-600 to-indigo-700 py-20 text-white text-center">
+      {/* <section className="bg-gradient-to-r from-purple-600 to-indigo-700 py-20 text-white text-center">
         <h2 className="text-2xl font-bold mb-6">Featured Club</h2>
         <div className="max-w-3xl mx-auto">
           <div className="bg-white/10 rounded-2xl p-8 backdrop-blur-md">
@@ -172,7 +173,7 @@ function Home() {
             </button>
           </div>
         </div>
-      </section>
+      </section> */}
     </main>
   );
 }
