@@ -1,5 +1,6 @@
 "use client";
 
+import { yearOptions } from "../../../../../constants/uploadConstants";
 import { useEffect, useState, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -56,7 +57,6 @@ export default function UserProfile({
 
     fetchUser();
   }, [username]);
-  console.log(user);
 
   const handleDelete = async (fileUrl: string) => {
     try {
@@ -146,7 +146,9 @@ export default function UserProfile({
       </div>
     );
   }
-
+  const displayYear = yearOptions.find(
+    (element) => element.value == user.studyyear
+  );
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-primary to-[#f3f3f3] text-gray-900 flex flex-col items-center px-6 py-10">
       {/* Header */}
@@ -181,7 +183,7 @@ export default function UserProfile({
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
               <span className="text-sm font-medium bg-primary text-white px-3 py-1 rounded-full shadow-sm">
-                5th Year (M2)
+                {displayYear?.label}
               </span>
               <span className="flex items-center gap-1 text-sm text-gray-300">
                 {user?.isDaa ? (
@@ -235,10 +237,10 @@ export default function UserProfile({
           <h2 className="text-2xl font-semibold text-primary uppercase tracking-wide">
             Uploaded Projects
           </h2>
-          {(session?.user.username === username || role === "admin") && (
+          {session?.user.username === username && role === "admin" && (
             <Link
               href="/upload"
-              className="text-sm bg-secondary hover:bg-[#e6b800] text-black font-semibold px-4 py-2 rounded-full shadow transition duration-300"
+              className="text-sm min-w-fit bg-secondary hover:bg-secondary/85 hover:text-white text-black font-semibold px-4 py-2 rounded-full shadow transition duration-300"
             >
               + Upload New
             </Link>

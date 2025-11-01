@@ -22,7 +22,9 @@ export async function GET(req: Request) {
   // 3️⃣ Fetch users from Supabase
   const { data, error } = await supabaseServer
     .from("users")
-    .select("firstname, lastname, registration_number,role,isdaa");
+    .select(
+      "firstname, lastname, registration_number,role,isdaa,username,id,studyyear"
+    );
 
   if (error) {
     return NextResponse.json(

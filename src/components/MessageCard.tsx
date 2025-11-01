@@ -8,7 +8,7 @@ interface MessageCardProps {
 function MessageCard({ type, message }: MessageCardProps) {
   return (
     <div
-      className={`rounded-md flex flex-col gap-1 justify-center items-center p-1 text-foreground text-xl w-fit ${
+      className={`rounded-md max-h-fit flex flex-col gap-1 justify-center items-center p-1 text-foreground text-xl w-fit ${
         type === "error"
           ? "bg-accent/60"
           : type === "info"

@@ -33,7 +33,6 @@ export default function CoursesPage() {
 
     fetchCourses();
   }, [status, year]);
-  console.log(courses);
 
   // 🧠 Filter by subject (if selected)
   useEffect(() => {
@@ -101,7 +100,7 @@ export default function CoursesPage() {
     <div className=" w-full h-screen flex items-center justify-center p-6 flex-col">
       <h1 className="text-2xl font-bold mb-4">Courses for {year}</h1>
       {subject && <h2 className="text-lg mb-2">Subject: {subject}</h2>}
-      {/* work for pagination later */}
+      {/* TODO : work for pagination later */}
       <div className="w-full h-full grid justify-items-center grid-cols-1 md:grid-cols-4">
         {courses.length ? (
           courses.map((course) => (

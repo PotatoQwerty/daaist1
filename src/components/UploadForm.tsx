@@ -138,8 +138,10 @@ export default function UploadForm({ userId }: { userId: string }) {
             </label>
             <input
               type="text"
+              // maxLength={12}
               name="title"
               placeholder="Enter a title for your file"
+              required
               value={formData.title}
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
