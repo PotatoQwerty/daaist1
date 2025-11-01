@@ -51,8 +51,8 @@ export default function EditUserModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-background/50 flex items-center justify-center z-50 p-4">
-      <div className="p-6 rounded-lg w-[440px] shadow-lg">
+    <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50 p-4">
+      <div className="p-6 rounded-lg w-[440px] shadow-lg bg-white">
         <h2 className="text-xl font-bold">Edit User:</h2>
 
         <label htmlFor="firstname">First Name</label>
@@ -61,7 +61,7 @@ export default function EditUserModal({
           type="text"
           name="firstname"
           id="firstname"
-          value={formData.firstname}
+          value={formData.firstname || ""}
           onChange={handleFormChanges}
         />
 
@@ -71,7 +71,7 @@ export default function EditUserModal({
           type="text"
           name="lastname"
           id="lastname"
-          value={formData.lastname}
+          value={formData.lastname || ""}
           onChange={handleFormChanges}
         />
 
@@ -82,6 +82,9 @@ export default function EditUserModal({
           className="w-full p-2 rounded-md border-foreground border"
           onChange={handleFormChanges}
         >
+          <option defaultChecked value="change">
+            Please select a new role
+          </option>
           <option value="admin">Admin</option>
           <option value="club">Club</option>
           <option value="student">Student</option>

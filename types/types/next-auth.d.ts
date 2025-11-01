@@ -23,7 +23,7 @@ declare module "next-auth" {
     firstname?: string;
     lastname: string;
     role?: string;
-    studyYear?: string;
+    studyyear?: string;
     isDaa?: boolean;
     username?: string;
     registration_number?: string;
@@ -32,4 +32,20 @@ declare module "next-auth" {
     likedposts: string[];
     ownPosts: string[];
   }
+}
+type FileCategory = "doc" | "image" | "video" | "other";
+import type { LevelKey } from "../../constants/uploadConstants";
+
+export interface File {
+  id: string;
+  file_name: string;
+  username?: string;
+  uploaded_by: string;
+  size: number;
+  url: string;
+  create_at?: Date;
+  category: FileCategory;
+  level: LevelKey;
+  subject: string;
+  type: string;
 }

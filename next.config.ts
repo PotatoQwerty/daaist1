@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
         hostname: "wnwewkiuabnwsegldtbq.supabase.co",
         // port: "",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.daaist.com",
+        // port: "",
+      },
     ],
   },
 };
