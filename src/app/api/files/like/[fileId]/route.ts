@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/auth";
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ fileId: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   const userId = session?.user.id;
 
   // 👇 await the promise first

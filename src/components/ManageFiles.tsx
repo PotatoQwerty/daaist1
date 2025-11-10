@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { FileIcon, Edit, FileX, MoreVertical } from "lucide-react";
 import type { File } from "../../types/types/next-auth";
-
+interface manageFileProps extends File {
+  onDelete: () => void;
+}
 function ManageFiles({
   file_name,
   type,
@@ -15,7 +17,8 @@ function ManageFiles({
   subject,
   category,
   size,
-}: File) {
+  onDelete,
+}: manageFileProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -33,17 +36,22 @@ function ManageFiles({
   return (
     <div className="bg-background rounded-2xl shadow-md p-4 w-[320px] h-[280px] flex relative flex-col items-center justify-between hover:shadow-xl hover:-translate-y-1 transition-all duration-200 border border-foreground/10">
       {/* Top-right menu */}
-      <div className="absolute top-3 right-3" ref={menuRef}>
-        <MoreVertical
+      <div className="absolute top-3 right-3 z-50 " ref={menuRef}>
+        <button
           onClick={(e) => {
             e.stopPropagation();
             setIsOpen((prev) => !prev);
           }}
-          className="opacity-70 hover:opacity-100 cursor-pointer"
-        />
+          className="flex justify-center items-center p-1 rounded-lg bg-white opacity-100 hover:opacity-70 cursor-pointer"
+        >
+          <MoreVertical />
+        </button>
         {isOpen && (
           <div className="absolute top-7 right-0 bg-white dark:bg-zinc-800 rounded-lg shadow-md p-2 w-[120px] animate-in fade-in slide-in-from-top-2 z-50">
-            <button className="flex w-full items-center gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 px-2 py-1 rounded-md transition">
+            <button
+              onClick={() => onDelete()}
+              className="flex w-full items-center gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 px-2 py-1 rounded-md transition"
+            >
               <FileX className="size-4" />
               <span className="text-sm font-medium">Delete</span>
             </button>

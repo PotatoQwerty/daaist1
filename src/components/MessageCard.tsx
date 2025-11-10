@@ -8,7 +8,7 @@ interface MessageCardProps {
 function MessageCard({ type, message }: MessageCardProps) {
   return (
     <div
-      className={`rounded-md max-h-fit flex flex-col gap-1 justify-center items-center p-1 text-foreground text-xl w-fit ${
+      className={`rounded-md max-h-fit flex flex-col gap-1 justify-center items-center p-2 text-foreground text-xl w-fit ${
         type === "error"
           ? "bg-accent/60"
           : type === "info"
@@ -17,12 +17,12 @@ function MessageCard({ type, message }: MessageCardProps) {
       }`}
     >
       {type === "info" ? (
-        <Info className="size-18 px-2" />
+        <Info className="size-18 px-2 text-white" />
       ) : (
         <CloudAlert className="size-18 px-2" />
       )}
 
-      <p className="text-start">{message}</p>
+      <p className="text-start text-white">{message}</p>
     </div>
   );
 }

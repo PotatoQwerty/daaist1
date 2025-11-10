@@ -1,31 +1,32 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import IsDaaSelector from "@/components/IsDaaSelector";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useIsOnBoarded } from "@/hooks/use-is-onboarded";
-import MessageCard from "@/components/MessageCard";
+import { Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function Onboarding() {
   const { loading, onboarded } = useIsOnBoarded();
   const { data: session } = useSession();
   const router = useRouter();
-
-  const [error, setError] = useState({
-    usererr: "",
-    fnameerr: "",
-    lnameerr: "",
-    matriculeerr: "",
-  });
+  const [submitting, setSubmitting] = useState<boolean>(false);
   const [form, setForm] = useState({
     firstname: "",
     lastname: "",
     username: "",
     studyyear: "",
     registration_number: "",
-    isDaa: false,
+    isdaa: false,
   });
-
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // if (!session) router.replace("/");
+    // if (onboarded === true && !loading) router.replace("/");
+    formRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [session, onboarded, loading, router]);
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -33,45 +34,15 @@ export default function Onboarding() {
 
     // Update the form state
     setForm((prev) => ({ ...prev, [name]: value }));
-
-    let errorMsg = "";
-
-    // Validation rules
-    if (name === "username") {
-      if (value.length < 5 || value.length > 15) {
-        errorMsg = "Username should be between 5 and 15 characters.";
-      }
-    } else if (name === "fname" || name === "lname") {
-      if (value.length < 4 || value.length > 15) {
-        errorMsg = `${
-          name === "fname" ? "First" : "Last"
-        } should be between 5 and 15 characters.`;
-      }
-    } else if (name === "matricule") {
-      if (!/^[0-9]+$/.test(value)) {
-        errorMsg = "Matricule should contain only numbers.";
-      }
-    }
-
-    // Map input name → error key
-    const errorKey = {
-      username: "usererr",
-      fname: "fnameerr",
-      lname: "lnameerr",
-      matricule: "matriculeerr",
-    }[name] as keyof typeof error;
-
-    // Update only that specific error
-    setError((prev) => ({ ...prev, [errorKey]: errorMsg }));
   };
-  const visibleError = Object.values(error).find((msg) => msg !== "");
 
   const handleIsDaaChange = (val: boolean) => {
-    setForm((prev) => ({ ...prev, isDaa: val }));
+    setForm((prev) => ({ ...prev, isdaa: val }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setSubmitting(true);
 
     try {
       const res = await fetch("/api/onboarding", {
@@ -80,35 +51,45 @@ export default function Onboarding() {
         body: JSON.stringify({ form, id: session?.user.id }),
       });
 
-      if (!res.ok) throw new Error("Failed to submit onboarding data");
-      else if (res.ok) {
-        router.replace("/");
+      if (res.status === 409) {
+        toast.error("Username is already taken! Please choose another one.");
+        usernameRef.current?.focus();
+        usernameRef.current?.classList.add("bg-red-100");
+        return;
       }
+
+      if (!res.ok) {
+        throw new Error("Failed to submit onboarding data");
+      }
+
+      // only runs if everything was successful
+      router.replace("/");
     } catch (err) {
       console.error(err);
+    } finally {
+      setSubmitting(false);
     }
   };
-  useEffect(() => {
-    if (!session && !loading) router.replace("/");
-    if (onboarded === true && !loading) router.replace("/");
-  }, [session, onboarded, loading, router]);
+
   return (
     <div className="flex min-h-screen">
       {/* Left Section */}
       <div className="w-1/2 justify-center items-center hidden md:flex relative overflow-hidden">
         {/* Abstract Bauhaus shapes */}
-        <div className="absolute top-10 left-10 w-32 h-32 bg-yellow-400 rounded-full"></div>
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-primary "></div>
-        <div className="absolute bottom-20 left-10 w-40 h-40 bg-primary "></div>
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-48 h-6 bg-white"></div>
-
-        <h1 className="text-white text-5xl font-bold z-10">DAA’ist</h1>
+        <div className="absolute top-10 left-10 w-32 h-32 bg-yellow-400 rounded-full" />
+        <div className="absolute bottom-20 right-10 w-40 h-40 bg-primary " />
+        <div className="absolute bottom-20 left-10 w-40 h-40 bg-primary " />
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-48 h-6 bg-white" />
+        <h1 className="text-foreground text-5xl font-bold z-10">DAA’ist</h1>
         {/* the loading component is causing a problem when its hidden for smaller screens  */}
         {/* <Loading /> */}
       </div>
 
       {/* Right Section */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center items-center px-10">
+      <div
+        className="w-full md:w-1/2 flex flex-col overflow-y-auto justify-center items-center px-10"
+        ref={formRef}
+      >
         <div className="w-full max-w-md space-y-6">
           <h2 className="text-3xl font-bold text-primary uppercase text-center">
             Student Sign Up
@@ -125,6 +106,7 @@ export default function Onboarding() {
             <input
               onChange={handleChange}
               type="text"
+              autoComplete="given-name"
               name="firstname"
               title="First Name"
               required
@@ -132,20 +114,23 @@ export default function Onboarding() {
               maxLength={16}
               pattern="[a-zA-Z0-9]{4,16}"
               placeholder="First name"
-              className="border border-gray-300 p-3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="border border-gray-300 p-3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-primary invalid:focus:ring-red-500 valid:focus:ring-green-500"
             />
+
             <input
               onChange={handleChange}
               type="text"
               name="lastname"
+              autoComplete="family-name"
               required
               minLength={4}
               maxLength={16}
               pattern="[a-zA-Z0-9]{4,16}"
               title="Last Name"
               placeholder="Last name"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black "
+              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black invalid:focus:ring-red-500 valid:focus:ring-green-500 "
             />
+
             <input
               onChange={handleChange}
               type="text"
@@ -153,18 +138,22 @@ export default function Onboarding() {
               title="username"
               pattern="[a-zA-Z0-9]{5,16}"
               required
+              ref={usernameRef}
               placeholder="Username"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black"
+              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-black invalid:focus:ring-red-500 valid:focus:ring-green-500"
             />
 
             <input
               onChange={handleChange}
-              type="string"
+              type="text"
               required
               maxLength={8}
               name="registration_number"
+              pattern="[0-9]{8}"
+              title="matricule"
+              aria-label="Matricule"
               placeholder="Registration number"
-              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary gap-1 text-black"
+              className="border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-primary gap-1 text-black invalid:focus:ring-red-500 valid:focus:ring-green-500"
             />
 
             <select
@@ -185,19 +174,24 @@ export default function Onboarding() {
               <option value="M2">5th year (M2)</option>
             </select>
 
-            <div className="flex justify-center items-center">
+            <div className="flex flex-col gap-2 justify-center items-center">
               <span className="text-gray-600">Do you study in DAA?</span>
               <IsDaaSelector handleFormChanges={handleIsDaaChange} />
             </div>
-            {visibleError && (
-              <MessageCard message={visibleError} type="error" />
-            )}
 
             <button
               type="submit"
-              className="bg-primary text-white p-3 rounded-md hover:bg-blue-800 transition"
+              disabled={submitting}
+              className="bg-primary flex gap-2 justify-center items-center text-white p-3 rounded-md hover:bg-blue-800 transition cursor-pointer disabled:bg-gray-400"
             >
-              Submit
+              {submitting ? (
+                <>
+                  <span>Submitting</span>
+                  <Loader2 className="size-5 animate-spin" />
+                </>
+              ) : (
+                "Submit"
+              )}
             </button>
           </form>
         </div>

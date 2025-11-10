@@ -1,9 +1,8 @@
-import { getServerSession } from "next-auth";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export default async function ProfileRedirectPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   // If not logged in → go to login
   if (!session) {

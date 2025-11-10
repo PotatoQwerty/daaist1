@@ -30,7 +30,8 @@ declare module "next-auth" {
     onboarded?: boolean;
     bio?: string;
     likedposts: string[];
-    ownPosts: string[];
+    uploads: string[];
+    likes: string[];
   }
 }
 type FileCategory = "doc" | "image" | "video" | "other";

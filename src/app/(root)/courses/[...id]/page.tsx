@@ -6,7 +6,7 @@ import FileCard from "@/components/FileCard";
 import { useSession } from "next-auth/react";
 import Loading from "@/components/Loading";
 import MessageCard from "@/components/MessageCard";
-
+// TODO ADD PAGINATION LATER + ADD FILTERING AND SEARCH OPTIONS
 export default function CoursesPage() {
   const params = useParams();
   const id = params.id as string[];

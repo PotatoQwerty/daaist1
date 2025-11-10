@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { r2Client } from "@/lib/r2Client";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { authOptions } from "../auth/[...nextauth]/route";
-import { getServerSession } from "next-auth";
+import { auth } from "@/auth";
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }

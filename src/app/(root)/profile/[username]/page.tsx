@@ -5,7 +5,7 @@ import { useEffect, useState, use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import PfpPlaceholder from "../../../../../public/images/placeholder.png";
-import { Stars, User, ShieldUser, Loader2Icon } from "lucide-react";
+import { Stars, UserIcon, ShieldUser, Loader2Icon } from "lucide-react";
 import EditProfileButton from "@/components/EditProfileButton";
 import ProfileBio from "@/components/EditProfileBio";
 import DaaLogo from "@/components/DaaLogo";
@@ -14,6 +14,7 @@ import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import FileCard from "@/components/FileCard";
 import { useCurrentRole } from "@/hooks/use-current-role";
+import type { User } from "next-auth";
 export default function UserProfile({
   params,
 }: {
@@ -21,7 +22,7 @@ export default function UserProfile({
 }) {
   const { username } = use(params);
   const { data: session } = useSession();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const role = useCurrentRole();
   useEffect(() => {
@@ -47,7 +48,6 @@ export default function UserProfile({
           uploads: filesData.files,
           likes: likedData.likedFiles,
         });
-        // setFiles(filesData);
       } catch (err) {
         console.error("Error fetching user:", err);
       } finally {
@@ -200,7 +200,7 @@ export default function UserProfile({
                     strokeWidth="1px"
                   />
                 ) : (
-                  <User
+                  <UserIcon
                     className="size-5"
                     fill="var(--primary)"
                     stroke="none"
