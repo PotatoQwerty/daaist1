@@ -19,6 +19,7 @@ function Navbar() {
   const { resolvedTheme } = useTheme();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
+  const [profileMenuOpen, setPRrofileMenuOpen] = useState<boolean>(false);
   const role = useCurrentRole();
   const links = [
     { href: "/", label: "Home" },
@@ -103,11 +104,13 @@ function Navbar() {
       <div className="flex items-center gap-4">
         {/* Theme Toggle */}
         <ThemeSwitch />
-        {/* { we want to display the hamburger menu} */}
 
         {session ? (
-          <div className="relative group">
-            <div className="flex gap-1 items-center justify-center cursor-pointer">
+          <div
+            className="relative"
+            onClick={() => setPRrofileMenuOpen(!profileMenuOpen)}
+          >
+            <div className="flex gap-1 items-center justify-center cursor-pointer group">
               <div className="w-8 h-8 rounded-full overflow-hidden border border-accent">
                 <Image
                   src={session.user.image || PfpPlaceholder}
@@ -122,7 +125,11 @@ function Navbar() {
               </span>
             </div>
 
-            <div className="absolute right-0 -mt-1 w-40 bg-background border rounded-md shadow-lg flex-col z-50 hidden group-hover:flex transition-all duration-200">
+            {/* The dropdown */}
+            <div
+              className={`absolute right-0 mt-2 w-40 bg-background border rounded-md shadow-lg flex-col z-50 transition-all duration-200 
+    ${profileMenuOpen ? "flex" : "hidden"} md:group-hover:flex`}
+            >
               <Link
                 href="/profile"
                 className="p-2 hover:bg-accent/10 transition-colors capitalize"
@@ -153,6 +160,8 @@ function Navbar() {
             Sign In
           </button>
         )}
+        {/* { hamburger menu} */}
+
         {session && (
           <div className="md:hidden">
             <div className="md:hidden relative">
