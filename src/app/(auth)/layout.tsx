@@ -5,7 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { Josefin_Sans } from "next/font/google";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSideBar";
-
+import { Toaster } from "react-hot-toast";
 const josefin = Josefin_Sans({
   subsets: ["latin"],
   variable: "--font-josefin",
@@ -24,6 +24,7 @@ export default async function AdminLayout({
             <AppSidebar />
             <main className="kabel-reg">
               <SidebarTrigger />
+              <Toaster position="top-right" />
               <SessionWrapper>{children}</SessionWrapper>
             </main>
           </SidebarProvider>

@@ -7,11 +7,10 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import MessageCard from "@/components/MessageCard";
 import { useIsOnBoarded } from "@/hooks/use-is-onboarded";
-
 function Home() {
   const { onboarded, loading } = useIsOnBoarded();
 
-  const { status } = useSession();
+  const { status, data: session } = useSession();
 
   const router = useRouter();
   useEffect(() => {
@@ -57,6 +56,8 @@ function Home() {
     );
   }
 
+  console.log(session);
+
   // authenticated
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -96,9 +97,19 @@ function Home() {
               icon: "📘",
               link: "/courses",
             },
-            { name: "Projects", color: "bg-accent", icon: "🏗️", link: "/" },
+            {
+              name: "Projects",
+              color: "bg-accent",
+              icon: "🏗️",
+              link: "/projects",
+            },
             { name: "Clubs", color: "bg-primary", icon: "🎨", link: "/club" },
-            { name: "Exams", color: "bg-accent", icon: "📝", link: "/" },
+            {
+              name: "Documents",
+              color: "bg-accent",
+              icon: "📄",
+              link: "/docs",
+            },
           ].map((item) => (
             <Link
               href={item.link}
@@ -106,7 +117,7 @@ function Home() {
               className={`${item.color} rounded-2xl p-8 flex flex-col items-center text-center hover:scale-105 transition`}
             >
               <span className="text-4xl mb-3">{item.icon}</span>
-              <h3 className="font-semibold text-lg">{item.name}</h3>
+              <h3 className="font-semibold text-lg text-white">{item.name}</h3>
             </Link>
           ))}
         </div>

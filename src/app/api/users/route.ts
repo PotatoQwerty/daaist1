@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import { supabaseServer } from "@/lib/supabase/server";
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   // 1️⃣ Check if logged in
   if (!session || !session.user) {

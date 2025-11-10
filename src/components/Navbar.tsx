@@ -7,30 +7,52 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import DaaistLogoHor from "../../public/images/DAAIST-LOGO-HOR.svg";
 import DaaistLogoHorDark from "../../public/images/daalogodarkhor.svg";
 import PfpPlaceholder from "../../public/images/placeholder.png";
-
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import { ThemeSwitch } from "./ThemeSwitch";
+import { Menu } from "lucide-react";
 import { useCurrentRole } from "@/hooks/use-current-role";
 
 function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [mounted, setMounted] = useState(false);
-  const [usedTheme, setUsedTheme] = useState<string | null>(null);
   const role = useCurrentRole();
-
+  const links = [
+    { href: "/", label: "Home" },
+    { href: "/courses", label: "Courses" },
+    { href: "/projects", label: "Projects" },
+    { href: "/club", label: "Clubs" },
+    { href: "/docs", label: "Documents" },
+  ];
   useEffect(() => {
     setMounted(true);
   }, []);
-
   useEffect(() => {
-    if (resolvedTheme) {
-      setUsedTheme(resolvedTheme);
-    }
-  }, [resolvedTheme]);
+    const handleClickOutside = (event: MouseEvent) => {
+      const menu = document.getElementById("mobile-menu");
+      const button = document.getElementById("menu-button");
 
+      if (
+        menu &&
+        !menu.contains(event.target as Node) &&
+        button &&
+        !button.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener("click", handleClickOutside);
+    }
+
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+    };
+  }, [isOpen]);
   if (!mounted) return null;
 
   const isActive = (href: string) => {
@@ -40,7 +62,7 @@ function Navbar() {
   };
 
   return (
-    <nav className="w-full flex justify-between items-center border-b-4 border-foreground bg-background px-8 py-4 uppercase font-bold tracking-wide">
+    <nav className="w-full flex justify-between items-center border-b-2 border-foreground bg-background px-8 py-4 uppercase font-bold tracking-wide">
       {/* LEFT: Logo */}
       <div className="flex items-center gap-2">
         <Link
@@ -48,7 +70,7 @@ function Navbar() {
           className="hover:scale-110 transition duration-300 ease-in-out"
         >
           <Image
-            src={usedTheme === "dark" ? DaaistLogoHorDark : DaaistLogoHor}
+            src={resolvedTheme === "dark" ? DaaistLogoHorDark : DaaistLogoHor}
             height={100}
             width={150}
             alt="Daaist Logo"
@@ -58,12 +80,7 @@ function Navbar() {
 
       {/* CENTER: Links */}
       <div className="hidden md:flex items-center gap-8 text-sm">
-        {[
-          { href: "/", label: "Home" },
-          { href: "/courses", label: "Courses" },
-          { href: "/projects", label: "Projects" },
-          { href: "/club", label: "Clubs" },
-        ].map((link) => {
+        {links.map((link) => {
           const active = isActive(link.href);
           return (
             <Link
@@ -72,7 +89,7 @@ function Navbar() {
               aria-current={active ? "page" : undefined}
               className={`transition duration-300 ease-in-out ${
                 active
-                  ? "text-accent scale-110 text-lg font-extrabold"
+                  ? "text-accent scale-125 text-lg font-extrabold"
                   : "hover:text-accent hover:scale-105"
               }`}
             >
@@ -86,65 +103,105 @@ function Navbar() {
       <div className="flex items-center gap-4">
         {/* Theme Toggle */}
         <ThemeSwitch />
-        {session?.user ? (
-          <>
-            <Link
-              href="/upload"
-              className="bg-primary text-white px-4 py-2 hidden md:block hover:bg-accent transition rounded-md"
-            >
-              + Upload
-            </Link>
+        {/* { we want to display the hamburger menu} */}
 
-            {/* Dropdown */}
-            <div className="dropdown">
+        {session ? (
+          <div className="relative group">
+            <div className="flex gap-1 items-center justify-center cursor-pointer">
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-accent">
+                <Image
+                  src={session.user.image || PfpPlaceholder}
+                  alt="Profile"
+                  width={32}
+                  height={32}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+              <span className="hidden md:block uppercase font-bold">
+                {session.user.name?.split(" ")[0]}
+              </span>
+            </div>
+
+            <div className="absolute right-0 -mt-1 w-40 bg-background border rounded-md shadow-lg flex-col z-50 hidden group-hover:flex transition-all duration-200">
               <Link
                 href="/profile"
-                className="hover:text-accent flex items-center gap-2"
+                className="p-2 hover:bg-accent/10 transition-colors capitalize"
               >
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-accent">
-                  <Image
-                    src={session.user.image || PfpPlaceholder}
-                    alt="Profile"
-                    width={32}
-                    height={32}
-                    className="object-cover w-full h-full"
-                  />
-                </div>
-                <span>{session.user.name?.split(" ")[0]}</span>
+                Profile
               </Link>
-
-              {/* Dropdown Content */}
-              <div className="dropdown-content">
+              {role === "admin" && (
                 <Link
-                  href="/profile"
-                  className="block px-4 py-2 hover:bg-accent hover:text-background"
+                  href="/admin"
+                  className="p-2 hover:bg-accent/10 transition-colors capitalize"
                 >
-                  Profile
+                  Admin dashboard
                 </Link>
-                {role === "admin" || role === "club" ? (
-                  <Link
-                    href="/admin"
-                    className="block px-4 py-2 hover:bg-accent hover:text-background"
-                  >
-                    Admin Dashboard
-                  </Link>
-                ) : null}
-                <button
-                  onClick={() => signOut()}
-                  className="w-full text-left px-4 py-2 hover:bg-red-500 hover:text-white"
-                >
-                  Sign Out
-                </button>
-              </div>
+              )}
+              <button
+                onClick={() => signOut()}
+                className="p-2 hover:bg-red-500 hover:text-white rounded-md text-left transition-colors"
+              >
+                Sign Out
+              </button>
             </div>
-          </>
+          </div>
         ) : (
           <button
+            className="p-2 bg-accent rounded-lg hover:bg-primary/90 hover:text-white transition-all ease-in-out duration-150"
             onClick={() => signIn("google")}
-            className="p-2 bg-accent font-bold text-background hover:bg-accent/80 hover:text-white rounded-md"
           >
-            Log In
+            Sign In
           </button>
+        )}
+        {session && (
+          <div className="md:hidden">
+            <div className="md:hidden relative">
+              <Menu
+                size={24}
+                id="menu-button"
+                aria-label="Toggle menu"
+                onClick={() => setIsOpen(!isOpen)}
+                className={`transition-transform duration-300 ${
+                  isOpen ? "rotate-90 text-accent" : "rotate-0"
+                }`}
+              />
+
+              {isOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div
+                    className="fixed inset-0 bg-black/10 backdrop-blur-xs z-40"
+                    onClick={() => setIsOpen(false)}
+                  />
+
+                  {/* Dropdown */}
+                  <div
+                    id="mobile-menu"
+                    className="absolute top-16 right-1 z-50 bg-background border border-foreground rounded-md shadow-lg flex flex-col p-4 gap-4"
+                  >
+                    {links.map((link) => {
+                      const active = isActive(link.href);
+                      return (
+                        <Link
+                          href={link.href}
+                          onClick={() => setIsOpen(false)}
+                          key={link.href}
+                          aria-current={active ? "page" : undefined}
+                          className={`transition duration-300 ease-in-out ${
+                            active
+                              ? "text-accent scale-110 text-lg font-extrabold"
+                              : ""
+                          }`}
+                        >
+                          {link.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </nav>

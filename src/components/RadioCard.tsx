@@ -1,5 +1,3 @@
-import React from "react";
-
 interface RadioCardProps {
   id: string;
   name: string;

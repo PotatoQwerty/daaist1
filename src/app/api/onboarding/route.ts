@@ -28,9 +28,15 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    console.log(error);
+    if (error.code === "23505") {
+      return NextResponse.json(
+        { error: "Username is already taken!" },
+        { status: 409 }
+      );
+    }
 
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
   return NextResponse.json({ user: data }, { status: 200 });
 }

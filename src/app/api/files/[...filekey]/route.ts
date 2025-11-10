@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { r2Client } from "@/lib/r2Client";
+import { auth } from "@/auth";
 
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ filekey: string | string[] }> }
 ) {
+  const session = await auth();
+
   try {
     const { filekey } = await params;
 

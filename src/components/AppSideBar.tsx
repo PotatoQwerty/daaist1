@@ -36,17 +36,17 @@ const items = [
   },
   {
     title: "Manage Users",
-    link: "/manage/users",
+    link: "/admin/manage/users",
     icon: User,
   },
   {
     title: "Manage Events",
-    link: "/manage/events",
+    link: "/admin/manage/events",
     icon: PartyPopper,
   },
   {
     title: "Manage Posts",
-    link: "/manage/posts",
+    link: "/admin/manage/posts",
     icon: FileCheck2,
   },
 ];

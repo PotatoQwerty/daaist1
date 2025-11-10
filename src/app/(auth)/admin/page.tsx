@@ -1,17 +1,14 @@
-"use client";
-import React from "react";
-import MessageCard from "@/components/MessageCard";
-import { RoleGate } from "@/components/RoleGate";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+export default async function AdminPage() {
+  const session = await auth();
+  if (!session || session.user.role !== "admin") {
+    redirect("/");
+  }
 
-function AdminPage() {
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-4">
-      <RoleGate AllowedRoles={["admin"]}>
-        <h1 className="text-2xl font-bold">Hello to the admin Page</h1>
-        <p>This Page is still under construction</p>
-      </RoleGate>
+    <div className="flex items-center justify-center">
+      <h1>admin dashboard</h1>
     </div>
   );
 }
-
-export default AdminPage;

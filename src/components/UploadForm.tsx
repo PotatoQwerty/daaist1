@@ -10,49 +10,44 @@ import {
   SubjectOption,
 } from "../../constants/uploadConstants";
 import { supabaseClient } from "@/lib/supabase/client";
+import toast from "react-hot-toast";
+import { Loader2Icon } from "lucide-react";
+import { useSession } from "next-auth/react";
 
-export default function UploadForm({ userId }: { userId: string }) {
+export default function UploadForm() {
+  const { data: session } = useSession();
+  const userId = session?.user.id || null;
   const [cat, setCat] = useState("");
-  const [subjectOption, setSubjectOption] = useState<SubjectOption[] | null>(
-    null
-  );
+  const [subjectOptionsForYear, setSubjectOptionsForYear] = useState<
+    SubjectOption[] | []
+  >([]);
   const [formData, setFormData] = useState<{
     title: string;
     level: YearOption | null;
     subject: SubjectOption | null;
-  }>({ title: "", subject: null, level: null });
-
+  }>({ title: "", level: null, subject: null });
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
-  // 🧠 Update subject options dynamically
+  // Update subject options dynamically & reset subject when year changes
   useEffect(() => {
     if (formData.level) {
-      setSubjectOption(subjectOptions[formData.level.value]);
+      setSubjectOptionsForYear(subjectOptions[formData.level.value] || []);
+      setFormData((prev) => ({ ...prev, subject: null }));
     } else {
-      setSubjectOption(null);
+      setSubjectOptionsForYear([]);
     }
   }, [formData.level]);
 
-  // 🟢 Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) {
-      setMessage("Please select a file to upload");
-      return;
-    }
 
-    if (!userId) {
-      setMessage("You must be logged in to upload files");
-      return;
-    }
+    if (!file) throw new Error("Please select a file to upload.");
+    if (!userId) throw new Error("You must be logged in to upload files.");
 
     setIsUploading(true);
-    setMessage("");
 
     try {
-      // 🧩 Prepare form data for API route
       const body = new FormData();
       body.append("file", file);
       body.append("title", formData.title);
@@ -60,17 +55,13 @@ export default function UploadForm({ userId }: { userId: string }) {
       body.append("level", formData.level?.value || "");
       body.append("subject", formData.subject?.value || "");
 
-      // 📡 Upload to /api/upload (R2)
       const res = await fetch("/api/upload", { method: "POST", body });
       const dataR2 = await res.json();
 
-      if (!res.ok) throw new Error(dataR2.message || "Upload failed");
+      if (!res.ok) throw new Error(dataR2.message || "Upload failed.");
 
-      const fileUrl = dataR2.fileUrl;
-      const fileType = dataR2.fileType;
-      const fileSize = dataR2.fileSize;
+      const { fileUrl, fileType, fileSize } = dataR2;
 
-      // 💾 Save metadata to Supabase
       const { error } = await supabaseClient.from("files").insert({
         file_name: formData.title,
         url: fileUrl,
@@ -84,30 +75,21 @@ export default function UploadForm({ userId }: { userId: string }) {
 
       if (error) throw new Error(error.message);
 
-      setMessage("✅ File uploaded successfully!");
-
-      // ♻️ Reset form
+      // reset form
       setFile(null);
-      setCat("");
-      setFormData({ title: "", subject: null, level: null });
-    } catch (err: any) {
-      console.error(err);
-      setMessage(`❌ ${err.message}`);
+      setFormData({ title: "", level: null, subject: null });
     } finally {
       setIsUploading(false);
     }
   };
 
-  // 🎨 UI (unchanged)
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-10 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-5 md:p-10 relative overflow-hidden">
       {/* Background shapes */}
-      <div className="absolute top-10 left-10 w-32 h-32 bg-primary rounded-full opacity-20"></div>
-      <div className="absolute bottom-10 right-20 w-24 h-24 bg-secondary rotate-12"></div>
-      <div className="absolute bottom-20 left-20 w-48 h-4 bg-accent"></div>
+      <div className="absolute top-10 left-10 w-32 h-32 bg-primary rounded-full opacity-20" />
+      <div className="absolute bottom-10 rotate-8 w-48 h-4 bg-accent" />
 
-      {/* Main Card */}
-      <div className="relative z-10 bg-accent/30 rounded-2xl shadow-lg border-4 border-foreground p-10 w-full max-w-xl">
+      <div className="relative z-10 bg-accent/30 rounded-2xl shadow-lg border-4 border-foreground p-5 md:p-10 w-full max-w-xl">
         <h1 className="text-3xl font-bold uppercase text-center text-primary mb-6">
           Upload a File
         </h1>
@@ -115,9 +97,18 @@ export default function UploadForm({ userId }: { userId: string }) {
           Help our architecture database grow by sharing your documents 📐
         </p>
 
-        <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-          {/* Category Selector */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <form
+          className="flex flex-col gap-6"
+          onSubmit={(e) =>
+            toast.promise(() => handleSubmit(e), {
+              loading: "Uploading file...",
+              success: "File uploaded successfully! 🎊",
+              error: (err) => `${err.message} ❌`,
+            })
+          }
+        >
+          {/* Category */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
             {categoryOptions.map((opt) => (
               <RadioCard
                 key={opt.id}
@@ -138,7 +129,6 @@ export default function UploadForm({ userId }: { userId: string }) {
             </label>
             <input
               type="text"
-              // maxLength={12}
               name="title"
               placeholder="Enter a title for your file"
               required
@@ -150,7 +140,7 @@ export default function UploadForm({ userId }: { userId: string }) {
             />
           </div>
 
-          {/* Year + Subject Selects */}
+          {/* Year + Subject */}
           {(cat === "course" || cat === "td") && (
             <div className="flex flex-col gap-4">
               <Select<YearOption>
@@ -164,7 +154,7 @@ export default function UploadForm({ userId }: { userId: string }) {
               />
 
               <Select<SubjectOption>
-                options={subjectOption || []}
+                options={subjectOptionsForYear}
                 value={formData.subject}
                 onChange={(selectedValue) =>
                   setFormData({ ...formData, subject: selectedValue })
@@ -197,18 +187,18 @@ export default function UploadForm({ userId }: { userId: string }) {
           <button
             type="submit"
             disabled={isUploading}
-            className="mt-4 bg-primary text-white font-semibold py-3 rounded-md hover:bg-secondary transition disabled:opacity-50"
+            className="mt-4 bg-primary text-white flex w-full gap-2 justify-center items-center font-semibold py-3 rounded-md hover:bg-secondary transition disabled:opacity-50"
           >
-            {isUploading ? "Uploading..." : "Submit File"}
+            {isUploading ? (
+              <>
+                <span>Uploading...</span>
+                <Loader2Icon className="animate-spin size-5" />
+              </>
+            ) : (
+              "Submit File"
+            )}
           </button>
         </form>
-
-        {/* Status Message */}
-        {message && (
-          <p className="mt-4 text-center text-sm text-gray-700 dark:text-gray-200">
-            {message}
-          </p>
-        )}
       </div>
     </div>
   );
