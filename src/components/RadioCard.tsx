@@ -6,6 +6,7 @@ interface RadioCardProps {
   onChange: React.ChangeEventHandler<HTMLInputElement>;
   required?: boolean;
   icon?: React.ReactNode;
+  checked?: boolean; // <-- add this
 }
 
 const RadioCard: React.FC<RadioCardProps> = ({
@@ -16,6 +17,7 @@ const RadioCard: React.FC<RadioCardProps> = ({
   onChange,
   required,
   icon,
+  checked, 
 }) => {
   return (
     <label htmlFor={id} className="cursor-pointer">
@@ -27,6 +29,7 @@ const RadioCard: React.FC<RadioCardProps> = ({
         className="peer sr-only"
         onChange={onChange}
         required={required}
+        checked={checked} 
       />
       <div className="w-32 h-24 p-3 flex flex-col justify-center items-center rounded-md bg-primary text-white ring-2 ring-transparent transition-all hover:shadow peer-checked:text-secondary peer-checked:ring-primary peer-checked:ring-offset-1">
         <p className="text-sm font-bold">{label}</p>

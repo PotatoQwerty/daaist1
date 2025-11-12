@@ -63,7 +63,7 @@ function Navbar() {
   };
 
   return (
-    <nav className="w-full flex justify-between items-center border-b-2 border-foreground bg-background px-8 py-4 uppercase font-bold tracking-wide">
+    <nav className="w-full flex justify-between items-center border-b-2 border-foreground bg-background p-4 uppercase font-bold tracking-wide">
       {/* LEFT: Logo */}
       <div className="flex items-center gap-2">
         <Link

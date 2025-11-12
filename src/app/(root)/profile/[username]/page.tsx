@@ -15,6 +15,8 @@ import toast from "react-hot-toast";
 import FileCard from "@/components/FileCard";
 import { useCurrentRole } from "@/hooks/use-current-role";
 import type { User } from "next-auth";
+import HorizontalUploads from "@/components/HorizontalUploads";
+import HorizontalLikes from "@/components/HorizontalLikes";
 export default function UserProfile({
   params,
 }: {
@@ -247,7 +249,7 @@ export default function UserProfile({
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6">
           {user?.uploads.length ? (
             user?.uploads.map((i: any) => (
               <UploadedCard
@@ -265,7 +267,8 @@ export default function UserProfile({
           ) : (
             <p className="text-gray-300 font-medium">Nothing posted yet 😔.</p>
           )}
-        </div>
+        </div> */}
+        <HorizontalUploads uploads={user.uploads} handleDelete={handleDelete} />
       </section>
 
       {/* Favorites */}
@@ -276,24 +279,11 @@ export default function UserProfile({
           </h2>
         </div>
 
-        <div className="grid justify-items-center grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {user.likes?.length ? (
-            user.likes.map((i: any) => (
-              <FileCard
-                key={i.id}
-                size={i.size}
-                title={i.file_name}
-                subject={i.subject}
-                type={i.type}
-                link={i.url}
-                handleLike={() => handleLike(i.id)}
-                isLiked={user.likes.some((i) => i.id === i.id)}
-              />
-            ))
-          ) : (
-            <p className="text-gray-300 font-medium">Nothing liked yet 😔.</p>
-          )}
-        </div>
+        <HorizontalLikes
+          likes={user.likes} // the array of all the files
+          liked={user.likes} // the state you maintain for which files are liked
+          handleLike={handleLike} // the function that toggles like for a given file ID
+        />
       </section>
     </div>
   );

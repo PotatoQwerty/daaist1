@@ -13,7 +13,7 @@ import { supabaseClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import { Loader2Icon } from "lucide-react";
 import { useSession } from "next-auth/react";
-
+//TODO: maybe create a docs table in the backend
 export default function UploadForm() {
   const { data: session } = useSession();
   const userId = session?.user.id || null;
@@ -49,24 +49,28 @@ export default function UploadForm() {
 
     try {
       const body = new FormData();
-      body.append("file", file);
       body.append("title", formData.title);
       body.append("category", cat);
       body.append("level", formData.level?.value || "");
       body.append("subject", formData.subject?.value || "");
-
-      const res = await fetch("/api/upload", { method: "POST", body });
+      body.append("type", file.type);
+      const res = await fetch("/api/upload-url", { method: "PUT", body });
       const dataR2 = await res.json();
 
       if (!res.ok) throw new Error(dataR2.message || "Upload failed.");
-
-      const { fileUrl, fileType, fileSize } = dataR2;
+      await fetch(dataR2.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
 
       const { error } = await supabaseClient.from("files").insert({
         file_name: formData.title,
-        url: fileUrl,
-        size: fileSize,
-        type: fileType,
+        url: dataR2.publicUrl,
+        size: file.size,
+        type: file.type,
         category: cat,
         level: formData.level?.value || null,
         subject: formData.subject?.value || null,
@@ -77,6 +81,7 @@ export default function UploadForm() {
 
       // reset form
       setFile(null);
+      setCat("");
       setFormData({ title: "", level: null, subject: null });
     } finally {
       setIsUploading(false);
@@ -90,7 +95,7 @@ export default function UploadForm() {
       <div className="absolute bottom-10 rotate-8 w-48 h-4 bg-accent" />
 
       <div className="relative z-10 bg-accent/30 rounded-2xl shadow-lg border-4 border-foreground p-5 md:p-10 w-full max-w-xl">
-        <h1 className="text-3xl font-bold uppercase text-center text-primary mb-6">
+        <h1 className="text-3xl font-bold uppercase text-center text-secondary mb-6">
           Upload a File
         </h1>
         <p className="text-center mb-8">
@@ -99,20 +104,28 @@ export default function UploadForm() {
 
         <form
           className="flex flex-col gap-6"
-          onSubmit={(e) =>
-            toast.promise(() => handleSubmit(e), {
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (file && file.size > 50 * 1024 * 1024) {
+              toast.error("Select a file less than 50 MB");
+              return;
+            }
+
+            toast.promise(handleSubmit(e), {
               loading: "Uploading file...",
               success: "File uploaded successfully! 🎊",
               error: (err) => `${err.message} ❌`,
-            })
-          }
+            });
+          }}
         >
           {/* Category */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
             {categoryOptions.map((opt) => (
               <RadioCard
+                checked={opt.value == cat}
                 key={opt.id}
                 id={opt.id}
+                icon={opt.icon}
                 name="fileNature"
                 value={opt.value}
                 label={opt.label}
@@ -124,7 +137,7 @@ export default function UploadForm() {
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-semibold text-primary mb-2">
+            <label className="block text-sm font-semibold text-foreground mb-2">
               File Title
             </label>
             <input
@@ -172,7 +185,7 @@ export default function UploadForm() {
 
           {/* File Input */}
           <div>
-            <label className="block text-sm font-semibold text-primary mb-2">
+            <label className="block text-sm font-semibold text-foreground mb-2">
               Upload File
             </label>
             <input

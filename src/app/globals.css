@@ -253,3 +253,11 @@
     @apply bg-background text-foreground;
   }
 }
+/* Tailwind custom */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

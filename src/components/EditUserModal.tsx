@@ -51,13 +51,13 @@ export default function EditUserModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50 p-4">
-      <div className="p-6 rounded-lg w-[440px] shadow-lg bg-white">
+    <div className="fixed inset-0  bg-background/80 flex items-center justify-center z-50 p-4 text-black">
+      <div className="p-6 rounded-lg w-[440px] shadow-lg  bg-white">
         <h2 className="text-xl font-bold">Edit User:</h2>
 
         <label htmlFor="firstname">First Name</label>
         <input
-          className="w-full p-2 rounded-md border-foreground border"
+          className="w-full p-2 rounded-md border-foreground border "
           type="text"
           name="firstname"
           id="firstname"

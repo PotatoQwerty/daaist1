@@ -10,6 +10,7 @@ export default function UploadedCard({
   type,
   size,
   onDelete,
+  style,
 }: {
   title: string;
   category: string;
@@ -18,6 +19,7 @@ export default function UploadedCard({
   link: string;
   type: string;
   size: number;
+  style?: string;
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -34,19 +36,21 @@ export default function UploadedCard({
   }, []);
 
   return (
-    <div className="bg-white rounded-xl shadow p-4 border relative">
+    <div
+      className={`bg-background w-[240px] h-[140px] rounded-xl shadow  p-4 border relative ${style}`}
+    >
       <div className="flex justify-between items-start">
-        <h3 className="font-bold text-lg">{title}</h3>
+        <h3 className="font-bold text-lg text-foreground">{title}</h3>
         <div className="relative" ref={menuRef}>
           <MoreVertical
-            className="w-5 h-5 cursor-pointer text-gray-500 hover:text-black"
+            className="w-5 h-5 cursor-pointer text-gray-500 hover:text-accent"
             onClick={() => setOpen((p) => !p)}
           />
           {open && (
             <div className="absolute right-0 mt-2 bg-white border rounded-lg shadow-lg w-32">
               <button
                 onClick={onDelete}
-                className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-gray-50 w-full text-left"
+                className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-gray-300 rounded-lg w-full text-left"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete
@@ -57,7 +61,14 @@ export default function UploadedCard({
       </div>
 
       <p className="text-gray-500 text-sm mt-2">
-        {category} • {subject} • {level}
+        {category === "doc" ? (
+          <>{category.toUpperCase()}</>
+        ) : (
+          <>
+            {subject.toUpperCase()} • {level.toUpperCase()} •{" "}
+            {category.toUpperCase()}
+          </>
+        )}
       </p>
       <p className="text-xs text-gray-400 mt-1">
         {type} • {(size / (1024 * 1024)).toFixed(2)} MB
@@ -65,7 +76,7 @@ export default function UploadedCard({
       <a
         href={link}
         target="_blank"
-        className="text-primary text-sm mt-2 inline-block underline"
+        className="text-secondary text-sm mt-2 inline-block underline"
       >
         View file
       </a>

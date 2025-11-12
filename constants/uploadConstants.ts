@@ -1,3 +1,5 @@
+import { icons } from "lucide-react";
+
 export interface CategoryOption {
   id: string;
   value: string;
@@ -19,16 +21,19 @@ export const categoryOptions = [
     id: "course",
     value: "course",
     label: "Course",
+    icon: "📗",
   },
   {
     id: "td",
     value: "td",
     label: "TD/EXAMEN",
+    icon: "📝",
   },
   {
     id: "documentation",
     value: "doc",
     label: "Documentation",
+    icon: "📄",
   },
 ];
 
