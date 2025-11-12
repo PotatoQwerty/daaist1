@@ -22,13 +22,24 @@ export default function HorizontalUploads({ uploads, handleDelete }: Props) {
 
   return (
     <div className="relative w-full">
-      {/* Left Arrow */}
-      <button
-        onClick={() => scroll("left")}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
-      >
-        <ChevronLeftIcon className="size-5" />
-      </button>
+      {uploads.length > 0 ? (
+        <>
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
+          >
+            <ChevronLeftIcon className="size-5" />
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
+          >
+            <ChevronRightIcon className="w-5 h-5" />
+          </button>
+        </>
+      ) : (
+        <></>
+      )}
 
       {/* Scrollable row */}
       <div
@@ -54,14 +65,6 @@ export default function HorizontalUploads({ uploads, handleDelete }: Props) {
           <p className="text-gray-300 font-medium">Nothing posted yet 😔.</p>
         )}
       </div>
-
-      {/* Right Arrow */}
-      <button
-        onClick={() => scroll("right")}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
-      >
-        <ChevronRightIcon className="w-5 h-5" />
-      </button>
     </div>
   );
 }

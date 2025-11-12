@@ -22,12 +22,24 @@ function HorizontalLikes({ likes, liked, handleLike }: LikesProps) {
 
   return (
     <div className="relative w-full">
-      <button
-        onClick={() => scroll("left")}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
-      >
-        <ChevronLeftIcon className="w-5 h-5" />
-      </button>
+      {likes.length ? (
+        <>
+          <button
+            onClick={() => scroll("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
+          >
+            <ChevronLeftIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
+          >
+            <ChevronRightIcon className="w-5 h-5" />
+          </button>
+        </>
+      ) : (
+        <></>
+      )}
 
       <div
         ref={scrollRef}
@@ -51,13 +63,6 @@ function HorizontalLikes({ likes, liked, handleLike }: LikesProps) {
           <p className="text-gray-300 font-medium">Nothing liked yet 😔.</p>
         )}
       </div>
-
-      <button
-        onClick={() => scroll("right")}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
-      >
-        <ChevronRightIcon className="w-5 h-5" />
-      </button>
     </div>
   );
 }
