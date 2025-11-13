@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Sidebar,
   SidebarContent,
@@ -21,89 +22,97 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
+
 import Image from "next/image";
 import Link from "next/link";
-const items = [
-  {
-    title: "Home",
-    link: "/",
-    icon: Home,
-  },
-  {
-    title: "Admin Dashboard",
-    link: "/admin",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Manage Users",
-    link: "/admin/manage/users",
-    icon: User,
-  },
-  {
-    title: "Manage Events",
-    link: "/admin/manage/events",
-    icon: PartyPopper,
-  },
-  {
-    title: "Manage Posts",
-    link: "/admin/manage/posts",
-    icon: FileCheck2,
-  },
-];
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+
 import DaaistLogo from "../../public/images/DAAIST-LOGO-HOR.svg";
 import DaaistLogoDark from "../../public/images/daalogodarkhor.svg";
-import { useTheme } from "next-themes";
+
+const items = [
+  { title: "Home", link: "/", icon: Home },
+  { title: "Admin Dashboard", link: "/admin", icon: LayoutDashboard },
+  { title: "Manage Users", link: "/admin/manage/users", icon: User },
+  { title: "Manage Events", link: "/admin/manage/events", icon: PartyPopper },
+  { title: "Manage Posts", link: "/admin/manage/posts", icon: FileCheck2 },
+];
 
 export function AppSidebar() {
+  const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
+
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+
   return (
-    <Sidebar>
-      <SidebarHeader>
+    <Sidebar className="flex flex-col h-screen bg-sidebar text-foreground">
+      {/* Logo */}
+      <SidebarHeader className="flex justify-center py-4">
         <Link href="/">
           <Image
-            src={theme == "dark" ? DaaistLogoDark : DaaistLogo}
+            src={theme === "dark" ? DaaistLogoDark : DaaistLogo}
             alt="Daaist logo"
-            className="hover:scale-110 transition-all ease-in-out duration-200 self-center"
+            className="w-36 sm:w-44 hover:scale-105 transition-transform duration-200"
           />
         </Link>
       </SidebarHeader>
-      <SidebarContent>
+
+      {/* Menu */}
+      <SidebarContent className="flex-1">
         <SidebarGroup>
           <SidebarGroupLabel>Admin Layout</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title} className="text-foreground">
-                  <SidebarMenuButton asChild>
-                    <Link href={item.link}>
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {items.map((item) => {
+                const active = pathname === item.link;
+                return (
+                  <SidebarMenuItem
+                    key={item.title}
+                    className={`rounded-md ${
+                      active
+                        ? "bg-accent text-accent-foreground"
+                        : "hover:bg-accent/10"
+                    }`}
+                  >
+                    <SidebarMenuButton asChild>
+                      <Link
+                        href={item.link}
+                        className="flex items-center gap-2 px-2 py-1"
+                      >
+                        <item.icon className="w-5 h-5" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        {theme == "dark" ? (
-          <button
-            className="flex justify-center items-center gap-1"
-            onClick={() => setTheme("light")}
-          >
-            <Moon className="size-5" />
-            <span>Set light mode</span>
-          </button>
-        ) : (
-          <button
-            className="flex justify-center items-center gap-1"
-            onClick={() => setTheme("dark")}
-          >
-            <Sun className="size-5" />
-            <span>Set dark mode</span>
-          </button>
-        )}
+
+      {/* Footer / Theme Toggle */}
+      <SidebarFooter className="py-4 flex justify-center">
+        <button
+          onClick={toggleTheme}
+          className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-accent/10 transition-colors"
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        >
+          {theme === "dark" ? (
+            <Sun className="w-5 h-5" />
+          ) : (
+            <Moon className="w-5 h-5" />
+          )}
+          <span className="hidden sm:inline">
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          </span>
+        </button>
       </SidebarFooter>
     </Sidebar>
   );
