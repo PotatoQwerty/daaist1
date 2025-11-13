@@ -8,7 +8,7 @@ export default function ProfileBio({
   actualBio,
   isOwnProfile,
 }: {
-  actualBio: string;
+  actualBio?: string;
   isOwnProfile: boolean;
 }) {
   const [bio, setBio] = useState(actualBio || "");
@@ -36,7 +36,7 @@ export default function ProfileBio({
     }
   };
   const handleCancel = () => {
-    setBio(actualBio);
+    setBio(actualBio || "");
     setIsEditing(false);
   };
   return (
@@ -57,12 +57,13 @@ export default function ProfileBio({
         </>
       ) : (
         <>
-          <label htmlFor="bio" className="block mb-1 text-sm">
-            Edit Your Bio
+          <label htmlFor="bio" className="block mb-1 text-sm text-white">
+            Edit Your Bio:
           </label>
           <textarea
             name="bio"
             value={bio}
+            placeholder="Enter new bio"
             onChange={(e) => setBio(e.target.value)}
             className="w-full rounded-md border border-gray-300 bg-transparent p-1 text-foreground text-sm outline-none"
             maxLength={80}
