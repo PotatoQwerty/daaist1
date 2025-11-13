@@ -156,19 +156,12 @@ export default function UserProfile({
         <div className="flex flex-col items-center justify-center gap-6 md:flex-row md:items-start md:gap-10">
           {/* Profile Image */}
           <div className="relative w-36 h-36 shrink-0">
-            <Image
-              src={user.image || PfpPlaceholder}
-              alt="Profile"
-              fill
-              className="object-cover rounded-full border-4 border-accent shadow-lg"
-              sizes="144px"
-              priority
-            />
-            {session?.user.username === username && (
-              <div className="absolute bottom-2 right-2">
-                <EditProfileButton isOwnProfile />
-              </div>
-            )}
+            <div className="absolute bottom-2 right-2">
+              <EditProfileButton
+                isOwnProfile={session?.user.username === username}
+                currentImage={user?.image || PfpPlaceholder}
+              />
+            </div>
           </div>
 
           {/* User Info */}
@@ -217,7 +210,7 @@ export default function UserProfile({
 
             <div className="mt-3 w-full max-w-sm">
               <ProfileBio
-                actualBio={user?.bio || "No bio Yet"}
+                actualBio={user?.bio}
                 isOwnProfile={session?.user.username === username}
               />
             </div>
