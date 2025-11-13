@@ -9,10 +9,8 @@ import { Stars, UserIcon, ShieldUser, Loader2Icon } from "lucide-react";
 import EditProfileButton from "@/components/EditProfileButton";
 import ProfileBio from "@/components/EditProfileBio";
 import DaaLogo from "@/components/DaaLogo";
-import UploadedCard from "@/components/UploadedCard";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
-import FileCard from "@/components/FileCard";
 import { useCurrentRole } from "@/hooks/use-current-role";
 import type { User } from "next-auth";
 import HorizontalUploads from "@/components/HorizontalUploads";
@@ -59,7 +57,6 @@ export default function UserProfile({
 
     fetchUser();
   }, [username]);
-
   const handleDelete = async (fileUrl: string) => {
     try {
       toast.promise(
@@ -220,7 +217,7 @@ export default function UserProfile({
 
             <div className="mt-3 w-full max-w-sm">
               <ProfileBio
-                actualBio={user?.bio}
+                actualBio={user?.bio || "No bio Yet"}
                 isOwnProfile={session?.user.username === username}
               />
             </div>
@@ -248,31 +245,11 @@ export default function UserProfile({
             </Link>
           )}
         </div>
-
-        {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6">
-          {user?.uploads.length ? (
-            user?.uploads.map((i: any) => (
-              <UploadedCard
-                type={i.type}
-                title={i.file_name}
-                key={i.id}
-                link={i.url}
-                category={i.category}
-                level={i.level}
-                subject={i.subject}
-                size={i.size}
-                onDelete={() => handleDelete(i.url)}
-              />
-            ))
-          ) : (
-            <p className="text-gray-300 font-medium">Nothing posted yet 😔.</p>
-          )}
-        </div> */}
         <HorizontalUploads uploads={user.uploads} handleDelete={handleDelete} />
       </section>
 
       {/* Favorites */}
-      <section className="w-full max-w-5xl mb-16">
+      <section className="w-full max-w-5xl mb-10">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-primary uppercase tracking-wide">
             Favorites

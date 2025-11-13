@@ -18,7 +18,6 @@ export const RoleGate = ({ children, AllowedRoles }: RoleGateProps) => {
         Access denied 🚫
       </h1>
     );
-  } else {
-    return <>{children}</>;
   }
+  return <>{children}</>;
 };

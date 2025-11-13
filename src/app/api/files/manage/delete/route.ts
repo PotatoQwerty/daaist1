@@ -13,7 +13,6 @@ export async function DELETE(req: Request) {
 
   try {
     const { fileUrl } = await req.json();
-    console.log(fileUrl);
 
     if (!fileUrl) {
       return NextResponse.json(

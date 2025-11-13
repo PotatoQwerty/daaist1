@@ -7,8 +7,9 @@ export default async function AdminPage() {
   }
 
   return (
-    <div className="flex items-center justify-center">
-      <h1>admin dashboard</h1>
+    <div className="flex flex-col items-center justify-center">
+      <h1 className="text-2xl font-bold">Admin dashboard</h1>
+      <p>this page is still under construction</p>
     </div>
   );
 }

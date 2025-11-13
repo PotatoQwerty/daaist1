@@ -5,32 +5,36 @@ import type { File } from "../../../../../../types/types/next-auth";
 import ManageFiles from "@/components/ManageFiles";
 import { Loader2Icon } from "lucide-react";
 import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
+import { redirect, RedirectType } from "next/navigation";
+import { RoleGate } from "@/components/RoleGate";
 
-function ManagePosts() {
+export default function ManagePosts() {
+  const { data: session, status } = useSession();
   const [files, setFiles] = useState<File[] | null>(null);
   const [search, setSearch] = useState("");
 
-  // Fetch all files on mount
   useEffect(() => {
-    const getAllFiles = async () => {
+    if (status == "loading") return;
+    if (!session) redirect("/", RedirectType.replace);
+
+    const fetchFiles = async () => {
       try {
         const res = await fetch("/api/files/manage");
-        if (res.ok) {
-          const data = await res.json();
-          setFiles(data.files);
-        } else {
-          toast.error("Failed to fetch files");
-        }
-      } catch (err) {
-        console.error("Error fetching files:", err);
+        if (!res.ok) throw new Error("Failed to fetch files");
+
+        const data = await res.json();
+        setFiles(data.files);
+      } catch (error) {
+        console.error("Error fetching files:", error);
         toast.error("Error fetching files");
       }
     };
+    if (status == "authenticated") {
+      fetchFiles();
+    }
+  }, [status, session]);
 
-    getAllFiles();
-  }, []);
-
-  // Delete file handler
   const handleDelete = async (fileUrl: string) => {
     toast.promise(
       (async () => {
@@ -43,7 +47,6 @@ function ManagePosts() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to delete file");
 
-        // Update state to remove deleted file
         setFiles((prev) => prev?.filter((f) => f.url !== fileUrl) || null);
       })(),
       {
@@ -54,7 +57,6 @@ function ManagePosts() {
     );
   };
 
-  // Filtered files for search
   const filteredFiles = files?.filter(
     (f) =>
       f.file_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -64,48 +66,48 @@ function ManagePosts() {
   );
 
   return (
-    <div className="flex flex-col gap-2 p-8 justify-center items-center flex-wrap">
-      <h1 className="text-2xl font-black self-start mb-2">
-        Manage All Uploaded Files
-      </h1>
+    <RoleGate AllowedRoles={["admin"]}>
+      <div className="flex flex-col gap-4 p-8 w-full">
+        <h1 className="text-2xl font-black mb-4">Manage All Uploaded Files</h1>
 
-      <div className="w-full mb-4">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          name="search"
-          type="text"
-          placeholder="Search by username, title, year or subject..."
-          className="w-full p-2 border border-gray-300 rounded-md"
+          placeholder="Search by username, title, year, or subject..."
+          className="w-full p-2 border border-gray-300 rounded-md mb-6"
         />
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
         {files ? (
-          filteredFiles?.map((file) => (
-            <ManageFiles
-              id={file.id}
-              key={file.id}
-              file_name={file.file_name}
-              type={file.type}
-              url={file.url}
-              uploaded_by={file.username || "not available"}
-              level={file.level}
-              category={file.category}
-              subject={file.subject}
-              size={file.size}
-              onDelete={() => handleDelete(file.url)}
-            />
-          ))
+          filteredFiles?.length ? (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {filteredFiles.map((file) => (
+                <ManageFiles
+                  key={file.id}
+                  id={file.id}
+                  file_name={file.file_name}
+                  type={file.type}
+                  url={file.url}
+                  uploaded_by={file.username || "not available"}
+                  level={file.level}
+                  category={file.category}
+                  subject={file.subject}
+                  size={file.size}
+                  onDelete={() => handleDelete(file.url)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-center w-full text-gray-500 mt-8">
+              No files match your search.
+            </p>
+          )
         ) : (
-          <div className="w-full p-4 h-screen flex flex-col items-center justify-center">
-            <h1 className="text-4xl">Loading files...</h1>
-            <Loader2Icon className="size-8 animate-spin mt-4" />
+          <div className="flex flex-col items-center justify-center w-full h-96">
+            <h2 className="text-3xl mb-4">Loading files...</h2>
+            <Loader2Icon className="size-8 animate-spin" />
           </div>
         )}
       </div>
-    </div>
+    </RoleGate>
   );
 }
-
-export default ManagePosts;

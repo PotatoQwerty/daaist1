@@ -13,10 +13,10 @@ declare module "next-auth" {
       onboarded?: boolean;
       username?: string;
       bio?: string;
-      likedposts: string[];
-      ownPosts: string[];
       firstname?: string;
       lastname?: string;
+      uploads: string[];
+      likes: string[];
     };
   }
   export interface User {
@@ -30,7 +30,6 @@ declare module "next-auth" {
     registration_number?: string;
     onboarded?: boolean;
     bio?: string;
-    likedposts: string[];
     uploads: string[];
     likes: string[];
   }

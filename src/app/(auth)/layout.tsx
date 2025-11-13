@@ -12,6 +12,10 @@ const josefin = Josefin_Sans({
 });
 export const metadata: Metadata = {
   title: `Daa'ist || Admin Dashboard`,
+  robots: {
+    follow: false,
+    index: false,
+  },
 };
 export default async function AdminLayout({
   children,
@@ -19,7 +23,11 @@ export default async function AdminLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${josefin.variable}`}>
       <body>
-        <ThemeProvider>
+        <ThemeProvider
+          enableSystem={true}
+          attribute="class"
+          defaultTheme="system"
+        >
           <SidebarProvider defaultOpen>
             <AppSidebar />
             <main className="kabel-reg">

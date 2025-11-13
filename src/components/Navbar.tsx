@@ -1,116 +1,98 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
+import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
 import DaaistLogoHor from "../../public/images/DAAIST-LOGO-HOR.svg";
 import DaaistLogoHorDark from "../../public/images/daalogodarkhor.svg";
 import PfpPlaceholder from "../../public/images/placeholder.png";
-import { useTheme } from "next-themes";
-import { usePathname } from "next/navigation";
 import { ThemeSwitch } from "./ThemeSwitch";
-import { Menu } from "lucide-react";
 import { useCurrentRole } from "@/hooks/use-current-role";
 
-function Navbar() {
-  const pathname = usePathname();
+const NAV_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/courses", label: "Courses" },
+  { href: "/projects", label: "Projects" },
+  { href: "/club", label: "Clubs" },
+  { href: "/docs", label: "Documents" },
+];
+
+export default function Navbar() {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [mounted, setMounted] = useState(false);
-  const [profileMenuOpen, setPRrofileMenuOpen] = useState<boolean>(false);
+  const pathname = usePathname();
   const role = useCurrentRole();
-  const links = [
-    { href: "/", label: "Home" },
-    { href: "/courses", label: "Courses" },
-    { href: "/projects", label: "Projects" },
-    { href: "/club", label: "Clubs" },
-    { href: "/docs", label: "Documents" },
-  ];
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const menu = document.getElementById("mobile-menu");
-      const button = document.getElementById("menu-button");
+  const [mounted, setMounted] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
-      if (
-        menu &&
-        !menu.contains(event.target as Node) &&
-        button &&
-        !button.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
+  useEffect(() => setMounted(true), []);
 
-    if (isOpen) {
-      window.addEventListener("click", handleClickOutside);
-    }
+  const isActive = (href: string) =>
+    href === "/"
+      ? pathname === "/"
+      : pathname?.startsWith(href + "/") || pathname === href;
 
-    return () => {
-      window.removeEventListener("click", handleClickOutside);
-    };
-  }, [isOpen]);
   if (!mounted) return null;
 
-  const isActive = (href: string) => {
-    if (!pathname) return false;
-    if (href === "/") return pathname === "/";
-    return pathname === href || pathname.startsWith(href + "/");
-  };
-
   return (
-    <nav className="w-full flex justify-between items-center border-b-2 border-foreground bg-background p-4 uppercase font-bold tracking-wide">
-      {/* LEFT: Logo */}
-      <div className="flex items-center gap-2">
-        <Link
-          href="/"
-          className="hover:scale-110 transition duration-300 ease-in-out"
-        >
-          <Image
-            src={resolvedTheme === "dark" ? DaaistLogoHorDark : DaaistLogoHor}
-            height={100}
-            width={150}
-            alt="Daaist Logo"
-          />
-        </Link>
-      </div>
+    <nav className="flex justify-between items-center w-full p-4 bg-background border-b-2 border-foreground uppercase font-bold tracking-wide">
+      {/* Logo */}
+      <Link
+        href="/"
+        className="flex items-center gap-2 hover:scale-110 transition duration-300 ease-in-out"
+      >
+        <Image
+          src={resolvedTheme === "dark" ? DaaistLogoHorDark : DaaistLogoHor}
+          width={150}
+          height={100}
+          alt="Daaist Logo"
+        />
+      </Link>
 
-      {/* CENTER: Links */}
+      {/* Desktop Links */}
       <div className="hidden md:flex items-center gap-8 text-sm">
-        {links.map((link) => {
-          const active = isActive(link.href);
-          return (
-            <Link
-              href={link.href}
-              key={link.href}
-              aria-current={active ? "page" : undefined}
-              className={`transition duration-300 ease-in-out ${
-                active
-                  ? "text-accent scale-125 text-lg font-extrabold"
-                  : "hover:text-accent hover:scale-105"
-              }`}
-            >
-              {link.label}
-            </Link>
-          );
-        })}
+        {NAV_LINKS.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            aria-current={isActive(link.href) ? "page" : undefined}
+            className={`transition duration-300 ease-in-out ${
+              isActive(link.href)
+                ? "text-accent scale-125 text-lg font-extrabold"
+                : "hover:text-accent hover:scale-105"
+            }`}
+          >
+            {link.label}
+          </Link>
+        ))}
       </div>
 
-      {/* RIGHT: Actions */}
-      <div className="flex items-center gap-4">
-        {/* Theme Toggle */}
+      {/* Actions */}
+      <div className="flex items-center gap-3">
         <ThemeSwitch />
 
-        {session ? (
-          <div
-            className="relative"
-            onClick={() => setPRrofileMenuOpen(!profileMenuOpen)}
+        {/* Admin Upload */}
+        {role === "admin" && (
+          <Link
+            href="/upload"
+            className="hidden md:flex items-center justify-center gap-1 bg-accent text-white rounded-sm p-2 hover:bg-secondary transition duration-300"
           >
-            <div className="flex gap-1 items-center justify-center cursor-pointer group">
+            + Upload
+          </Link>
+        )}
+
+        {/* Session / Profile */}
+        {session ? (
+          <div className="relative">
+            <div
+              className="flex items-center gap-1 cursor-pointer group"
+              onClick={() => setProfileOpen((prev) => !prev)}
+            >
               <div className="w-8 h-8 rounded-full overflow-hidden border border-accent">
                 <Image
                   src={session.user.image || PfpPlaceholder}
@@ -125,10 +107,11 @@ function Navbar() {
               </span>
             </div>
 
-            {/* The dropdown */}
+            {/* Dropdown */}
             <div
-              className={`absolute right-0 mt-2 w-40 bg-background border rounded-md shadow-lg flex-col z-50 transition-all duration-200 
-    ${profileMenuOpen ? "flex" : "hidden"} md:group-hover:flex`}
+              className={`absolute right-0 mt-2 w-40 bg-background border rounded-md shadow-lg flex-col z-50 transition-all duration-200 ${
+                profileOpen ? "flex" : "hidden"
+              } md:group-hover:flex`}
             >
               <Link
                 href="/profile"
@@ -154,67 +137,52 @@ function Navbar() {
           </div>
         ) : (
           <button
-            className="p-2 bg-accent rounded-lg hover:bg-primary/90 hover:text-white transition-all ease-in-out duration-150"
             onClick={() => signIn("google")}
+            className="p-2 bg-accent rounded-lg hover:bg-primary/90 hover:text-white transition-all ease-in-out duration-150"
           >
             Sign In
           </button>
         )}
-        {/* { hamburger menu} */}
 
-        {session && (
-          <div className="md:hidden">
-            <div className="md:hidden relative">
-              <Menu
-                size={24}
-                id="menu-button"
-                aria-label="Toggle menu"
-                onClick={() => setIsOpen(!isOpen)}
-                className={`transition-transform duration-300 ${
-                  isOpen ? "rotate-90 text-accent" : "rotate-0"
-                }`}
+        {/* Mobile Hamburger */}
+        <div className="md:hidden relative">
+          <Menu
+            size={24}
+            className={`transition-transform duration-300 ${
+              mobileOpen ? "rotate-90 text-accent" : "rotate-0"
+            }`}
+            onClick={() => setMobileOpen((prev) => !prev)}
+          />
+
+          {mobileOpen && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 bg-black/10 backdrop-blur-xs z-40"
+                onClick={() => setMobileOpen(false)}
               />
-
-              {isOpen && (
-                <>
-                  {/* Backdrop */}
-                  <div
-                    className="fixed inset-0 bg-black/10 backdrop-blur-xs z-40"
-                    onClick={() => setIsOpen(false)}
-                  />
-
-                  {/* Dropdown */}
-                  <div
-                    id="mobile-menu"
-                    className="absolute top-16 right-1 z-50 bg-background border border-foreground rounded-md shadow-lg flex flex-col p-4 gap-4"
+              {/* Dropdown */}
+              <div className="absolute top-16 right-1 z-50 bg-background border border-foreground rounded-md shadow-lg flex flex-col p-4 gap-4">
+                {NAV_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    aria-current={isActive(link.href) ? "page" : undefined}
+                    className={`transition duration-300 ease-in-out ${
+                      isActive(link.href)
+                        ? "text-accent scale-110 text-lg font-extrabold"
+                        : ""
+                    }`}
+                    onClick={() => setMobileOpen(false)}
                   >
-                    {links.map((link) => {
-                      const active = isActive(link.href);
-                      return (
-                        <Link
-                          href={link.href}
-                          onClick={() => setIsOpen(false)}
-                          key={link.href}
-                          aria-current={active ? "page" : undefined}
-                          className={`transition duration-300 ease-in-out ${
-                            active
-                              ? "text-accent scale-110 text-lg font-extrabold"
-                              : ""
-                          }`}
-                        >
-                          {link.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </nav>
   );
 }
-
-export default Navbar;
