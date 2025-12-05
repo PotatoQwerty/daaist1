@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { File } from "../../../../../../types/types/next-auth";
+import type { File } from "../../../../../types/next-auth";
 import ManageFiles from "@/components/ManageFiles";
 import { Loader2Icon } from "lucide-react";
 import toast from "react-hot-toast";
@@ -30,7 +30,7 @@ export default function ManagePosts() {
         toast.error("Error fetching files");
       }
     };
-    if (status == "authenticated") {
+    if (status == "authenticated" && session?.user?.role === "admin") {
       fetchFiles();
     }
   }, [status, session]);
@@ -67,18 +67,25 @@ export default function ManagePosts() {
 
   return (
     <RoleGate AllowedRoles={["admin"]}>
-      <div className="flex flex-col gap-4 p-8 w-full">
-        <h1 className="text-2xl font-black mb-4">Manage All Uploaded Files</h1>
+      {!files ? (
+        <div className="flex flex-col items-center justify-center w-full h-96">
+          <h2 className="text-3xl mb-4">Loading files...</h2>
+          <Loader2Icon className="size-8 animate-spin" />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4 p-8 w-full">
+          <h1 className="text-2xl font-black mb-4">
+            Manage All Uploaded Files
+          </h1>
 
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by username, title, year, or subject..."
-          className="w-full p-2 border border-gray-300 rounded-md mb-6"
-        />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by username, title, year, or subject..."
+            className="w-full p-2 border border-gray-300 rounded-md mb-6"
+          />
 
-        {files ? (
-          filteredFiles?.length ? (
+          {filteredFiles?.length ? (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {filteredFiles.map((file) => (
                 <ManageFiles
@@ -100,14 +107,9 @@ export default function ManagePosts() {
             <p className="text-center w-full text-gray-500 mt-8">
               No files match your search.
             </p>
-          )
-        ) : (
-          <div className="flex flex-col items-center justify-center w-full h-96">
-            <h2 className="text-3xl mb-4">Loading files...</h2>
-            <Loader2Icon className="size-8 animate-spin" />
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </RoleGate>
   );
 }

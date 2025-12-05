@@ -105,8 +105,14 @@ export default function AdminUsersPage() {
                   key={user.registration_number}
                   className="border-t hover:bg-accent/50 transition duration-150 ease-in"
                 >
-                  <td className="px-4 py-2">{user.firstname}</td>
-                  <td className="px-4 py-2">{user.lastname}</td>
+                  <td className="px-4 py-2">{user.firstname || "Unknown"}</td>
+                  <td className="px-4 py-2">{user.lastname || "Unknown"}</td>
+                  <td className="px-4 py-2">
+                    {user.username || "Unknown"}{" "}
+                    <span className="text-accent font-bold">
+                      {user.username === session?.user?.username ? "(Me)" : ""}
+                    </span>
+                  </td>
                   <td className="px-4 py-2">
                     {user.registration_number || "Not mentioned"}
                   </td>

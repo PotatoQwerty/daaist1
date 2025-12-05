@@ -2,9 +2,10 @@
 import { useRef } from "react";
 import UploadedCard from "./UploadedCard";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import type { File } from "../types/next-auth";
 
 interface Props {
-  uploads: string[];
+  uploads: File[];
   handleDelete: (url: string) => void;
 }
 
@@ -21,48 +22,45 @@ export default function HorizontalUploads({ uploads, handleDelete }: Props) {
   };
 
   return (
-    <div className="relative w-full">
-      {uploads.length > 0 ? (
-        <>
-          <button
-            onClick={() => scroll("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
-          >
-            <ChevronLeftIcon className="size-5" />
-          </button>
-          <button
-            onClick={() => scroll("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
-          >
-            <ChevronRightIcon className="w-5 h-5" />
-          </button>
-        </>
-      ) : (
-        <></>
-      )}
-
+    <div className="relative w-full border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50 min-h-[300px] flex items-center">
       {/* Scrollable row */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto py-2 px-6 scrollbar-hide scroll-smooth snap-x snap-mandatory"
+        className="flex gap-4 overflow-x-auto py-2 px-6 scrollbar-hide scroll-smooth snap-x snap-mandatory w-full"
       >
-        {uploads.length ? (
-          uploads.map((i) => (
-            <div key={i.id} className="flex-shrink-0 snap-start">
-              <UploadedCard
-                type={i.type}
-                title={i.file_name}
-                link={i.url}
-                category={i.category}
-                level={i.level}
-                subject={i.subject}
-                size={i.size}
-                onDelete={() => handleDelete(i.url)}
-              />
-            </div>
-          ))
+        {uploads.length > 0 ? (
+          <>
+            <button
+              onClick={() => scroll("left")}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
+            >
+              <ChevronLeftIcon className="size-5" />
+            </button>
+            <button
+              onClick={() => scroll("right")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
+            >
+              <ChevronRightIcon className="w-5 h-5" />
+            </button>
+            {uploads.map((i) => (
+              <div key={i.id} className="flex-shrink-0 snap-start">
+                <UploadedCard
+                  type={i.type}
+                  title={i.file_name}
+                  link={i.url}
+                  category={i.category}
+                  level={i.level}
+                  subject={i.subject}
+                  size={i.size}
+                  onDelete={() => handleDelete(i.url)}
+                />
+              </div>
+            ))}
+          </>
         ) : (
-          <p className="text-gray-300 font-medium">Nothing posted yet 😔.</p>
+          <p className="text-gray-300 font-medium w-full text-center">
+            Nothing posted yet 😔.
+          </p>
         )}
       </div>
     </div>

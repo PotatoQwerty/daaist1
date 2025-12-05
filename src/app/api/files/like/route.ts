@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
 
+import { auth } from "@/auth";
+
 export async function POST(req: Request) {
-  const { userId, fileId } = await req.json();
+  const session = await auth();
+  const userId = session?.user?.id;
+  const { fileId } = await req.json();
+
   if (!userId || !fileId)
     return NextResponse.json(
       { error: "You are not signed in || the file does not exist anymore" },
-      { status: 403 }
+      { status: 401 }
     );
 
   // first check if it exists in the likes table

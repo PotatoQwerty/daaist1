@@ -8,7 +8,7 @@ import {
   categoryOptions,
   YearOption,
   SubjectOption,
-} from "../../constants/uploadConstants";
+} from "@/constants/uploadConstants";
 import { supabaseClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import { Loader2Icon } from "lucide-react";

@@ -1,130 +1,39 @@
-"use client";
+import { supabaseServer } from "@/lib/supabase/server";
+import FilesClient from "@/components/FilesClient";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import FileCard from "@/components/FileCard";
-import { useSession } from "next-auth/react";
-import Loading from "@/components/Loading";
-import MessageCard from "@/components/MessageCard";
-// TODO ADD PAGINATION LATER + ADD FILTERING AND SEARCH OPTIONS
-export default function CoursesPage() {
-  const params = useParams();
-  const id = params.id as string[];
+export const revalidate = 3600; // Cache for 1 hour
+
+export default async function CoursesPage({
+  params,
+}: {
+  params: Promise<{ id: string[] }>;
+}) {
+  const { id } = await params;
   const year = id[0];
   const subject = id[1];
 
-  const { data: session, status } = useSession();
-  const userId = session?.user?.id;
+  let query = supabaseServer
+    .schema("public")
+    .from("files")
+    .select("*")
+    .eq("level", year);
 
-  const [courses, setCourses] = useState<any[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
-  const [liked, setLiked] = useState<{ id: string }[]>([]);
+  if (subject) {
+    query = query.eq("subject", subject);
+  }
 
-  // 🧠 Fetch all courses for the year
-  useEffect(() => {
-    // if (status !== "authenticated") return;
+  const { data: courses, error } = await query;
 
-    const fetchCourses = async () => {
-      const res = await fetch(`/api/files/level/${year}`);
-      const data = await res.json();
-      setCourses(data.data || []);
-      setFilteredCourses(data.data || []);
-    };
-
-    fetchCourses();
-  }, [status, year]);
-
-  // 🧠 Filter by subject (if selected)
-  useEffect(() => {
-    if (subject) {
-      setFilteredCourses(
-        courses.filter((course) => course.subject === subject)
-      );
-    } else {
-      setFilteredCourses(courses);
-    }
-  }, [subject, courses]);
-
-  // 🧠 Fetch liked files for user
-  useEffect(() => {
-    if (status !== "authenticated" || !userId) return;
-
-    const fetchLikedPosts = async () => {
-      const res = await fetch(`/api/files/like/user/${userId}`);
-      if (!res.ok) return;
-      const data = await res.json();
-
-      setLiked(Array.isArray(data.likedFiles) ? data.likedFiles : []);
-    };
-
-    fetchLikedPosts();
-  }, [status, userId]);
-
-  // ❤️ Like/unlike handler
-  const handleLike = async (fileId: string) => {
-    if (!userId) return;
-
-    const isLiked = liked.some((item) => item.id === fileId);
-
-    // 🔹 Optimistic UI update (instant feedback)
-    setLiked((prev) =>
-      isLiked
-        ? prev.filter((item) => item.id !== fileId)
-        : [...prev, { id: fileId }]
-    );
-
-    try {
-      const res = await fetch(`/api/files/like`, {
-        method: "POST",
-        body: JSON.stringify({ userId, fileId }),
-        headers: { "Content-Type": "application/json" },
-      });
-
-      // Optionally reconcile with server if backend returns updated list
-      if (res.ok) {
-        const data = await res.json();
-        if (data.likedposts) {
-          setLiked(Array.isArray(data.likedposts) ? data.likedposts : []);
-        }
-      }
-    } catch (err) {
-      console.error("Like/unlike failed:", err);
-    }
-  };
-
-  if (status === "loading") {
-    return <Loading />;
+  if (error) {
+    console.error("Fetch courses error:", error);
   }
 
   return (
-    <div className=" w-full h-screen flex items-center justify-center p-6 flex-col">
-      <h1 className="text-2xl font-bold mb-4">Courses for {year}</h1>
-      {subject && <h2 className="text-lg mb-2">Subject: {subject}</h2>}
-      {/* TODO : work for pagination later */}
-      <div className="w-full h-full grid justify-items-center grid-cols-1 md:grid-cols-4">
-        {courses.length ? (
-          courses.map((course) => (
-            <FileCard
-              key={course.id}
-              subject={course.subject}
-              size={course.size}
-              title={course.file_name}
-              type={course.type}
-              link={course.url}
-              handleLike={() => handleLike(course.id)}
-              isLiked={liked.some((i) => i.id === course.id)}
-            />
-          ))
-        ) : (
-          <>
-            <MessageCard
-              type="error"
-              message="There is nothing uploaded here"
-              key="err-msg"
-            />
-          </>
-        )}
-      </div>
+    <div className="flex flex-col w-full min-h-screen p-6 bg-background">
+      <h1 className="text-3xl font-bold mb-6 text-center text-foreground">
+        Courses for {year}
+      </h1>
+      <FilesClient initialFiles={courses || []} />
     </div>
   );
 }

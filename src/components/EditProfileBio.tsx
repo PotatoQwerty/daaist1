@@ -16,8 +16,8 @@ export default function ProfileBio({
   const [isEditing, setIsEditing] = useState(false);
   const handleUpdate = async () => {
     try {
-      const res = await fetch("/api/users/update-bio", {
-        method: "POST",
+      const res = await fetch("/api/users/update", {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -27,7 +27,7 @@ export default function ProfileBio({
       if (!res.ok) throw new Error("Failed to update bio");
 
       const data = await res.json();
-      if (data.success) {
+      if (data.user) {
         setIsEditing(false);
         router.refresh();
       }

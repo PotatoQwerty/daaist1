@@ -35,7 +35,7 @@ declare module "next-auth" {
   }
 }
 type FileCategory = "doc" | "image" | "video" | "other";
-import type { LevelKey } from "../../constants/uploadConstants";
+import type { LevelKey } from "@/constants/uploadConstants";
 
 export interface File {
   id: string;
