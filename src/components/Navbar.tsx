@@ -6,19 +6,44 @@ import { useState, useEffect } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import {
+  Menu,
+  User,
+  LogOut,
+  LayoutDashboard,
+  Home,
+  Book,
+  Building,
+  Library,
+  School,
+  PlusCircle,
+} from "lucide-react";
 import DaaistLogoHor from "../../public/images/DAAIST-LOGO-HOR.svg";
 import DaaistLogoHorDark from "../../public/images/daalogodarkhor.svg";
-import PfpPlaceholder from "../../public/images/placeholder.png";
 import { ThemeSwitch } from "./ThemeSwitch";
 import { useCurrentRole } from "@/hooks/use-current-role";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/courses", label: "Courses" },
-  { href: "/projects", label: "Projects" },
-  { href: "/club", label: "Clubs" },
-  { href: "/docs", label: "Documents" },
+  { href: "/", label: "Home", icon: <Home /> },
+  { href: "/courses", label: "Courses", icon: <Book /> },
+  { href: "/projects", label: "Projects", icon: <Building /> },
+  { href: "/club", label: "Clubs", icon: <School /> },
+  { href: "/docs", label: "Documents", icon: <Library /> },
 ];
 
 export default function Navbar() {
@@ -27,10 +52,16 @@ export default function Navbar() {
   const pathname = usePathname();
   const role = useCurrentRole();
   const [mounted, setMounted] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const isActive = (href: string) =>
     href === "/"
@@ -40,7 +71,7 @@ export default function Navbar() {
   if (!mounted) return null;
 
   return (
-    <nav className="flex justify-between items-center w-full p-4 bg-background border-b-2 border-foreground uppercase font-bold tracking-wide">
+    <nav className="flex justify-between items-center w-full p-4 bg-background/60 backdrop-blur-xl border-b border-white/10 shadow-sm sticky top-0 left-0 right-0 z-50 supports-[backdrop-filter]:bg-background/60">
       {/* Logo */}
       <Link
         href="/"
@@ -51,6 +82,7 @@ export default function Navbar() {
           width={150}
           height={100}
           alt="Daaist Logo"
+          priority
         />
       </Link>
 
@@ -61,12 +93,13 @@ export default function Navbar() {
             key={link.href}
             href={link.href}
             aria-current={isActive(link.href) ? "page" : undefined}
-            className={`transition duration-300 ease-in-out ${
+            className={`flex items-center gap-2 transition duration-300 ease-in-out ${
               isActive(link.href)
                 ? "text-accent scale-125 text-lg font-extrabold"
                 : "hover:text-accent hover:scale-105"
             }`}
           >
+            {link.icon}
             {link.label}
           </Link>
         ))}
@@ -82,59 +115,60 @@ export default function Navbar() {
             href="/upload"
             className="hidden md:flex items-center justify-center gap-1 bg-accent text-white rounded-sm p-2 hover:bg-secondary transition duration-300"
           >
-            + Upload
+            <PlusCircle className="mr-1 h-4 w-4" />
+            Upload
           </Link>
         )}
 
         {/* Session / Profile */}
         {session ? (
-          <div className="relative">
-            <div
-              className="flex items-center gap-1 cursor-pointer group"
-              onClick={() => setProfileOpen((prev) => !prev)}
-            >
-              <div className="w-8 h-8 rounded-full overflow-hidden border border-accent">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="relative w-9 h-9 rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-ring transition-all focus:outline-none">
                 <Image
-                  src={session.user.image || PfpPlaceholder}
+                  src={session.user.image || "/images/placeholder.png"}
                   alt="Profile"
-                  width={32}
-                  height={32}
-                  className="object-cover w-full h-full"
+                  fill
+                  className="object-cover"
                 />
-              </div>
-              <span className="hidden md:block uppercase font-bold">
-                {session.user.name?.split(" ")[0]}
-              </span>
-            </div>
-
-            {/* Dropdown */}
-            <div
-              className={`absolute right-0 mt-2 w-40 bg-background border rounded-md shadow-lg flex-col z-50 transition-all duration-200 ${
-                profileOpen ? "flex" : "hidden"
-              } md:group-hover:flex`}
-            >
-              <Link
-                href="/profile"
-                className="p-2 hover:bg-accent/10 transition-colors capitalize"
-              >
-                Profile
-              </Link>
-              {role === "admin" && (
-                <Link
-                  href="/admin"
-                  className="p-2 hover:bg-accent/10 transition-colors capitalize"
-                >
-                  Admin dashboard
-                </Link>
-              )}
-              <button
-                onClick={() => signOut()}
-                className="p-2 hover:bg-red-500 hover:text-white rounded-md text-left transition-colors"
-              >
-                Sign Out
               </button>
-            </div>
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {session.user.name}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {session.user.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/profile" className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+              </DropdownMenuItem>
+              {role === "admin" && (
+                <DropdownMenuItem asChild>
+                  <Link href="/admin" className="cursor-pointer">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Admin Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600 cursor-pointer"
+                onClick={() => signOut()}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sign out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <button
             onClick={() => signIn("google")}
@@ -144,43 +178,56 @@ export default function Navbar() {
           </button>
         )}
 
-        {/* Mobile Hamburger */}
-        <div className="md:hidden relative">
-          <Menu
-            size={24}
-            className={`transition-transform duration-300 ${
-              mobileOpen ? "rotate-90 text-accent" : "rotate-0"
-            }`}
-            onClick={() => setMobileOpen((prev) => !prev)}
-          />
-
-          {mobileOpen && (
-            <>
-              {/* Backdrop */}
-              <div
-                className="fixed inset-0 bg-black/10 backdrop-blur-xs z-40"
-                onClick={() => setMobileOpen(false)}
-              />
-              {/* Dropdown */}
-              <div className="absolute top-16 right-1 z-50 bg-background border border-foreground rounded-md shadow-lg flex flex-col p-4 gap-4">
+        {/* Mobile Dictionary */}
+        <div className="md:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <button className="p-2 -mr-2 text-foreground/80 hover:text-foreground">
+                <Menu size={24} />
+              </button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="w-[200px] sm:w-[250px] p-2 flex flex-col items-center bg-background/60 backdrop-blur-xl border-white/10 shadow-sm supports-[backdrop-filter]:bg-background/60"
+            >
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-2 mt-8 items-start">
                 {NAV_LINKS.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    aria-current={isActive(link.href) ? "page" : undefined}
-                    className={`transition duration-300 ease-in-out ${
+                    className={`flex items&-center gap-2 text-lg font-bold transition-colors ${
                       isActive(link.href)
-                        ? "text-accent scale-110 text-lg font-extrabold"
-                        : ""
+                        ? "text-primary scale-115"
+                        : "text-foreground/60 hover:text-foreground"
                     }`}
-                    onClick={() => setMobileOpen(false)}
                   >
+                    {link.icon}
                     {link.label}
                   </Link>
                 ))}
+                {role === "admin" && (
+                  <Link
+                    href="/upload"
+                    className="flex items-center justify-center gap-1 text-lg font-bold hover:text-foreground bg-accent p-2 w-full rounded-lg text-white "
+                  >
+                    <PlusCircle className="mr-1 h-4 w-4" />
+                    <span>Upload</span>
+                  </Link>
+                )}
+                {!session && (
+                  <button
+                    onClick={() => signIn("google")}
+                    className="text-lg font-medium text-left text-foreground/60 hover:text-foreground"
+                  >
+                    Sign In
+                  </button>
+                )}
               </div>
-            </>
-          )}
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </nav>

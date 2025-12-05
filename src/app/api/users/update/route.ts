@@ -1,32 +1,43 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
+import { auth } from "@/auth";
+
 export async function PATCH(req: Request) {
   try {
-    const body = await req.json();
-    const { registration_number, ...updateFields } = body;
-
-    if (!registration_number) {
-      NextResponse.json({ error: "Missing Matricule" }, { status: 400 });
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data, error } = await supabaseServer
-      .from("users")
-      .update(updateFields)
-      .eq("registration_number", registration_number)
-      .select();
+    const isAdmin = session.user.role === "admin";
+    const body = await req.json();
+    const { registration_number, role, ...updateFields } = body;
+
+    const finalUpdateFields = { ...updateFields };
+
+    if (isAdmin && role) {
+      finalUpdateFields.role = role;
+    }
+
+    let query = supabaseServer.from("users").update(finalUpdateFields);
+
+    // Hybrid Logic:
+    // 1. If Admin AND registration_number provided -> Update user by matricule
+    // 2. Else -> Update self (session user)
+    if (isAdmin && registration_number) {
+      query = query.eq("registration_number", registration_number);
+    } else {
+      query = query.eq("id", session.user.id);
+    }
+
+    const { data, error } = await query.select();
 
     if (error) {
-      console.error("Supabase update error:", error);
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    if (!data || data.length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ user: data[0] }, { status: 200 });
-  } catch (err) {
-    console.error("Unexpected error:", err);
+    return NextResponse.json({ user: data[0] });
+  } catch (error) {
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

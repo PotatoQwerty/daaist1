@@ -28,7 +28,7 @@ function Home() {
     return (
       <div className="w-full min-h-screen flex justify-center items-center p-4">
         {/* Background container that wraps content */}
-        <div className="relative w-[90%] sm:w-3/4 rounded-2xl bg-accent/20 flex flex-col items-center text-center space-y-4 p-6 sm:p-10">
+        <div className="relative w-[90%] sm:w-3/4 rounded-2xl bg-primary/60 flex flex-col items-center text-center space-y-4 p-6 sm:p-10">
           <MessageCard
             type="info"
             message="Please note that this website is developed and maintained by the club Archibenvoles. 
@@ -40,7 +40,7 @@ function Home() {
             Daa&apos;ist — Built by Students, For Students.
           </h1>
 
-          <p className="font-light text-lg sm:text-xl text-accent">
+          <p className="font-light text-lg sm:text-xl text-white">
             Find documentation, past exams, and events at the Département
             d&apos;Architecture d&apos;Alger and more!
           </p>

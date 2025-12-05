@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { FileIcon, Edit, FileX, MoreVertical } from "lucide-react";
-import type { File } from "../../types/types/next-auth";
+import type { File } from "../types/next-auth";
 interface manageFileProps extends File {
   onDelete: () => void;
 }

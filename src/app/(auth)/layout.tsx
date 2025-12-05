@@ -30,8 +30,10 @@ export default async function AdminLayout({
         >
           <SidebarProvider defaultOpen>
             <AppSidebar />
-            <main className="kabel-reg">
-              <SidebarTrigger />
+            <main className="kabel-reg w-full flex flex-col min-h-screen bg-background">
+              <div className="p-4 bg-background">
+                <SidebarTrigger />
+              </div>
               <Toaster position="top-right" />
               <SessionWrapper>{children}</SessionWrapper>
             </main>
