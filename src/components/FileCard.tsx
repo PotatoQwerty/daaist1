@@ -17,8 +17,6 @@ function FileCard({
   isLiked: boolean;
   subject: string;
 }) {
-  console.log(url);
-
   const fileSizeMB = (size / (1024 * 1024)).toFixed(2);
   // const screenWidth = window.innerWidth; make the width depend on the screensize?
   return (
