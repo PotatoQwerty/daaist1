@@ -23,7 +23,7 @@ export default async function CoursesPage({
     // optionally return a UI with the error
   }
 
-
+  // This logs on the server (terminal / host logs)
   console.log("courses server log:", courses);
 
   return (

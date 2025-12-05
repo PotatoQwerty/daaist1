@@ -1,5 +1,13 @@
 import React from "react";
-
+export async function generateMetadata() {
+  const title = "Daa'ist — Projects";
+  const description =
+    "Explore All projects made by DAA students, and much more!.";
+  return {
+    title,
+    description,
+  };
+}
 function page() {
   return (
     <div className="w-full h-screen flex flex-col justify-center items-center">

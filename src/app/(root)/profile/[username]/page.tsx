@@ -1,6 +1,24 @@
 import { getUserByUsername, getFilesByUserId, getLikedFiles } from "@/lib/data";
 import ProfileClient from "@/components/ProfileClient";
+import type { Metadata } from "next";
+export async function generateMetadata({
+  params,
+}: {
+  params: { username: string };
+}): Promise<Metadata> {
+  const { username } = await params;
+  const title = `Daa'ist — ${username}'s profile`;
+  const description = `${username}'s uploads and liked files on Daa'ist.`;
 
+  return {
+    title,
+    description,
+    robots: {
+      index: false,
+      follow: true,
+    },
+  };
+}
 export default async function UserProfile({
   params,
 }: {

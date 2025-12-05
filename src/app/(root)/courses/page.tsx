@@ -1,9 +1,17 @@
 import { yearOptions } from "@/constants/uploadConstants";
 import Link from "next/link";
 
+export const metadata = {
+  title: "Daa'ist — Courses by Year",
+  description:
+    "Explore courses, resources, and materials for all academic years.",
+  alternates: {
+    canonical: "https://daaist.com/courses",
+  },
+};
 export default function FilesList() {
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-background to-accent/10 flex flex-col items-center px-4 py-10">
+    <div className="min-h-screen w-full bg-linear-to-b from-background to-accent/10 flex flex-col items-center px-4 py-10">
       {/* Title */}
       <h1 className="text-3xl md:text-4xl font-bold text-center mb-8 text-foreground">
         View Courses by Year

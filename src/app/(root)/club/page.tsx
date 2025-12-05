@@ -1,5 +1,13 @@
 import React from "react";
-
+import type { Metadata } from "next";
+export async function generateMetadata() {
+  const title = "Daa'ist — Clubs";
+  const description = "Explore All DAA's clubs, and future events.";
+  return {
+    title,
+    description,
+  };
+}
 function page() {
   return (
     <div className="w-full h-screen flex flex-col justify-center items-center">

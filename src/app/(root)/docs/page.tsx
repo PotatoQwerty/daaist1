@@ -2,7 +2,13 @@ import { supabaseServer } from "@/lib/supabase/server";
 import FilesClient from "@/components/FilesClient";
 
 export const revalidate = 3600; // Cache for 1 hour (ISR)
-
+export const metadata = {
+  title: "Daa'ist — Documents",
+  description: "Explore resources, and materials for all academic years.",
+  alternates: {
+    canonical: "https://daaist.com/docs",
+  },
+};
 export default async function DocsPage() {
   const { data: files, error } = await supabaseServer
     .schema("public")
