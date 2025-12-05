@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import type { User } from "next-auth";
 export default function EditUserModal({
   user,
+  sessionUser,
   onClose,
   onSave,
 }: {
   user: User;
+  sessionUser: string;
   onClose: () => void;
   onSave: (user: User) => void;
 }) {
@@ -74,21 +76,39 @@ export default function EditUserModal({
           value={formData.lastname || ""}
           onChange={handleFormChanges}
         />
-
-        <label htmlFor="role">Role</label>
-        <select
-          name="role"
-          id="role"
-          className="w-full p-2 rounded-md border-foreground border"
-          onChange={handleFormChanges}
-        >
-          <option defaultChecked value="change">
-            Please select a new role
-          </option>
-          <option value="admin">Admin</option>
-          <option value="club">Club</option>
-          <option value="student">Student</option>
-        </select>
+        {sessionUser === user.id ? (
+          <>
+            <label htmlFor="role">Role</label>
+            <select
+              disabled
+              name="role"
+              id="role"
+              className="w-full p-2 rounded-md border-foreground border disabled:bg-accent/20"
+              onChange={handleFormChanges}
+            >
+              <option defaultChecked value="change">
+                You can&#39;t change your own role.
+              </option>
+            </select>
+          </>
+        ) : (
+          <>
+            <label htmlFor="role">Role</label>
+            <select
+              name="role"
+              id="role"
+              className="w-full p-2 rounded-md border-foreground border"
+              onChange={handleFormChanges}
+            >
+              <option defaultChecked value="change">
+                Please select a new role
+              </option>
+              <option value="admin">Admin</option>
+              <option value="club">Club</option>
+              <option value="student">Student</option>
+            </select>
+          </>
+        )}
 
         <div className="flex justify-end gap-2 p-4">
           <button className="bg-green-500 rounded-lg p-2" onClick={handleSave}>
