@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { File } from "../../../../../types/next-auth";
+import type { File } from "@/types/next-auth";
 import ManageFiles from "@/components/ManageFiles";
 import { Loader2Icon } from "lucide-react";
 import toast from "react-hot-toast";

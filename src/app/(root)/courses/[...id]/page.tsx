@@ -1,3 +1,4 @@
+// app/(your-route)/page.tsx
 import { supabaseServer } from "@/lib/supabase/server";
 import FilesClient from "@/components/FilesClient";
 
@@ -6,27 +7,24 @@ export const revalidate = 3600; // Cache for 1 hour
 export default async function CoursesPage({
   params,
 }: {
-  params: Promise<{ id: string[] }>;
+  params: { id: string[] }; // not Promise
 }) {
   const { id } = await params;
   const year = id[0];
-  const subject = id[1];
 
-  let query = supabaseServer
+  const { data: courses, error } = await supabaseServer
     .schema("public")
     .from("files")
     .select("*")
     .eq("level", year);
 
-  if (subject) {
-    query = query.eq("subject", subject);
-  }
-
-  const { data: courses, error } = await query;
-
   if (error) {
     console.error("Fetch courses error:", error);
+    // optionally return a UI with the error
   }
+
+
+  console.log("courses server log:", courses);
 
   return (
     <div className="flex flex-col w-full min-h-screen p-6 bg-background">
