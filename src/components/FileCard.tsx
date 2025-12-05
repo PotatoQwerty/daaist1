@@ -4,7 +4,7 @@ function FileCard({
   title,
   size,
   type,
-  link,
+  url,
   handleLike,
   isLiked,
   subject,
@@ -12,17 +12,20 @@ function FileCard({
   title: string;
   size: number;
   type: string;
-  link: string;
+  url: string;
   handleLike: () => void;
   isLiked: boolean;
   subject: string;
 }) {
+  console.log(url);
+
   const fileSizeMB = (size / (1024 * 1024)).toFixed(2);
   // const screenWidth = window.innerWidth; make the width depend on the screensize?
   return (
     <div className="relative w-[280px] h-fit bg-background rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 border border-accent flex flex-col overflow-hidden">
       {/* Like Button */}
       <button
+        type="button"
         onClick={handleLike}
         className="absolute top-3 right-3 z-10 bg-white shadow-sm rounded-full p-1.5 hover:scale-110 transition-transform"
       >
@@ -62,11 +65,11 @@ function FileCard({
 
         {/* Download Button */}
         <a
-          href={link}
+          href={url}
           download={title}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-accent text-white  py-2 px-3 text-sm font-bold hover:opacity-90 transition-all duration-200"
+          className="mt-3 cursor-pointer inline-flex items-center justify-center gap-2 rounded-lg bg-accent text-white  py-2 px-3 text-sm font-bold hover:opacity-90 transition-all duration-200"
         >
           <DownloadCloud className="size-4" />
           Download
