@@ -25,16 +25,22 @@ export default function HomeClient() {
     return (
       <div className="w-full min-h-screen flex justify-center items-center p-4">
         <div className="relative w-[90%] sm:w-3/4 rounded-2xl bg-primary/60 flex flex-col items-center text-center space-y-4 p-6 sm:p-10">
-          <MessageCard type="info" message="Please note..." />
+          <MessageCard
+            type="info"
+            message="Please note that this website is developed and maintained by the club Archibenvoles. 
+      You might encounter some errors and bugs since you’re using one of the earliest versions of this website. 
+      If you notice anything odd, please contact us."
+          />
           <h1 className="font-bold text-2xl sm:text-3xl text-foreground">
-            Daa'ist — Built by Students
+            Daa&#39;ist — Built by Students
           </h1>
           <p className="font-light text-lg sm:text-xl text-white">
             Find documentation, past exams...
           </p>
           <button
+            type="button"
             onClick={() => signIn("google")}
-            className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-primary text-white font-bold hover:scale-110 transition"
+            className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-primary p-0.5 text-white font-bold hover:scale-110 transition"
           >
             Let&apos;s get you started!
           </button>

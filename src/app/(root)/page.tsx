@@ -6,6 +6,8 @@ export const metadata = {
     "Discover courses, past exams, design resources, documents, and club activities for architecture students at the Département d’Architecture d’Alger. Daa’ist brings academic content and student creativity together in one platform.",
   keywords: [
     "architecture students",
+    "daaist",
+    "Daa",
     "courses",
     "past exams",
     "design resources",
