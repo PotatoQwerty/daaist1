@@ -1,6 +1,6 @@
 import { yearOptions } from "@/constants/uploadConstants";
 import Link from "next/link";
-
+import { auth } from "@/auth";
 export const metadata = {
   title: "Daa'ist — Courses by Year",
   description:
@@ -9,7 +9,36 @@ export const metadata = {
     canonical: "https://daaist.com/courses",
   },
 };
-export default function FilesList() {
+export default async function FilesList() {
+  const session = await auth();
+  if (!session) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md bg-card border border-accent/30 rounded-2xl p-8 text-center shadow-sm">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Access restricted
+          </h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            You need to be signed in to view courses and resources.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Link
+              href="/api/auth/signin"
+              className="inline-flex items-center px-4 py-2 bg-accent text-background rounded-md shadow-sm hover:brightness-95 transition"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex items-center px-4 py-2 border border-accent/20 rounded-md text-foreground hover:bg-accent/5 transition"
+            >
+              Go home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen w-full bg-linear-to-b from-background to-accent/10 flex flex-col items-center px-4 py-10">
       {/* Title */}
