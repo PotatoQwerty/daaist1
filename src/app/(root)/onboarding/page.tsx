@@ -7,7 +7,7 @@ export default async function Onboarding() {
   const onboarded = session?.user.onboarded;
 
   if (onboarded) {
-    // redirect("/");
+    redirect("/");
   }
 
   return (
