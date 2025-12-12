@@ -40,15 +40,18 @@ export default function ProfileBio({
     setIsEditing(false);
   };
   return (
-    <div className="w-full p-1 bg-background/25 rounded-lg">
-      <h4 className="font-bold text-accent">Bio:</h4>
+    <div>
+      <h4 className="font-bold text-accent text-start">Bio:</h4>
       {!isEditing ? (
         <>
-          <p className="text-sm text-foreground">{bio || "No bio yet"}</p>
+          <p className="text-sm text-foreground text-start">
+            {bio || "No bio yet"}
+          </p>
           {isOwnProfile ? (
             <button
+              type="button"
               onClick={() => setIsEditing(true)}
-              className="text-xs text-blue-500 hover:underline mt-1 flex justify-center items-center gap-1.5"
+              className="text-xs text-blue-500 hover:underline mt-1 flex justify-center items-center gap-1.5 justify-self-end"
             >
               <Edit2 className="size-4" />
               Edit Bio
@@ -72,14 +75,16 @@ export default function ProfileBio({
             <p className="text-xs text-gray-400">{bio?.length}/80</p>
             <div className="space-x-2">
               <button
+                type="button"
                 onClick={handleCancel}
-                className="text-xs text-gray-400 hover:text-gray-200"
+                className="text-xs p-2 rounded-md hover:bg-gray-600 bg-gray-200 hover:text-white "
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleUpdate}
-                className="text-xs text-green-500 hover:text-green-400"
+                className="text-xs bg-green-400 p-2 rounded-md hover:bg-green-600 hover:text-white "
               >
                 Save
               </button>

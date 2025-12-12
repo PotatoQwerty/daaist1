@@ -34,9 +34,9 @@ export default function HomeClient() {
           <h1 className="font-bold text-2xl sm:text-3xl text-foreground">
             Daa&#39;ist — Built by Students
           </h1>
-          <p className="font-light text-lg sm:text-xl text-white">
+          {/* <p className="font-light text-lg sm:text-xl text-white">
             Find documentation, past exams...
-          </p>
+          </p> */}
           <button
             type="button"
             onClick={() => signIn("google")}
@@ -52,7 +52,7 @@ export default function HomeClient() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       {/* HERO */}
-      <section className="relative flex flex-col items-center justify-center text-center py-24 px-6 bg-gradient-to-tl from-primary to-accent text-white">
+      <section className="relative flex flex-col items-center justify-center text-center py-24 px-6 bg-linear-to-tl from-primary to-accent text-white">
         <h1 className="text-4xl md:text-6xl font-bold mb-4">
           Empowering Architecture Students
         </h1>
@@ -68,6 +68,7 @@ export default function HomeClient() {
             Explore Courses
           </Link>
           <Link
+            prefetch={false}
             href="/club"
             className="px-6 py-3 border border-white font-semibold rounded-xl hover:bg-white/10 transition"
           >

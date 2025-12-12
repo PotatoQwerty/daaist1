@@ -109,14 +109,14 @@ export default function ProfileClient({
   );
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-primary to-[#f3f3f3] text-gray-900 flex flex-col items-center px-6 py-10">
+    <div className="min-h-screen w-full bg-linear-to-br from-primary to-[#f3f3f3] text-gray-900 flex flex-col items-center px-6 py-10">
       {/* Header */}
-      <div className="relative w-full max-w-5xl bg-background shadow-lg rounded-3xl p-10 mb-10 flex flex-col md:flex-row justify-between items-center gap-8">
+      <div className="relative w-full max-w-5xl bg-background supports-backdrop-filter:bg-background/60 shadow-lg rounded-3xl p-10 mb-10 flex flex-col md:flex-row justify-between items-center gap-8 ">
         {/* Profile Info */}
         <div className="flex flex-col items-center justify-center gap-6 md:flex-row md:items-start md:gap-10">
           {/* Profile Image */}
           <div className="relative w-36 h-36 shrink-0">
-            <div className="absolute bottom-2 right-2">
+            <div className="absolute">
               <EditProfileButton
                 isOwnProfile={isOwnProfile}
                 currentImage={user.image || "/images/placeholder.png"}
@@ -137,7 +137,7 @@ export default function ProfileClient({
               <span className="text-sm font-medium bg-primary text-white px-3 py-1 rounded-full shadow-sm">
                 {displayYear?.label}
               </span>
-              <span className="flex items-center gap-1 text-sm text-gray-300">
+              <span className="flex items-center gap-1 text-sm text-slate-100 font-medium bg-accent/80 px-3 py-1 rounded-full shadow-sm">
                 {user.isDaa ? (
                   <Stars
                     className="size-5"

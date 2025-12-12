@@ -67,7 +67,7 @@ function FileCard({
           download={title}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 cursor-pointer inline-flex items-center justify-center gap-2 rounded-lg bg-accent text-white  py-2 px-3 text-sm font-bold hover:opacity-90 transition-all duration-200"
+          className="mt-3 cursor-pointer inline-flex items-center justify-center gap-2 rounded-lg bg-accent text-white  py-2 px-3 text-sm font-bold hover:bg-accent/60 transition-all ease-in-out duration-200"
         >
           <DownloadCloud className="size-4" />
           Download

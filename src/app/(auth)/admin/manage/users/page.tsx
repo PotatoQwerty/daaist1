@@ -4,7 +4,7 @@ import type { User } from "next-auth";
 import { useEffect, useState, useMemo } from "react";
 import { ChevronDown, Edit, Loader2Icon } from "lucide-react";
 import Link from "next/link";
-import EditUserModal from "@/components/EditUserModal";
+import EditUserModal from "@/app/(auth)/_components/EditUserModal";
 import { RoleGate } from "@/components/RoleGate";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";

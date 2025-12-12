@@ -37,7 +37,7 @@ export default function UploadedCard({
 
   return (
     <div
-      className={`bg-background w-[240px] h-[140px] rounded-xl shadow  p-4 border relative ${style}`}
+      className={`bg-background w-60 h-[140px] rounded-xl shadow  p-4 border relative ${style}`}
     >
       <div className="flex justify-between items-start">
         <h3 className="font-bold text-lg text-foreground">{title}</h3>
@@ -49,6 +49,7 @@ export default function UploadedCard({
           {open && (
             <div className="absolute right-0 mt-2 bg-white border rounded-lg shadow-lg w-32">
               <button
+                type="button"
                 onClick={onDelete}
                 className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-gray-300 rounded-lg w-full text-left"
               >
@@ -76,7 +77,7 @@ export default function UploadedCard({
       <a
         href={link}
         target="_blank"
-        className="text-secondary text-sm mt-2 inline-block underline"
+        className="text-secondary text-sm mt-2 inline-block hover:opacity-80 hover:underline "
       >
         View file
       </a>

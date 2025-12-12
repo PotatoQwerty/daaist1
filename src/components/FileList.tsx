@@ -1,4 +1,4 @@
-import React from "react";
+
 import FileCard from "./FileCard";
 function FileList({ files }: { files: any[] }) {
   return (

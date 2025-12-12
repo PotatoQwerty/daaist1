@@ -25,6 +25,7 @@ import { useCurrentRole } from "@/hooks/use-current-role";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -71,7 +72,7 @@ export default function Navbar() {
   if (!mounted) return null;
 
   return (
-    <nav className="flex justify-between items-center w-full p-4 bg-background/60 backdrop-blur-xl border-b border-white/10 shadow-sm sticky top-0 left-0 right-0 z-50 supports-[backdrop-filter]:bg-background/60">
+    <nav className="flex justify-between items-center w-full p-4 bg-background/60 backdrop-blur-xl border-b border-white/10 shadow-sm sticky top-0 left-0 right-0 z-50 supports-backdrop-filter:bg-background/60">
       {/* Logo */}
       <Link
         href="/"
@@ -80,7 +81,6 @@ export default function Navbar() {
         <Image
           src={resolvedTheme === "dark" ? DaaistLogoHorDark : DaaistLogoHor}
           width={150}
-          height={100}
           alt="Daaist Logo"
           priority
         />
@@ -90,6 +90,7 @@ export default function Navbar() {
       <div className="hidden md:flex items-center gap-8 text-sm">
         {NAV_LINKS.map((link) => (
           <Link
+            prefetch={false}
             key={link.href}
             href={link.href}
             aria-current={isActive(link.href) ? "page" : undefined}
@@ -124,10 +125,15 @@ export default function Navbar() {
         {session ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="relative w-9 h-9 rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-ring transition-all focus:outline-none">
+              <button
+                title="Menu"
+                type="button"
+                className="relative w-9 h-9 rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-ring transition-all focus:outline-none"
+              >
                 <Image
                   src={session.user.image || "/images/placeholder.png"}
                   alt="Profile"
+                  sizes="36px"
                   fill
                   className="object-cover"
                 />
@@ -171,6 +177,7 @@ export default function Navbar() {
           </DropdownMenu>
         ) : (
           <button
+            type="button"
             onClick={() => signIn("google")}
             className="p-2 bg-accent rounded-lg hover:bg-primary/90 hover:text-white transition-all ease-in-out duration-150"
           >
@@ -182,14 +189,19 @@ export default function Navbar() {
         <div className="md:hidden">
           <Sheet>
             <SheetTrigger asChild>
-              <button className="p-2 -mr-2 text-foreground/80 hover:text-foreground">
+              <button
+                type="button"
+                title="Menu"
+                className="p-2 -mr-2 text-foreground/80 hover:text-foreground"
+              >
                 <Menu size={24} />
               </button>
             </SheetTrigger>
             <SheetContent
               side="right"
-              className="w-[200px] sm:w-[250px] p-2 flex flex-col items-center bg-background/60 backdrop-blur-xl border-white/10 shadow-sm supports-[backdrop-filter]:bg-background/60"
+              className="w-[200px] sm:w-[250px] p-2 flex flex-col items-center bg-background/60 backdrop-blur-xl border-white/10 shadow-sm supports-backdrop-filter:bg-background/60"
             >
+              <SheetDescription aria-description="Menu" />
               <SheetHeader>
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>

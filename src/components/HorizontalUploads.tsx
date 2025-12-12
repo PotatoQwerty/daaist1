@@ -31,19 +31,23 @@ export default function HorizontalUploads({ uploads, handleDelete }: Props) {
         {uploads.length > 0 ? (
           <>
             <button
+              type="button"
+              title="left-scroll"
               onClick={() => scroll("left")}
               className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
             >
               <ChevronLeftIcon className="size-5" />
             </button>
             <button
+              type="button"
+              title="right-scroll"
               onClick={() => scroll("right")}
               className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
             >
               <ChevronRightIcon className="w-5 h-5" />
             </button>
             {uploads.map((i) => (
-              <div key={i.id} className="flex-shrink-0 snap-start">
+              <div key={i.id} className="shrink-0 snap-start">
                 <UploadedCard
                   type={i.type}
                   title={i.file_name}

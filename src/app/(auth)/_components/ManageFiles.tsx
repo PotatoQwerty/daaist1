@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { FileIcon, Edit, FileX, MoreVertical } from "lucide-react";
-import type { File } from "../types/next-auth";
+import type { File } from "../../../types/next-auth";
 interface manageFileProps extends File {
   onDelete: () => void;
 }
@@ -38,6 +38,8 @@ function ManageFiles({
       {/* Top-right menu */}
       <div className="absolute top-3 right-3 z-50 " ref={menuRef}>
         <button
+          type="button"
+          title="manage file button"
           onClick={(e) => {
             e.stopPropagation();
             setIsOpen((prev) => !prev);
@@ -64,13 +66,14 @@ function ManageFiles({
       </div>
 
       {/* File Preview */}
-      <div className="w-full h-[160px] flex items-center justify-center bg-muted rounded-xl overflow-hidden">
+      <div className="w-full h-40 flex items-center justify-center bg-muted rounded-xl overflow-hidden">
         {type.includes("image") ? (
           <Link
+            prefetch={false}
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-[300px] h-[160px] block"
+            className="w-[300px] h-40 block"
           >
             <Image
               src={url}

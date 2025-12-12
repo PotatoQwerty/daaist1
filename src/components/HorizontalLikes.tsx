@@ -30,25 +30,29 @@ function HorizontalLikes({ likes, liked, handleLike }: LikesProps) {
         {likes.length ? (
           <>
             <button
+              type="button"
+              title="left-scroll"
               onClick={() => scroll("left")}
               className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
             >
               <ChevronLeftIcon className="w-5 h-5" />
             </button>
             <button
+              type="button"
+              title="right-scroll"
               onClick={() => scroll("right")}
               className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
             >
               <ChevronRightIcon className="w-5 h-5" />
             </button>
             {likes.map((i) => (
-              <div key={i.id} className="flex-shrink-0 snap-start">
+              <div key={i.id} className="shrink-0 snap-start">
                 <FileCard
                   size={i.size}
                   title={i.file_name}
                   subject={i.subject}
                   type={i.type}
-                  link={i.url}
+                  url={i.url}
                   handleLike={() => handleLike(i.id)}
                   isLiked={liked.some((item) => item.id === i.id)}
                 />

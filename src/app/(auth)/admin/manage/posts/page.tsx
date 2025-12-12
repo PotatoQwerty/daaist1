@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { File } from "@/types/next-auth";
-import ManageFiles from "@/components/ManageFiles";
+import ManageFiles from "@/app/(auth)/_components/ManageFiles";
 import { Loader2Icon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
