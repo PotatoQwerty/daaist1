@@ -13,7 +13,7 @@ function OnboardingForm() {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [hidden, setHidden] = useState<boolean>(true);
   const [foundDaa, setFoundDaa] = useState<boolean>(false);
-
+  const [error, setError] = useState<string>("");
   // FIX 1: Initialize isdaa as null explicitly
   const [form, setForm] = useState<{
     firstname: string;
@@ -37,6 +37,38 @@ function OnboardingForm() {
   useEffect(() => {
     formRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [router]);
+
+  // Debounced validation effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const username = form.username;
+
+      // Empty check - clear error if empty
+      if (!username) {
+        setError("");
+        return;
+      }
+
+      const isValidUsername = (u: string) => {
+        const regex = /^(?![._])(?!.*[._]$)(?!.*\.\.)[a-zA-Z0-9._]{5,20}$/;
+        return regex.test(u);
+      };
+
+      if (username.startsWith(".")) {
+        setError("Username cannot start with a dot");
+      } else if (username.includes(" ")) {
+        setError("Spaces are not allowed in usernames");
+      } else if (!isValidUsername(username)) {
+        setError(
+          "Username must be 5-20 chars (only letters, numbers, dot, underscore)"
+        );
+      } else {
+        setError("");
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [form.username]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -93,7 +125,11 @@ function OnboardingForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
-
+    if (error) {
+      toast.error(error);
+      setSubmitting(false);
+      return;
+    }
     try {
       const res = await fetch("/api/registration/onboarding", {
         method: "POST",
@@ -132,7 +168,7 @@ function OnboardingForm() {
           <h2 className="text-4xl font-extrabold text-primary uppercase tracking-tight">
             Student Sign Up
           </h2>
-          <p className="text-gray-300 text-lg">
+          <p className="text-accent text-lg">
             Complete your profile to start using DAA’ist
           </p>
         </div>
@@ -145,7 +181,7 @@ function OnboardingForm() {
         >
           {/* Question Section */}
           <div className="flex flex-col gap-4 justify-center items-center py-2">
-            <span className="text-gray-700 font-medium text-lg">
+            <span className="text-primary font-medium text-lg">
               Do you study in DAA?
             </span>
             <IsDaaSelector
@@ -166,14 +202,14 @@ function OnboardingForm() {
                 name="registration_number"
                 title="matricule"
                 placeholder="Registration number (e.g., 2121001234)"
-                className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none text-gray-700 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:bg-gray-200 disabled:cursor-not-allowed placeholder:text-gray-400"
+                className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none text-primary focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:bg-gray-200 disabled:cursor-not-allowed placeholder:text-gray-400"
               />
 
               <button
                 onClick={handleCheckDaa}
                 disabled={foundDaa}
                 type="button"
-                className={`bg-primary text-white rounded-xl p-4 font-bold text-lg hover:bg-blue-800 transition shadow-lg shadow-blue-500/20 active:scale-[0.98] w-full ${
+                className={`bg-primary text-white rounded-xl p-4 font-bold text-lg hover:bg-blue-800 transition shadow-lg cursor-pointer shadow-blue-500/20 active:scale-[0.98] w-full ${
                   foundDaa ? "hidden" : "block"
                 }`}
               >
@@ -188,13 +224,13 @@ function OnboardingForm() {
                       title="readOnlylastname"
                       readOnly
                       value={form.lastname}
-                      className="border border-gray-200 bg-gray-200 p-4 rounded-xl text-gray-700 font-medium cursor-not-allowed "
+                      className="border border-gray-200 bg-gray-200 p-4 rounded-xl text-primary font-medium cursor-not-allowed "
                     />
                     <input
                       readOnly
                       title="readOnlyfirstname"
                       value={form.firstname}
-                      className="border border-gray-200 bg-gray-200 p-4 rounded-xl text-gray-700 font-medium cursor-not-allowed"
+                      className="border border-gray-200 bg-gray-200 p-4 rounded-xl text-primary font-medium cursor-not-allowed"
                     />
                   </div>
 
@@ -208,7 +244,7 @@ function OnboardingForm() {
                     placeholder="Choose a Username"
                     className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50  placeholder:text-gray-400"
                   />
-
+                  {error && <span className="text-red-500">{error}</span>}
                   <select
                     title="study year select"
                     name="studyyear"
@@ -231,7 +267,7 @@ function OnboardingForm() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="bg-primary mt-2 flex gap-2 justify-center items-center text-white p-4 rounded-xl font-bold text-lg hover:bg-blue-800 transition shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                    className="bg-primary mt-2 flex gap-2 justify-center items-center text-white p-4 rounded-xl font-bold text-lg hover:bg-blue-800 transition shadow-lg shadow-blue-500/20 active:scale-[0.98] cursor-pointer"
                   >
                     {submitting ? (
                       <Loader2 className="animate-spin" />
@@ -277,6 +313,7 @@ function OnboardingForm() {
                 placeholder="Username"
                 className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50  placeholder:text-gray-400"
               />
+              {error && <span className="text-red-500">{error}</span>}
 
               <input
                 onChange={handleChange}
@@ -310,7 +347,7 @@ function OnboardingForm() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-primary mt-4 flex gap-2 justify-center items-center text-white p-4 rounded-xl font-bold text-lg hover:bg-blue-800 transition shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                className="bg-primary mt-4 flex gap-2 justify-center items-center text-white p-4 rounded-xl font-bold text-lg hover:bg-blue-800 transition shadow-lg shadow-blue-500/20 active:scale-[0.98] cursor-pointer"
               >
                 {submitting ? <Loader2 className="animate-spin" /> : "Sign Up"}
               </button>

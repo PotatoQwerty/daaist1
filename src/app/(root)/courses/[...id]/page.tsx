@@ -1,13 +1,15 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import FilesClient from "@/components/FilesClient";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
 
 export const revalidate = 3600; // Cache for 1 hour
 
 export default async function CoursesPage({
   params,
 }: {
-  params: { id: string[] }; // not Promise
+  params: Promise<{ id: string[] }>;
 }) {
   const { id } = await params;
   const year = id[0];
@@ -23,17 +25,23 @@ export default async function CoursesPage({
   }
 
   return (
-    <div className="flex flex-col w-full min-h-screen p-6 bg-background">
-      <Link
-        href="/courses"
-        className="text-sm p-3 bg-red-400 w-fit supports-backdrop-filter:bg-red-400/60 rounded-lg hover:opacity-80"
-      >
-        <span>&larr; Back to all courses</span>
-      </Link>
-      <h1 className="text-3xl font-bold mb-6 text-center text-foreground">
-        Courses for {year}
-      </h1>
-      <FilesClient initialFiles={courses || []} />
+    <div className="flex flex-col w-full min-h-screen p-6 bg-background space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" asChild className="shrink-0">
+          <Link href="/courses">
+            <ChevronLeft className="size-5" />
+          </Link>
+        </Button>
+        <div className="flex flex-col">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            {year}
+          </h1>
+          <p className="text-muted-foreground">
+            Browse resources and materials for {year}
+          </p>
+        </div>
+      </div>
+      <FilesClient initialFiles={courses || []} level={year} />
     </div>
   );
 }

@@ -48,6 +48,7 @@ function HorizontalLikes({ likes, liked, handleLike }: LikesProps) {
             {likes.map((i) => (
               <div key={i.id} className="shrink-0 snap-start">
                 <FileCard
+                  category={i.category}
                   size={i.size}
                   title={i.file_name}
                   subject={i.subject}

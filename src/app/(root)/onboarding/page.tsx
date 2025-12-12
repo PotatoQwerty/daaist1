@@ -12,11 +12,6 @@ export default async function Onboarding() {
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-white">
-      {/* 🎨 ARTISTIC SECTION 
-        - Mobile: Top header (h-48), w-full
-        - Desktop: Left sidebar (h-screen), w-1/2
-        - sticky: Keeps it visible while scrolling on desktop if the form is long
-      */}
       <div className="relative w-full md:w-1/2 h-48 md:h-screen md:sticky md:top-0 bg-gray-50 overflow-hidden flex items-center justify-center transition-all duration-500 ease-in-out">
         {/* Decorative Circles (Using % to be responsive) */}
         <div className="absolute top-[-10%] left-[-10%] w-40 h-40 md:w-72 md:h-72 bg-yellow-400/80 rounded-full blur-2xl md:blur-3xl mix-blend-multiply" />
@@ -34,10 +29,6 @@ export default async function Onboarding() {
         </div>
       </div>
 
-      {/* 📝 FORM SECTION
-        - Mobile: w-full, flows naturally below header
-        - Desktop: w-1/2, flows next to sidebar
-      */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 lg:p-20 bg-background">
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
           <OnboardingForm />

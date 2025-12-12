@@ -36,7 +36,8 @@ export async function getLikedFiles(userId: string) {
         url,
         size,
         type,
-        subject
+        subject,
+        category
       )
     `
     )

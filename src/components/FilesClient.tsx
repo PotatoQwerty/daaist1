@@ -10,10 +10,24 @@ interface FilesClientProps {
   initialFiles: File[];
 }
 
-export default function FilesClient({ initialFiles }: FilesClientProps) {
+import { subjectOptions, LevelKey } from "@/constants/uploadConstants";
+import { Button } from "@/components/ui/button";
+
+interface FilesClientProps {
+  initialFiles: File[];
+  level?: string;
+}
+
+export default function FilesClient({ initialFiles, level }: FilesClientProps) {
   const [liked, setLiked] = useState<{ id: string }[]>([]);
+  const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const { data: session, status } = useSession();
   const userId = session?.user?.id;
+
+  const filesToDisplay =
+    selectedSubject === "all"
+      ? initialFiles
+      : initialFiles.filter((file) => file.subject === selectedSubject);
 
   useEffect(() => {
     if (status !== "authenticated" || !userId) return;
@@ -62,25 +76,69 @@ export default function FilesClient({ initialFiles }: FilesClientProps) {
     }
   };
 
-  if (!initialFiles || initialFiles.length === 0) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <MessageCard
-          type="error"
-          message="There is nothing uploaded here"
-          key="err-msg"
-        />
-      </div>
-    );
-  }
+  const getSubjectLabel = (value: string) => {
+    if (!level) return value;
+    const subjects = subjectOptions[level as LevelKey];
+    return subjects?.find((s) => s.value === value)?.label || value;
+  };
 
   // Map files to include props needed for FileCard (via FileList)
-  const filesWithProps = initialFiles.map((file) => ({
+  const filesWithProps = filesToDisplay.map((file) => ({
     ...file,
     title: file.file_name, // Map file_name to title
     handleLike: () => handleLike(file.id),
     isLiked: liked.some((l) => l.id === file.id),
   }));
 
-  return <FileList files={filesWithProps} />;
+  const subjects = level ? subjectOptions[level as LevelKey] : [];
+
+  return (
+    <div className="flex flex-col gap-6 w-full h-full">
+      {level && subjects && subjects.length > 0 && (
+        <div className="flex flex-wrap gap-2 pb-4 overflow-x-auto no-scrollbar mask-linear">
+          <div className="flex gap-1">
+            <Button
+              variant={selectedSubject === "all" ? "default" : "outline"}
+              onClick={() => setSelectedSubject("all")}
+              size="sm"
+              className="rounded-full"
+            >
+              All
+            </Button>
+            {subjects.map((subject) => (
+              <Button
+                key={subject.value}
+                variant={
+                  selectedSubject === subject.value ? "default" : "outline"
+                }
+                onClick={() => setSelectedSubject(subject.value)}
+                size="sm"
+                className="rounded-full"
+              >
+                {subject.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!initialFiles || initialFiles.length === 0 ? (
+        <div className="flex justify-center items-center h-full">
+          <MessageCard
+            type="error"
+            message="There is nothing uploaded here"
+            key="err-msg"
+          />
+        </div>
+      ) : filesToDisplay.length === 0 ? (
+        <div className="flex justify-center items-center h-full min-h-[200px]">
+          <p className="text-muted-foreground">
+            No files found for {getSubjectLabel(selectedSubject)}
+          </p>
+        </div>
+      ) : (
+        <FileList files={filesWithProps} />
+      )}
+    </div>
+  );
 }

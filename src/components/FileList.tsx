@@ -1,4 +1,3 @@
-
 import FileCard from "./FileCard";
 function FileList({ files }: { files: any[] }) {
   return (

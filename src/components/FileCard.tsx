@@ -8,6 +8,7 @@ function FileCard({
   handleLike,
   isLiked,
   subject,
+  category,
 }: {
   title: string;
   size: number;
@@ -16,11 +17,20 @@ function FileCard({
   handleLike: () => void;
   isLiked: boolean;
   subject: string;
+  category: string;
 }) {
   const fileSizeMB = (size / (1024 * 1024)).toFixed(2);
+
   // const screenWidth = window.innerWidth; make the width depend on the screensize?
   return (
     <div className="relative w-[280px] h-fit bg-background rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 border border-accent flex flex-col overflow-hidden">
+      {/* TD Badge */}
+      {category === "td" && (
+        <span className="absolute top-3 left-3 z-10 bg-orange-100 text-orange-700 text-xs font-bold px-2 py-1 rounded-md shadow-sm border border-orange-200">
+          TD
+        </span>
+      )}
+
       {/* Like Button */}
       <button
         type="button"
