@@ -31,12 +31,14 @@ export default function HomeClient() {
       You might encounter some errors and bugs since you’re using one of the earliest versions of this website. 
       If you notice anything odd, please contact us."
           />
-          <h1 className="font-bold text-2xl sm:text-3xl text-foreground">
-            Daa&#39;ist — Built by Students
+          <h1 className="font-bold text-2xl sm:text-3xl text-white">
+            Daa&#39;ist — Built by Students for Students...
           </h1>
-          {/* <p className="font-light text-lg sm:text-xl text-white">
-            Find documentation, past exams...
-          </p> */}
+          <p className="font-light text-lg sm:text-xl text-white">
+            Find documentation, past exams, courses, and more — all shared by
+            fellow architecture students at the Département d’Architecture
+            d’Alger.
+          </p>
           <button
             type="button"
             onClick={() => signIn("google")}

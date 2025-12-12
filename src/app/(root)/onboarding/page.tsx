@@ -5,26 +5,44 @@ import { redirect } from "next/navigation";
 export default async function Onboarding() {
   const session = await auth();
   const onboarded = session?.user.onboarded;
+
   if (onboarded) {
-    redirect("/");
+    // redirect("/");
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left Section */}
-      <div className="w-1/2 justify-center items-center hidden md:flex relative overflow-hidden">
-        {/* Abstract Bauhaus shapes */}
-        <div className="absolute top-10 left-10 w-32 h-32 bg-yellow-400 rounded-full" />
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-primary " />
-        <div className="absolute bottom-20 left-10 w-40 h-40 bg-primary " />
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-48 h-6 bg-white" />
-        <h1 className="text-foreground text-5xl font-bold z-10">DAA’ist</h1>
-        {/* the loading component is causing a problem when its hidden for smaller screens  */}
-        {/* <Loading /> */}
+    <div className="flex flex-col md:flex-row min-h-screen bg-white">
+      {/* 🎨 ARTISTIC SECTION 
+        - Mobile: Top header (h-48), w-full
+        - Desktop: Left sidebar (h-screen), w-1/2
+        - sticky: Keeps it visible while scrolling on desktop if the form is long
+      */}
+      <div className="relative w-full md:w-1/2 h-48 md:h-screen md:sticky md:top-0 bg-gray-50 overflow-hidden flex items-center justify-center transition-all duration-500 ease-in-out">
+        {/* Decorative Circles (Using % to be responsive) */}
+        <div className="absolute top-[-10%] left-[-10%] w-40 h-40 md:w-72 md:h-72 bg-yellow-400/80 rounded-full blur-2xl md:blur-3xl mix-blend-multiply" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-48 h-48 md:w-96 md:h-96 bg-primary/60 rounded-full blur-2xl md:blur-3xl mix-blend-multiply" />
+        <div className="absolute top-[20%] right-[10%] w-24 h-24 md:w-40 md:h-40 bg-purple-400/50 rounded-full blur-xl mix-blend-multiply" />
+
+        {/* Brand Text */}
+        <div className="relative z-10 text-center">
+          <h1 className="text-4xl md:text-7xl font-black tracking-tighter text-gray-900 drop-shadow-sm">
+            DAA’ist
+          </h1>
+          <p className="text-sm md:text-lg text-gray-600 font-medium mt-2 tracking-widest uppercase">
+            Student Portal
+          </p>
+        </div>
       </div>
 
-      {/* Right Section */}
-      <OnboardingForm />
+      {/* 📝 FORM SECTION
+        - Mobile: w-full, flows naturally below header
+        - Desktop: w-1/2, flows next to sidebar
+      */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 lg:p-20 bg-background">
+        <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+          <OnboardingForm />
+        </div>
+      </div>
     </div>
   );
 }
