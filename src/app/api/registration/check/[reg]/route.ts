@@ -23,7 +23,6 @@ export async function GET(
     .single();
 
   if (!studiesDaa) {
-    console.log(error);
     return NextResponse.json({ error: "Not a DAA student" }, { status: 404 });
   }
   return NextResponse.json({ data: studiesDaa }, { status: 200 });

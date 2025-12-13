@@ -145,7 +145,6 @@ function OnboardingForm() {
       }
 
       if (!res.ok) {
-        console.log(res);
         throw new Error("Failed to submit onboarding data");
       }
 

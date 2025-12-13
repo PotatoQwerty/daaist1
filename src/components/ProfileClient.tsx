@@ -21,7 +21,7 @@ interface ProfileClientProps {
     likes: any[];
     studyyear?: string;
     bio?: string;
-    isDaa?: boolean;
+    isdaa?: boolean;
     role?: string;
   };
   username: string; // from params
@@ -138,7 +138,7 @@ export default function ProfileClient({
                 {displayYear?.label}
               </span>
               <span className="flex items-center gap-1 text-sm text-slate-100 font-medium bg-accent/80 px-3 py-1 rounded-full shadow-sm">
-                {user.isDaa ? (
+                {user.isdaa ? (
                   <Stars
                     className="size-5"
                     fill="var(--secondary)"
@@ -159,7 +159,7 @@ export default function ProfileClient({
                   />
                 )}
                 <span>
-                  {user.isDaa
+                  {user.isdaa
                     ? `DAA'ist`
                     : user.role === "admin"
                     ? `Admin`

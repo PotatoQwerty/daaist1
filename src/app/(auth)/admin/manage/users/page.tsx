@@ -31,6 +31,7 @@ export default function AdminUsersPage() {
       try {
         const res = await fetch("/api/users");
         const data = await res.json();
+
         if (res.ok) {
           setUsers(Array.isArray(data.users) ? data.users : []);
           setFilteredUsers(Array.isArray(data.users) ? data.users : []);
@@ -120,6 +121,7 @@ export default function AdminUsersPage() {
                   <div className="flex items-center justify-center gap-2">
                     <span>Last Name</span>
                     <button
+                      type="button"
                       className="cursor-pointer"
                       onClick={toggleSort}
                       aria-label="Sort by first name"
@@ -155,7 +157,7 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-2">
                     {user.registration_number || "Not mentioned"}
                   </td>
-                  <td className="px-4 py-2">{user.isDaa ? "Yes" : "No"}</td>
+                  <td className="px-4 py-2">{user.isdaa ? "Yes" : "No"}</td>
                   <td className="px-4 py-2">{user.studyyear || "—"}</td>
                   <td className="px-4 py-2 text-center">
                     <span

@@ -15,7 +15,7 @@ export default {
     async session({ session, user }: { session: Session; user: User }) {
       session.user.id = user.id;
       session.user.role = user.role;
-      session.user.isDaa = user.isDaa;
+      session.user.isdaa = user.isdaa;
       session.user.studyYear = user.studyyear;
       session.user.username = user.username;
       session.user.bio = user.bio;

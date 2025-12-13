@@ -9,7 +9,7 @@ declare module "next-auth" {
       image?: string | null;
       role?: string;
       studyYear?: string;
-      isDaa?: boolean;
+      isdaa?: boolean;
       onboarded?: boolean;
       username?: string;
       bio?: string;
@@ -25,7 +25,7 @@ declare module "next-auth" {
     lastname: string;
     role?: string;
     studyyear?: string;
-    isDaa?: boolean;
+    isdaa?: boolean;
     username?: string;
     registration_number?: string;
     onboarded?: boolean;
