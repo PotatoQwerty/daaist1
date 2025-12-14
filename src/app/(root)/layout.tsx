@@ -7,19 +7,14 @@ import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "next-themes";
 import Footer from "@/components/Footer";
 import ChatBubble from "@/components/ChatBubble";
-import { auth } from "@/auth";
-
 const josefin = Josefin_Sans({
   subsets: ["latin"],
   variable: "--font-josefin",
 });
-
 export const metadata: Metadata = {
   title: "Daa'ist",
-
   description:
     "Discover courses, past exams, design resources, documents, and club activities for architecture students at the Département d’Architecture d’Alger. Daa’ist brings academic content and student creativity together in one platform.",
-
   keywords: [
     "architecture students",
     "daaist",
@@ -34,18 +29,20 @@ export const metadata: Metadata = {
     "architecture projects",
     "studio materials",
   ],
-
   alternates: { canonical: "https://daaist.com/" },
 };
-
-// 1. ADD 'async' here
-export default async function RootLayout({
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  interactiveWidget: "resizes-content",
+};
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
-
   return (
     <html lang="en" suppressHydrationWarning className={`${josefin.variable}`}>
       <body className="kabel-reg">
@@ -54,13 +51,11 @@ export default async function RootLayout({
           defaultTheme="system"
           enableSystem={true}
         >
-          {/* Optional: Pass session to wrapper to prevent flickering */}
           <SessionWrapper>
             <Toaster position="top-right" />
             <Navbar />
             {children}
-            {/* Logic is perfect: Only show chat if logged in */}
-            {session?.user && session?.user.isdaa && <ChatBubble />}
+            <ChatBubble />
           </SessionWrapper>
         </ThemeProvider>
         <Footer />

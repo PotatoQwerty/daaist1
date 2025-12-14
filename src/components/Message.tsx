@@ -1,7 +1,7 @@
 import Image from "next/image";
-import placehodler from "../../public/images/placeholder.png";
+import placeholder from "../../public/images/placeholder.png";
 import Link from "next/link";
-import { supabaseServer } from "@/lib/supabase/server";
+import { memo } from "react";
 
 interface MessageProps {
   messageContent: string;
@@ -10,8 +10,7 @@ interface MessageProps {
   img: string | null;
   username: string;
 }
-
-function Message({
+const Message = memo(function Message({
   messageContent,
   myMsg,
   showAvatar,
@@ -19,27 +18,27 @@ function Message({
   username,
 }: MessageProps) {
   const Avatar = () => (
-    <Link href={`/profile/${username}`} className="shrink-0">
+    <Link href={`/profile/${username}`} className="shrink-0 relative">
       <Image
-        src={img || placehodler}
+        src={img || placeholder}
         width={32}
         height={32}
-        className="rounded-full object-cover"
+        // FIX 2: Added 'w-8 h-8' to force square aspect ratio
+        className="rounded-full object-cover w-8 h-8 border border-gray-100"
         alt="user profile pic"
       />
     </Link>
   );
 
-  // Invisible spacer to maintain layout when avatar is hidden
   const AvatarSpacer = () => <div className="w-8 h-8 shrink-0" />;
+  console.log(username);
 
   return (
-    <>
-      {myMsg ? (
-        /* MY MESSAGE (Right Side) */
-        <div className="flex place-self-end w-fit max-w-[80%] gap-2 items-end">
+    <div className={`w-full flex ${myMsg ? "justify-end" : "justify-start"}`}>
+      <div className="max-w-[80%] flex gap-2 items-end">
+        {myMsg ? (
           <div
-            className={`bg-accent/30 p-3 text-sm ${
+            className={`bg-accent/30 p-2 text-sm whitespace-pre-wrap break-all ${
               showAvatar
                 ? "rounded-l-lg rounded-tr-lg rounded-br-none"
                 : "rounded-lg"
@@ -47,29 +46,30 @@ function Message({
           >
             <p>{messageContent}</p>
           </div>
-
-          {/* Only show avatar if it's the last one, otherwise show spacer */}
-          {showAvatar ? <Avatar /> : <AvatarSpacer />}
-        </div>
-      ) : (
-        /* THEIR MESSAGE (Left Side) */
-        <div className="flex w-fit max-w-[80%] gap-2 items-end">
-          {/* Only show avatar if it's the last one, otherwise show spacer */}
-          {showAvatar ? <Avatar /> : <AvatarSpacer />}
-
-          <div
-            className={`bg-primary/30 p-3 text-sm ${
-              showAvatar
-                ? "rounded-r-lg rounded-tl-lg rounded-bl-none"
-                : "rounded-lg"
-            }`}
-          >
-            <p>{messageContent}</p>
+        ) : (
+          <div className="flex flex-col">
+            {showAvatar ? (
+              <span className="ml-9 mb-0.5 text-xs text-muted-foreground">
+                {username}
+              </span>
+            ) : null}
+            <div className="flex gap-1">
+              {showAvatar ? <Avatar /> : <AvatarSpacer />}
+              <div
+                className={`bg-primary/30 p-2 text-sm whitespace-pre-wrap break-all ${
+                  showAvatar
+                    ? "rounded-r-lg rounded-tl-lg rounded-bl-none"
+                    : "rounded-lg"
+                }`}
+              >
+                <p>{messageContent}</p>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-    </>
+        )}
+      </div>
+    </div>
   );
-}
+});
 
 export default Message;

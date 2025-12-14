@@ -1,7 +1,7 @@
 "use client";
 import { getChatMessages, addChatMessage } from "@/lib/Chat"; // Assuming you have the add function
 import { MessageCircle, Send, X, Loader2 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Message from "./Message";
 import { useSession } from "next-auth/react";
 import { supabaseClient } from "@/lib/supabase/client";
@@ -73,16 +73,19 @@ function ChatBubble() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!session || !session.user.isdaa) return;
     if (!newMessage.trim()) return;
 
     // Optimistic Update (Show message immediately before DB confirms)
 
-    const tempId = `temp-${Date.now()}`;
+    const tempId = crypto.randomUUID();
+
     const tempMsg = {
       id: tempId,
       content: newMessage,
       created_at: new Date().toISOString(),
       user_id: session?.user.id,
+      user_image: session.user.image,
       isTemp: true,
     };
 
@@ -92,7 +95,6 @@ function ChatBubble() {
     // Send minimal payload to server (avoid sending temp fields)
     const payload = {
       content: tempMsg.content,
-      user_id: tempMsg.user_id,
     };
 
     const res = await addChatMessage(payload);
@@ -117,7 +119,25 @@ function ChatBubble() {
       return prev.map((m) => (m.id === tempId ? res : m));
     });
   };
+  const renderedMessages = useMemo(() => {
+    return messages.map((msg, index) => {
+      const isLastInSequence =
+        index === messages.length - 1 ||
+        messages[index + 1].user_id !== msg.user_id;
 
+      return (
+        <Message
+          key={msg.id}
+          messageContent={msg.content}
+          myMsg={msg.user_id === session?.user?.id}
+          showAvatar={isLastInSequence}
+          img={msg.user_image}
+          username={msg.user_username}
+        />
+      );
+    });
+  }, [messages, session?.user?.id]);
+  if (!session || !session.user.isdaa) return null;
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {/* CHAT WINDOW */}
@@ -142,7 +162,7 @@ function ChatBubble() {
           </div>
 
           {/* Messages Area (Scrollable) */}
-          <div className="flex-1 overflow-y-auto p-4 bg-background space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 bg-background flex flex-col space-y-2">
             {isLoading ? (
               <div className="flex justify-center items-center h-full text-gray-400">
                 <Loader2 className="animate-spin size-6" />
@@ -152,23 +172,7 @@ function ChatBubble() {
                 No messages yet. Say hello!
               </div>
             ) : (
-              messages.map((msg, index) => {
-                // Check if the NEXT message is from a different user (or doesn't exist)
-                const isLastInSequence =
-                  index === messages.length - 1 ||
-                  messages[index + 1].user_id !== msg.user_id;
-
-                return (
-                  <Message
-                    key={msg.id}
-                    messageContent={msg.content}
-                    myMsg={msg.user_id === session?.user?.id}
-                    showAvatar={isLastInSequence}
-                    img={msg.user_image}
-                    username={msg.user_username}
-                  />
-                );
-              })
+              renderedMessages
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -180,6 +184,7 @@ function ChatBubble() {
           >
             <input
               type="text"
+              maxLength={120}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."

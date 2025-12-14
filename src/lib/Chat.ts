@@ -4,7 +4,7 @@ import { supabaseServer } from "./supabase/server";
 
 export async function getChatMessages() {
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user || !session.user.isdaa) {
     throw new Error("Unauthorized");
   }
 
@@ -24,16 +24,28 @@ export async function getChatMessages() {
     return [];
   }
 }
-export async function addChatMessage(message) {
+export async function addChatMessage(message: {
+  content: string;
+  user_id: string;
+  user_image: string;
+  user_username: string;
+}) {
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user || !session.user.isdaa) {
     throw new Error("Unauthorized");
   }
+  console.log(message.content);
+
   try {
     const { data: messageSent, error } = await supabaseServer
       .schema("public")
       .from("messages")
-      .insert(message)
+      .insert({
+        content: message.content,
+        user_id: session.user.id,
+        user_image: session.user.image,
+        user_username: session.user.username,
+      })
       .select()
       .single();
     if (error) throw error;
