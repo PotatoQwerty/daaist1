@@ -12,7 +12,7 @@ export async function getChatMessages() {
     // Query the VIEW, not the table
     const { data: messages, error } = await supabaseServer
       .schema("public")
-      .from("chat_messages_view")
+      .from("messages")
       .select("*")
       .order("created_at", { ascending: true });
 
