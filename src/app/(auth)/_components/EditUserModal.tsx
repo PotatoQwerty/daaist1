@@ -28,6 +28,7 @@ export default function EditUserModal({
       const res = await fetch(`/api/users/update`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({
           registration_number: user.registration_number,
           ...formData,

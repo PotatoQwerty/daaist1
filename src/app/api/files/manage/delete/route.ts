@@ -50,8 +50,9 @@ export async function DELETE(req: Request) {
     );
   } catch (err) {
     console.error("Admin deletion error:", err);
+    const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: "Failed to delete file", details: err },
+      { error: "Failed to delete file", details: message },
       { status: 500 }
     );
   }

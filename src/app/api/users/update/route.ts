@@ -38,8 +38,9 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ user: data[0] });
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal Server Error", details: message },
       { status: 500 }
     );
   }

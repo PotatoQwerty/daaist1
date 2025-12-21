@@ -11,7 +11,7 @@ import {
 } from "@/constants/uploadConstants";
 import { supabaseClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
-import { Loader2Icon } from "lucide-react";
+import { CircleCheck, Loader2Icon } from "lucide-react";
 import { useSession } from "next-auth/react";
 //TODO: maybe create a docs table in the backend
 export default function UploadForm() {
@@ -25,7 +25,8 @@ export default function UploadForm() {
     title: string;
     level: YearOption | null;
     subject: SubjectOption | null;
-  }>({ title: "", level: null, subject: null });
+    issum: boolean;
+  }>({ title: "", level: null, subject: null, issum: false });
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -43,7 +44,8 @@ export default function UploadForm() {
     e.preventDefault();
 
     if (!file) throw new Error("Please select a file to upload.");
-    if (!userId) throw new Error("You must be logged in to upload files.");
+    if (!userId && !session)
+      throw new Error("You must be logged in to upload files.");
 
     setIsUploading(true);
 
@@ -74,6 +76,7 @@ export default function UploadForm() {
         category: cat,
         level: formData.level?.value || null,
         subject: formData.subject?.value || null,
+        issum: formData.issum,
         uploaded_by: userId,
       });
 
@@ -82,7 +85,7 @@ export default function UploadForm() {
       // reset form
       setFile(null);
       setCat("");
-      setFormData({ title: "", level: null, subject: null });
+      setFormData({ title: "", level: null, subject: null, issum: false });
     } finally {
       setIsUploading(false);
     }
@@ -180,6 +183,30 @@ export default function UploadForm() {
                 }
                 isDisabled={!formData.level}
               />
+              {cat === "course" && (
+                <>
+                  <label
+                    htmlFor="issum"
+                    className="flex gap-1 justify-center items-center text-xl"
+                  >
+                    <input
+                      type="checkbox"
+                      title="issum"
+                      name="issum"
+                      id="issum"
+                      className="peer hidden"
+                      checked={formData.issum}
+                      onChange={() =>
+                        setFormData({ ...formData, issum: !formData.issum })
+                      }
+                    />
+
+                    <CircleCheck className="size-5 peer-checked:fill-accent" />
+
+                    <span>This is a summary</span>
+                  </label>
+                </>
+              )}
             </div>
           )}
 
@@ -189,6 +216,7 @@ export default function UploadForm() {
               Upload File
             </label>
             <input
+              title="file input"
               type="file"
               name="file"
               className="w-full border-2 border-dashed border-accent rounded-md p-3 bg-primary/50 hover:bg-primary/80 cursor-pointer file:cursor-pointer file:border-none file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-primary file:text-white"

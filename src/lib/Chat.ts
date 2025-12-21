@@ -34,7 +34,6 @@ export async function addChatMessage(message: {
   if (!session?.user || !session.user.isdaa) {
     throw new Error("Unauthorized");
   }
-  console.log(message.content);
 
   try {
     const { data: messageSent, error } = await supabaseServer

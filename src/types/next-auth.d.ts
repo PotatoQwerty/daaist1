@@ -34,7 +34,8 @@ declare module "next-auth" {
     likes: string[];
   }
 }
-type FileCategory = "doc" | "image" | "video" | "other";
+type FileCategory = "td" | "course" | "exam" | "other" | "doc";
+
 import type { LevelKey } from "@/constants/uploadConstants";
 
 export interface File {
@@ -49,4 +50,8 @@ export interface File {
   level: LevelKey;
   subject: string;
   type: string;
+  issum?: boolean;
+  title?: string;
+  handleLike?: () => void;
+  isLiked?: boolean;
 }

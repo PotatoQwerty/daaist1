@@ -1,4 +1,5 @@
-import { Heart, File, DownloadCloud, ImageIcon } from "lucide-react";
+import { File } from "@/types/next-auth";
+import { Heart, FileIcon, DownloadCloud, ImageIcon } from "lucide-react";
 
 function FileCard({
   title,
@@ -9,16 +10,8 @@ function FileCard({
   isLiked,
   subject,
   category,
-}: {
-  title: string;
-  size: number;
-  type: string;
-  url: string;
-  handleLike: () => void;
-  isLiked: boolean;
-  subject: string;
-  category: string;
-}) {
+  issum,
+}: File) {
   const fileSizeMB = (size / (1024 * 1024)).toFixed(2);
 
   // const screenWidth = window.innerWidth; make the width depend on the screensize?
@@ -28,6 +21,11 @@ function FileCard({
       {category === "td" && (
         <span className="absolute top-3 left-3 z-10 bg-orange-100 text-orange-700 text-xs font-bold px-2 py-1 rounded-md shadow-sm border border-orange-200">
           TD
+        </span>
+      )}
+      {issum && (
+        <span className="absolute top-3 left-3 z-10 bg-primary text-white text-xs font-bold px-2 py-1 rounded-md shadow-sm border border-white/60">
+          Summary
         </span>
       )}
 
@@ -49,7 +47,7 @@ function FileCard({
         {type.includes("image") ? (
           <ImageIcon className="size-14 text-accent" />
         ) : (
-          <File className="size-14 text-accent" />
+          <FileIcon className="size-14 text-accent" />
         )}
       </div>
 

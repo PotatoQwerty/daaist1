@@ -12,6 +12,7 @@ interface FilesClientProps {
 
 import { subjectOptions, LevelKey } from "@/constants/uploadConstants";
 import { Button } from "@/components/ui/button";
+import { CircleCheck } from "lucide-react";
 
 interface FilesClientProps {
   initialFiles: File[];
@@ -21,13 +22,15 @@ interface FilesClientProps {
 export default function FilesClient({ initialFiles, level }: FilesClientProps) {
   const [liked, setLiked] = useState<{ id: string }[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
+  const [onlySum, setOnlySum] = useState<boolean>(false);
   const { data: session, status } = useSession();
   const userId = session?.user?.id;
 
-  const filesToDisplay =
-    selectedSubject === "all"
-      ? initialFiles
-      : initialFiles.filter((file) => file.subject === selectedSubject);
+  const filesToDisplay = initialFiles.filter(
+    (file) =>
+      (selectedSubject === "all" || file.subject === selectedSubject) &&
+      (!onlySum || file.issum)
+  );
 
   useEffect(() => {
     if (status !== "authenticated" || !userId) return;
@@ -119,6 +122,24 @@ export default function FilesClient({ initialFiles, level }: FilesClientProps) {
               </Button>
             ))}
           </div>
+          <label
+            htmlFor="issum"
+            className="flex gap-1 justify-center items-center text-xl "
+          >
+            <input
+              type="checkbox"
+              title="issum"
+              name="issum"
+              id="issum"
+              className="peer hidden"
+              checked={onlySum}
+              onChange={() => setOnlySum(!onlySum)}
+            />
+
+            <CircleCheck className="size-5 peer-checked:fill-accent" />
+
+            <span>Show only summaries</span>
+          </label>
         </div>
       )}
 

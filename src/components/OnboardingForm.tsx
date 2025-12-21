@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import IsDaaSelector from "./IsDaaSelector";
 import { useSession } from "next-auth/react";
-
+import swal from "sweetalert2";
 function OnboardingForm() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -14,7 +14,7 @@ function OnboardingForm() {
   const [hidden, setHidden] = useState<boolean>(true);
   const [foundDaa, setFoundDaa] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-  // FIX 1: Initialize isdaa as null explicitly
+
   const [form, setForm] = useState<{
     firstname: string;
     lastname: string;
@@ -91,14 +91,31 @@ function OnboardingForm() {
       toast.error("Registration number is required");
       return;
     }
+
+    const result = await swal.fire({
+      title: "Are you sure you entered the correct matricule?",
+      input: "text",
+      inputLabel: "Your matricule",
+      inputValue: form.registration_number,
+      inputValidator: (value) => {
+        if (!value) return "Matricule Is required!";
+        if (value.length > 15) return "Matricule must be at most 15 characters";
+        return null;
+      },
+      showCancelButton: true,
+    });
+
+    if (!result.isConfirmed) return;
+    const updatedMatricule = result.value;
+    setForm((prevState) => ({
+      ...prevState,
+      registration_number: updatedMatricule,
+    }));
     try {
-      const res = await fetch(
-        `api/registration/check/${form.registration_number}`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      const res = await fetch(`/api/registration/check/${updatedMatricule}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
 
       if (res.status === 404) {
         toast.error(
@@ -107,24 +124,33 @@ function OnboardingForm() {
         return;
       }
 
-      toast.success("DAA student verified!");
+      if (!res.ok) {
+        toast.error("Something went wrong. Please try again.");
+        return;
+      }
+
       const { data } = await res.json();
+
+      toast.success("DAA student verified!");
 
       setForm((prev) => ({
         ...prev,
         firstname: data.firstname,
         lastname: data.lastname,
       }));
+
       setFoundDaa(true);
       setHidden(false);
     } catch (error) {
       console.error("Error checking DAA student:", error);
+      toast.error("Server error while checking student.");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitting(true);
+
     if (error) {
       toast.error(error);
       setSubmitting(false);
@@ -198,6 +224,7 @@ function OnboardingForm() {
                 required
                 disabled={foundDaa}
                 value={form.registration_number}
+                maxLength={15}
                 name="registration_number"
                 title="matricule"
                 placeholder="Registration number (e.g., 2121001234)"
@@ -243,7 +270,9 @@ function OnboardingForm() {
                     placeholder="Choose a Username"
                     className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50  placeholder:text-gray-400"
                   />
+
                   {error && <span className="text-red-500">{error}</span>}
+
                   <select
                     title="study year select"
                     name="studyyear"
@@ -319,6 +348,7 @@ function OnboardingForm() {
                 type="text"
                 required
                 value={form.registration_number}
+                maxLength={15}
                 name="registration_number"
                 placeholder="Registration number (e.g., 2121001234)"
                 className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50  placeholder:text-gray-400"

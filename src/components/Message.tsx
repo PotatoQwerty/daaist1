@@ -31,7 +31,7 @@ const Message = memo(function Message({
   );
 
   const AvatarSpacer = () => <div className="w-8 h-8 shrink-0" />;
-  console.log(username);
+
 
   return (
     <div className={`w-full flex ${myMsg ? "justify-end" : "justify-start"}`}>
