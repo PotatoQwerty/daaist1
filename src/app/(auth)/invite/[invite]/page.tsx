@@ -33,7 +33,7 @@ function Page() {
           type="button"
           onClick={() =>
             signIn("google", {
-              callbackUrl: `/admin-invite/${rawTokenFromUrl}`,
+              callbackUrl: `/invite/${rawTokenFromUrl}`,
             })
           }
         >
