@@ -6,9 +6,11 @@ export interface CategoryOption {
   label: string;
 }
 
+export type LevelKey = "L1" | "L2" | "L3" | "M1" | "M2";
+
 export interface YearOption {
   id: number;
-  value: string;
+  value: LevelKey;
   label: string;
 }
 
@@ -36,8 +38,6 @@ export const categoryOptions = [
     icon: "📄",
   },
 ];
-
-export type LevelKey = "L1" | "L2" | "L3" | "M1" | "M2";
 
 export const yearOptions: YearOption[] = [
   { id: 1, value: "L1", label: "1st year (L1)" },

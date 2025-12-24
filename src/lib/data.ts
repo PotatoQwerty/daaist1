@@ -2,13 +2,25 @@ import { supabaseServer } from "@/lib/supabase/server";
 
 export async function getUserByUsername(username: string) {
   const { data, error } = await supabaseServer
-    .from("users")
+    .schema("public")
+    .from("profiles")
     .select("*")
     .eq("username", username)
     .single();
 
+  const { data: enrollmentData } = await supabaseServer
+    .schema("public")
+    .from("student_enrollments")
+    .select("study_year, isdaa")
+    .eq("user_id", data?.user_id)
+    .single();
+
   if (error) return null;
-  return data;
+  return {
+    ...data,
+    studyyear: enrollmentData?.study_year,
+    isdaa: enrollmentData?.isdaa,
+  };
 }
 
 export async function getFilesByUserId(userId: string) {

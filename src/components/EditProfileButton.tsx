@@ -4,6 +4,7 @@ import { Edit3, Loader2 } from "lucide-react";
 import Image, { StaticImageData } from "next/image";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useUser } from "@/context/user-context";
 
 export default function EditProfileButton({
   isOwnProfile,
@@ -13,6 +14,7 @@ export default function EditProfileButton({
   currentImage: string | StaticImageData;
 }) {
   const [image, setImage] = useState<string>();
+  const { refreshUser } = useUser();
 
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +35,10 @@ export default function EditProfileButton({
       const data = await res.json();
 
       if (data.error) throw new Error(data.error);
-      if (data.imageUrl) setImage(data.imageUrl);
+      if (data.imageUrl) {
+        setImage(data.imageUrl);
+        await refreshUser();
+      }
     } catch (error: any) {
       console.error("Upload failed:", error);
       toast.error(error.message || "Upload failed ❌");

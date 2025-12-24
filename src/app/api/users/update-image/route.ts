@@ -17,9 +17,10 @@ export async function POST(req: Request) {
 
   // 🧩 Get the user's current image first
   const { data: userData, error: fetchError } = await supabaseServer
-    .from("users")
+    .schema("public")
+    .from("profiles")
     .select("image")
-    .eq("id", session.user.id)
+    .eq("user_id", session.user.id)
     .single();
 
   if (fetchError)
@@ -60,9 +61,10 @@ export async function POST(req: Request) {
 
   // 🧱 Update the user's image in the database
   const { error: updateError } = await supabaseServer
-    .from("users")
+    .schema("public")
+    .from("profiles")
     .update({ image: imageUrl })
-    .eq("id", session.user.id);
+    .eq("user_id", session.user.id);
 
   if (updateError)
     return NextResponse.json({ error: updateError.message }, { status: 500 });

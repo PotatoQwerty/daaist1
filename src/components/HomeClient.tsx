@@ -10,6 +10,7 @@ import { useIsOnBoarded } from "@/hooks/use-is-onboarded";
 
 export default function HomeClient() {
   const { onboarded, loading } = useIsOnBoarded();
+  
   const { status } = useSession();
   const router = useRouter();
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Edit2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/user-context";
 
 export default function ProfileBio({
   actualBio,
@@ -13,11 +14,12 @@ export default function ProfileBio({
 }) {
   const [bio, setBio] = useState(actualBio || "");
   const router = useRouter();
+  const { refreshUser } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const handleUpdate = async () => {
     try {
-      const res = await fetch("/api/users/update", {
-        method: "PATCH",
+      const res = await fetch("/api/profile/update", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -29,6 +31,7 @@ export default function ProfileBio({
       const data = await res.json();
       if (data.user) {
         setIsEditing(false);
+        await refreshUser();
         router.refresh();
       }
     } catch (error) {

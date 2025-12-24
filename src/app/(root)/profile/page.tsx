@@ -1,15 +1,27 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { supabaseServer } from "@/lib/supabase/server";
 
 export default async function ProfileRedirectPage() {
   const session = await auth();
 
-  // If not logged in → go to login
-  if (!session) {
+  if (!session?.user?.id) {
     redirect("/");
   }
 
-  // Redirect logged-in user to their public profile even if there is no session it will show the public profile but do we actually want that?
+  // Fetch username directly from DB to avoid stale session data
+  const { data: profile } = await supabaseServer
+    .schema("public") // explicit schema is good practice as seen in your other files
+    .from("profiles")
+    .select("username")
+    .eq("user_id", session.user.id)
+    .single();
 
-  redirect(`/profile/${session.user.username}`);
+  if (!profile?.username) {
+    // If no profile found, maybe they haven't onboarded yet or something is wrong
+    // Redirecting to home or potentially onboarding check could go here
+    redirect("/");
+  }
+
+  redirect(`/profile/${profile.username}`);
 }

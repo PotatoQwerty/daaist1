@@ -3,11 +3,16 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { r2Client } from "@/lib/r2Client";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { auth } from "@/auth";
+import { getUserRoles } from "@/lib/supabase/actions";
 
 export async function DELETE(req: Request) {
-  // Check admin session
   const session = await auth();
-  if (!session || session.user?.role !== "admin") {
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+  const { isAdmin } = await getUserRoles(session?.user?.id);
+
+  if (!isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

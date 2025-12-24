@@ -19,23 +19,21 @@ interface ProfileClientProps {
   initialUser: User & {
     uploads: any[];
     likes: any[];
+    user_id: string;
     studyyear?: string;
     bio?: string;
     isdaa?: boolean;
     role?: string;
   };
-  username: string; // from params
 }
 
-export default function ProfileClient({
-  initialUser,
-  username,
-}: ProfileClientProps) {
+export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const { data: session } = useSession();
   const [user, setUser] = useState(initialUser);
-  const role = useCurrentRole();
+  const { isAdmin, roles } = useCurrentRole();
+  console.log(initialUser);
 
-  const isOwnProfile = session?.user.username === username;
+  const isOwnProfile = session?.user.id === user.user_id;
 
   const handleDelete = async (fileUrl: string) => {
     try {
@@ -128,7 +126,7 @@ export default function ProfileClient({
           <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-3 w-full">
             <div>
               <h1 className="text-3xl font-bold text-foreground tracking-tight">
-                {user.name}
+                {user.firstname + " " + user.lastname}
               </h1>
               <p className="text-gray-600">@{user.username}</p>
             </div>
@@ -186,7 +184,7 @@ export default function ProfileClient({
           <h2 className="text-2xl font-semibold text-primary uppercase tracking-wide">
             Uploaded Projects
           </h2>
-          {isOwnProfile && role === "admin" && (
+          {isOwnProfile && isAdmin && (
             <Link
               href="/upload"
               className="text-sm min-w-fit bg-secondary hover:bg-secondary/85 hover:text-white text-black font-semibold px-4 py-2 rounded-full shadow transition duration-300"
@@ -198,6 +196,7 @@ export default function ProfileClient({
 
         {user.uploads && user.uploads.length > 0 ? (
           <HorizontalUploads
+            isOwnProfile={isOwnProfile}
             uploads={user.uploads}
             handleDelete={handleDelete}
           />
@@ -224,6 +223,7 @@ export default function ProfileClient({
 
         {user.likes && user.likes.length > 0 ? (
           <HorizontalLikes
+            isOwnProfile={isOwnProfile}
             likes={user.likes}
             liked={user.likes}
             handleLike={handleLike}

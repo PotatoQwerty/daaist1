@@ -1,10 +1,14 @@
 import { auth } from "@/auth";
 import OnboardingForm from "@/components/OnboardingForm";
+import { isOnboarded } from "@/lib/supabase/actions";
 import { redirect } from "next/navigation";
 
 export default async function Onboarding() {
   const session = await auth();
-  const onboarded = session?.user.onboarded;
+
+  if (!session) return null;
+
+  const onboarded = await isOnboarded(session?.user.id);
 
   if (onboarded) {
     redirect("/");

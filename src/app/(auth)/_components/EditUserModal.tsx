@@ -1,15 +1,27 @@
 import React, { useState } from "react";
 import type { User } from "next-auth";
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
 export default function EditUserModal({
   user,
   sessionUser,
   onClose,
   onSave,
+  roleOptions = [
+    { value: "admin", label: "Admin" },
+    { value: "club", label: "Club" },
+    { value: "student", label: "Student" },
+  ],
 }: {
   user: User;
   sessionUser: string;
   onClose: () => void;
   onSave: (user: User) => void;
+  roleOptions?: SelectOption[];
 }) {
   const [formData, setFormData] = useState({
     firstname: user.firstname,
@@ -25,12 +37,12 @@ export default function EditUserModal({
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`/api/users/update`, {
-        method: "PATCH",
+      const res = await fetch(`/api/admin/users/update`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
-          registration_number: user.registration_number,
+          targetUserId: user.user_id,
           ...formData,
         }),
       });
@@ -101,21 +113,26 @@ export default function EditUserModal({
               className="w-full p-2 rounded-md border-foreground border"
               onChange={handleFormChanges}
             >
-              <option defaultChecked value="change">
-                Please select a new role
-              </option>
-              <option value="admin">Admin</option>
-              <option value="club">Club</option>
-              <option value="student">Student</option>
+              <option value="">Please select a new role</option>
+              {roleOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </>
         )}
 
         <div className="flex justify-end gap-2 p-4">
-          <button className="bg-green-500 rounded-lg p-2" onClick={handleSave}>
+          <button
+            type="button"
+            className="bg-green-500 rounded-lg p-2"
+            onClick={handleSave}
+          >
             Save
           </button>
           <button
+            type="button"
             className="bg-accent rounded-lg p-2 hover:bg-accent/70"
             onClick={onClose}
           >

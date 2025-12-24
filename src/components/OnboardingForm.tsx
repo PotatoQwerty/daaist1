@@ -96,7 +96,7 @@ function OnboardingForm() {
       title: "Are you sure you entered the correct matricule?",
       input: "text",
       inputLabel: "Your matricule",
-      inputValue: form.registration_number,
+      inputValue: form.registration_number.trim(),
       inputValidator: (value) => {
         if (!value) return "Matricule Is required!";
         if (value.length > 15) return "Matricule must be at most 15 characters";
@@ -109,13 +109,16 @@ function OnboardingForm() {
     const updatedMatricule = result.value;
     setForm((prevState) => ({
       ...prevState,
-      registration_number: updatedMatricule,
+      registration_number: updatedMatricule.trim(),
     }));
     try {
-      const res = await fetch(`/api/registration/check/${updatedMatricule}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
+      const res = await fetch(
+        `/api/registration/check/${updatedMatricule.trim()}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
       if (res.status === 404) {
         toast.error(

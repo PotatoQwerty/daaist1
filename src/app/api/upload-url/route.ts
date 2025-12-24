@@ -2,8 +2,16 @@ import { NextResponse } from "next/server";
 import { r2Client } from "@/lib/r2Client";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { redirect, RedirectType } from "next/navigation";
+import { getUserRoles } from "@/lib/supabase/actions";
+import { auth } from "@/auth";
 
 export const PUT = async (request: Request) => {
+  const session = await auth();
+  if (!session) redirect("/", RedirectType.replace);
+  const { isAdmin } = await getUserRoles(session?.user.id!);
+  if (!isAdmin || !session) redirect("/", RedirectType.replace);
+
   try {
     const formData = await request.formData();
     const title = formData.get("title") as string | null;

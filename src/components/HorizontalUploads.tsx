@@ -7,9 +7,14 @@ import type { File } from "../types/next-auth";
 interface Props {
   uploads: File[];
   handleDelete: (url: string) => void;
+  isOwnProfile: boolean;
 }
 
-export default function HorizontalUploads({ uploads, handleDelete }: Props) {
+export default function HorizontalUploads({
+  uploads,
+  handleDelete,
+  isOwnProfile,
+}: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: "left" | "right") => {
@@ -26,7 +31,7 @@ export default function HorizontalUploads({ uploads, handleDelete }: Props) {
       {/* Scrollable row */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto py-2 px-6 scrollbar-hide scroll-smooth snap-x snap-mandatory w-full"
+        className="flex gap-4 overflow-x-auto py-2 px-16 scrollbar-hide scroll-smooth snap-x snap-mandatory w-full"
       >
         {uploads.length > 0 ? (
           <>
@@ -34,7 +39,7 @@ export default function HorizontalUploads({ uploads, handleDelete }: Props) {
               type="button"
               title="left-scroll"
               onClick={() => scroll("left")}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white shadow-md hover:scale-110 transition-all"
             >
               <ChevronLeftIcon className="size-5" />
             </button>
@@ -42,13 +47,14 @@ export default function HorizontalUploads({ uploads, handleDelete }: Props) {
               type="button"
               title="right-scroll"
               onClick={() => scroll("right")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white shadow-md hover:scale-110 transition-all"
             >
               <ChevronRightIcon className="w-5 h-5" />
             </button>
             {uploads.map((i) => (
-              <div key={i.id} className="shrink-0 snap-start">
+              <div key={i.id} className="shrink-0 snap-start w-60 h-[280px]">
                 <UploadedCard
+                  isOwnProfile={isOwnProfile}
                   type={i.type}
                   title={i.file_name}
                   link={i.url}

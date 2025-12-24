@@ -21,7 +21,7 @@ import {
 import DaaistLogoHor from "../../public/images/DAAIST-LOGO-HOR.svg";
 import DaaistLogoHorDark from "../../public/images/daalogodarkhor.svg";
 import { ThemeSwitch } from "./ThemeSwitch";
-import { useCurrentRole } from "@/hooks/use-current-role";
+import { useUser } from "@/context/user-context";
 import {
   Sheet,
   SheetContent,
@@ -51,7 +51,8 @@ export default function Navbar() {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
   const pathname = usePathname();
-  const role = useCurrentRole();
+  const { isAdmin, user, loading } = useUser();
+
   const [mounted, setMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -70,7 +71,7 @@ export default function Navbar() {
       : pathname?.startsWith(href + "/") || pathname === href;
 
   if (!mounted) return null;
-
+  if (loading) return null;
   return (
     <nav className="flex justify-between items-center w-full p-4 bg-background/60 backdrop-blur-xl border-b border-white/10 shadow-sm sticky top-0 left-0 right-0 z-50 supports-backdrop-filter:bg-background/60">
       {/* Logo */}
@@ -111,7 +112,7 @@ export default function Navbar() {
         <ThemeSwitch />
 
         {/* Admin Upload */}
-        {role === "admin" && (
+        {isAdmin && (
           <Link
             href="/upload"
             className="hidden md:flex items-center justify-center gap-1 bg-accent text-white rounded-sm p-2 hover:bg-secondary transition duration-300"
@@ -131,7 +132,11 @@ export default function Navbar() {
                 className="relative w-9 h-9 rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-ring transition-all focus:outline-none"
               >
                 <Image
-                  src={session.user.image || "/images/placeholder.png"}
+                  src={
+                    user?.image ||
+                    session.user.image ||
+                    "/images/placeholder.png"
+                  }
                   alt="Profile"
                   sizes="36px"
                   fill
@@ -157,7 +162,7 @@ export default function Navbar() {
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              {role === "admin" && (
+              {isAdmin && (
                 <DropdownMenuItem asChild>
                   <Link href="/admin" className="cursor-pointer">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -220,7 +225,7 @@ export default function Navbar() {
                     {link.label}
                   </Link>
                 ))}
-                {role === "admin" && (
+                {isAdmin && (
                   <Link
                     href="/upload"
                     className="flex items-center justify-center gap-1 text-lg font-bold hover:text-foreground bg-accent p-2 w-full rounded-lg text-white "
@@ -231,6 +236,7 @@ export default function Navbar() {
                 )}
                 {!session && (
                   <button
+                    type="button"
                     onClick={() => signIn("google")}
                     className="text-lg font-medium text-left text-foreground/60 hover:text-foreground"
                   >

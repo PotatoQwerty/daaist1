@@ -40,8 +40,8 @@ export default async function UserProfile({
 
   // 2. Fetch files and likes in parallel
   const [uploads, likes] = await Promise.all([
-    getFilesByUserId(userData.id),
-    getLikedFiles(userData.id),
+    getFilesByUserId(userData.user_id),
+    getLikedFiles(userData.user_id),
   ]);
 
   // 3. Construct the full user object expected by the client
@@ -50,6 +50,7 @@ export default async function UserProfile({
     uploads,
     likes,
   };
+  
 
-  return <ProfileClient initialUser={initialUser} username={username} />;
+  return <ProfileClient initialUser={initialUser} />;
 }

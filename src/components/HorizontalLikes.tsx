@@ -7,9 +7,15 @@ interface LikesProps {
   likes: File[];
   liked: { id: string }[];
   handleLike: (fileId: string) => void;
+  isOwnProfile: boolean;
 }
 
-function HorizontalLikes({ likes, liked, handleLike }: LikesProps) {
+function HorizontalLikes({
+  likes,
+  liked,
+  handleLike,
+  isOwnProfile,
+}: LikesProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: "left" | "right") => {
@@ -25,7 +31,7 @@ function HorizontalLikes({ likes, liked, handleLike }: LikesProps) {
     <div className="relative w-full border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50 min-h-[300px] flex items-center">
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto py-2 px-6 scrollbar-hide scroll-smooth snap-x snap-mandatory w-full"
+        className="flex gap-4 overflow-x-auto py-2 px-16 scrollbar-hide scroll-smooth snap-x snap-mandatory w-full"
       >
         {likes.length ? (
           <>
@@ -33,7 +39,7 @@ function HorizontalLikes({ likes, liked, handleLike }: LikesProps) {
               type="button"
               title="left-scroll"
               onClick={() => scroll("left")}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white shadow-md hover:scale-110 transition-all"
             >
               <ChevronLeftIcon className="w-5 h-5" />
             </button>
@@ -41,21 +47,19 @@ function HorizontalLikes({ likes, liked, handleLike }: LikesProps) {
               type="button"
               title="right-scroll"
               onClick={() => scroll("right")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white shadow-md hover:scale-110 transition-all"
             >
               <ChevronRightIcon className="w-5 h-5" />
             </button>
             {likes.map((i) => (
-              <div key={i.id} className="shrink-0 snap-start">
+              <div key={i.id} className="shrink-0 snap-start w-60 h-[280px]">
                 <FileCard
-                  category={i.category}
-                  size={i.size}
+                  {...i}
                   title={i.file_name}
-                  subject={i.subject}
-                  type={i.type}
-                  url={i.url}
+                  isOwnProfile={isOwnProfile}
                   handleLike={() => handleLike(i.id)}
                   isLiked={liked.some((item) => item.id === i.id)}
+                  showLikeButton={isOwnProfile}
                 />
               </div>
             ))}

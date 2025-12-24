@@ -6,14 +6,26 @@ import EditUserModal from "./EditUserModal";
 import { ChevronDown, Edit } from "lucide-react";
 import type { User } from "next-auth";
 import { useSession } from "next-auth/react";
+interface ExtendedUser extends User {
+  student_enrollments?: {
+    registration_number?: string;
+    isdaa?: boolean;
+    study_year?: string;
+  }[];
+  user_roles?: {
+    role: string;
+  }[];
+  registration_number?: string;
+}
+
 interface ManageUsersInterface {
-  initialUsers: User[];
+  initialUsers: any[]; // relaxed type for initial input
 }
 function ManageUsers({ initialUsers }: ManageUsersInterface) {
   const { data: session } = useSession();
-  const [users, setUsers] = useState<User[]>(initialUsers || []);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<ExtendedUser[]>(initialUsers || []);
+  const [filteredUsers, setFilteredUsers] = useState<ExtendedUser[]>([]);
+  const [editingUser, setEditingUser] = useState<ExtendedUser | null>(null);
   const [search, setSearch] = useState("");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const sortedUsers = useMemo(() => {
@@ -42,7 +54,9 @@ function ManageUsers({ initialUsers }: ManageUsersInterface) {
           (u.firstname || "").toLowerCase().includes(lowerSearch) ||
           (u.lastname || "").toLowerCase().includes(lowerSearch) ||
           (u.registration_number || "").toLowerCase().includes(lowerSearch) ||
-          (u.role || "").toLowerCase().includes(lowerSearch)
+          (u.role || u.user_roles?.[0]?.role || "")
+            .toLowerCase()
+            .includes(lowerSearch)
         );
       })
     );
@@ -104,7 +118,7 @@ function ManageUsers({ initialUsers }: ManageUsersInterface) {
                 <tr
                   key={user.id ?? user.registration_number ?? Math.random()}
                   className={`border-t transition duration-150 ease-in ${
-                    user.isdaa
+                    user.student_enrollments?.[0]?.isdaa
                       ? "bg-primary/20 hover:bg-primary/30"
                       : "hover:bg-accent/30"
                   }`}
@@ -120,19 +134,24 @@ function ManageUsers({ initialUsers }: ManageUsersInterface) {
                   <td className="px-4 py-2">
                     {user.registration_number || "Not mentioned"}
                   </td>
-                  <td className="px-4 py-2">{user.isdaa ? "Yes" : "No"}</td>
-                  <td className="px-4 py-2">{user.studyyear || "—"}</td>
+                  <td className="px-4 py-2">
+                    {user.student_enrollments?.[0]?.isdaa ? "Yes" : "No"}
+                  </td>
+                  <td className="px-4 py-2">
+                    {user.student_enrollments?.[0]?.study_year || "—"}
+                  </td>
                   <td className="px-4 py-2 text-center">
                     <span
                       className={`px-2 py-1 rounded-full font-bold text-xs ${
-                        user.role === "student"
+                        (user.user_roles?.[0]?.role || user.role) === "student"
                           ? "bg-blue-500 text-white"
-                          : user.role === "admin"
+                          : (user.user_roles?.[0]?.role || user.role) ===
+                            "admin"
                           ? "bg-red-500 text-white"
                           : "bg-yellow-500 text-black"
                       }`}
                     >
-                      {user.role || "unknown"}
+                      {user.user_roles?.[0]?.role || user.role || "unknown"}
                     </span>
                   </td>
                   <td className="px-4 py-2">
@@ -161,6 +180,11 @@ function ManageUsers({ initialUsers }: ManageUsersInterface) {
 
         {editingUser && (
           <EditUserModal
+            roleOptions={[
+              { value: "admin", label: "Admin" },
+              { value: "club", label: "Club" },
+              { value: "student", label: "Student" },
+            ]}
             onClose={() => setEditingUser(null)}
             onSave={(updatedUser) => {
               setUsers((prev) =>

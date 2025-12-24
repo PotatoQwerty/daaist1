@@ -1,5 +1,5 @@
 import HomeClient from "@/components/HomeClient";
-
+import { auth } from "@/auth";
 export const metadata = {
   title: "Daa'ist — Home",
   description:
@@ -21,7 +21,6 @@ export const metadata = {
   alternates: { canonical: "https://daaist.com/" },
 };
 
-export default function HomePage() {
-  // server-rendered head + SSR metadata; client UI stays client-only
+export default async function HomePage() {
   return <HomeClient />;
 }

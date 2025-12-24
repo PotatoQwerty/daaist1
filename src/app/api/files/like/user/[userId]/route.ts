@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
-
 import { auth } from "@/auth";
 
 export async function GET(
@@ -10,10 +9,7 @@ export async function GET(
   const session = await auth();
   const { userId } = await params;
 
-  if (
-    !session ||
-    (session.user?.id !== userId && session.user?.role !== "admin")
-  ) {
+  if (!session || session.user?.id !== userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

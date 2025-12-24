@@ -1,29 +1,38 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { supabaseServer } from "@/lib/supabase/server";
+import { getUserRoles } from "@/lib/supabase/actions";
 
 export async function GET() {
   const session = await auth();
 
-  // 1️⃣ Check if logged in
-  if (!session || !session.user) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  //   // 2️⃣ Check if user is admin
-  if (session.user.role !== "admin") {
+  const { isAdmin } = await getUserRoles(session.user.id);
+  if (!isAdmin) {
     return NextResponse.json(
       { error: "You do not have permission to do this action" },
       { status: 403 }
     );
   }
 
-  // 3️⃣ Fetch users from Supabase
-  const { data, error } = await supabaseServer
-    .from("users")
-    .select(
-      "firstname, lastname, registration_number,role,isdaa,username,id,studyyear"
-    );
+  const { data, error } = await supabaseServer.from("profiles").select(`
+      user_id,
+      firstname,
+      lastname,
+      username,
+      registration_number,
+      user_roles (
+        role
+      ),
+      student_enrollments (
+        study_year,
+        isdaa,
+        created_at
+      )
+    `);
 
   if (error) {
     return NextResponse.json(

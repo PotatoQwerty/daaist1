@@ -1,15 +1,30 @@
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import MainAdmin from "../_components/MainAdmin";
+import { getUserRoles } from "@/lib/supabase/actions";
+
 export default async function AdminPage() {
   const session = await auth();
-  if (!session || session.user.role !== "admin") {
-    redirect("/");
-  }
+  if (!session) notFound();
+  const { isAdmin } = await getUserRoles(session.user.id);
+  if (!isAdmin) notFound();
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <h1 className="text-2xl font-bold">Admin dashboard</h1>
-      <p>this page is still under construction</p>
+    <div className="min-h-screen w-full bg-background p-6 md:p-12">
+      <div className="w-full max-w-5xl mx-auto space-y-8">
+        <header className="flex flex-col space-y-2 text-center md:text-left">
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+            Admin Dashboard
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Manage roles, invites, and system settings.
+          </p>
+        </header>
+
+        <main>
+          <MainAdmin />
+        </main>
+      </div>
     </div>
   );
 }

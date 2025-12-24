@@ -8,11 +8,18 @@ function FileCard({
   type,
   url,
   handleLike,
-  isLiked,
-  subject,
   category,
   issum,
-}: File) {
+  isOwnProfile,
+  isLiked,
+  subject,
+  showLikeButton = true,
+}: File & {
+  isOwnProfile?: boolean;
+  handleLike?: () => void;
+  isLiked?: boolean;
+  showLikeButton?: boolean;
+}) {
   const fileSizeMB = (size / (1024 * 1024)).toFixed(2);
 
   return (
@@ -35,17 +42,19 @@ function FileCard({
       </div>
 
       {/* Like Button */}
-      <button
-        type="button"
-        onClick={handleLike}
-        className="absolute top-3 right-3 z-30 bg-white/50 dark:bg-black/20 backdrop-blur-md shadow-sm border border-white/30 dark:border-white/10 rounded-full p-2 hover:scale-110 active:scale-95 transition-all duration-300"
-      >
-        {isLiked ? (
-          <Heart className="size-5 fill-accent stroke-accent transition-all duration-300 transform scale-110" />
-        ) : (
-          <Heart className="size-5 text-gray-600 dark:text-gray-300 hover:text-accent transition-colors duration-300" />
-        )}
-      </button>
+      {showLikeButton && (
+        <button
+          type="button"
+          onClick={handleLike}
+          className="absolute top-3 right-3 z-30 bg-white/50 dark:bg-black/20 backdrop-blur-md shadow-sm border border-white/30 dark:border-white/10 rounded-full p-2 hover:scale-110 active:scale-95 transition-all duration-300"
+        >
+          {isLiked ? (
+            <Heart className="size-5 fill-accent stroke-accent transition-all duration-300 transform scale-110" />
+          ) : (
+            <Heart className="size-5 text-gray-600 dark:text-gray-300 hover:text-accent transition-colors duration-300" />
+          )}
+        </button>
+      )}
 
       {/* File Preview Section */}
       <div className="relative flex flex-col items-center justify-center pt-8 pb-4 px-4 overflow-hidden h-48">
@@ -76,7 +85,7 @@ function FileCard({
         </h2>
 
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-[11px] font-medium text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-md border border-border/50">
+          <span className="text-[11px] font-medium text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-md border border-border/50 max-w-[80px] truncate">
             {type.split("/")[1]?.toUpperCase() || "DOC"}
           </span>
           {subject && (

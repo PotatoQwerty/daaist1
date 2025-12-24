@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "next-themes";
 import Footer from "@/components/Footer";
 import ChatBubble from "@/components/ChatBubble";
+import { UserProvider } from "@/context/user-context";
 const josefin = Josefin_Sans({
   subsets: ["latin"],
   variable: "--font-josefin",
@@ -52,10 +53,12 @@ export default function RootLayout({
           enableSystem={true}
         >
           <SessionWrapper>
-            <Toaster position="top-right" />
-            <Navbar />
-            {children}
-            <ChatBubble />
+            <UserProvider>
+              <Toaster position="top-right" />
+              <Navbar />
+              {children}
+              <ChatBubble />
+            </UserProvider>
           </SessionWrapper>
         </ThemeProvider>
         <Footer />
