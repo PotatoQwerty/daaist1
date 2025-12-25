@@ -31,7 +31,6 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const { data: session } = useSession();
   const [user, setUser] = useState(initialUser);
   const { isAdmin, roles } = useCurrentRole();
-  console.log(initialUser);
 
   const isOwnProfile = session?.user.id === user.user_id;
 
@@ -133,7 +132,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
               <span className="text-sm font-medium bg-primary text-white px-3 py-1 rounded-full shadow-sm">
-                {displayYear?.label}
+                {displayYear?.label || "Unknown"}
               </span>
               <span className="flex items-center gap-1 text-sm text-slate-100 font-medium bg-accent/80 px-3 py-1 rounded-full shadow-sm">
                 {user.isdaa ? (
@@ -142,7 +141,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                     fill="var(--secondary)"
                     stroke="none"
                   />
-                ) : user.role === "admin" ? (
+                ) : isAdmin ? (
                   <ShieldUser
                     className="size-5"
                     fill="var(--secondary)"
@@ -157,11 +156,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   />
                 )}
                 <span>
-                  {user.isdaa
-                    ? `DAA'ist`
-                    : user.role === "admin"
-                    ? `Admin`
-                    : "Guest"}
+                  {user.isdaa ? `DAA'ist` : isAdmin ? `Admin` : "Guest"}
                 </span>
               </span>
             </div>

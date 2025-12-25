@@ -56,6 +56,7 @@ export default function UploadForm() {
       body.append("level", formData.level?.value || "");
       body.append("subject", formData.subject?.value || "");
       body.append("type", file.type);
+
       const res = await fetch("/api/upload-url", { method: "PUT", body });
       const dataR2 = await res.json();
 
@@ -67,8 +68,7 @@ export default function UploadForm() {
         },
         body: file,
       });
-
-      const { error } = await supabaseClient.from("files").insert({
+      const supabaseBody = {
         file_name: formData.title,
         url: dataR2.publicUrl,
         size: file.size,
@@ -77,10 +77,20 @@ export default function UploadForm() {
         level: formData.level?.value || null,
         subject: formData.subject?.value || null,
         issum: formData.issum,
-        uploaded_by: userId,
+      };
+      const resSupa = await fetch("/api/files/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(supabaseBody),
       });
 
-      if (error) throw new Error(error.message);
+      const dataSupa = await resSupa.json();
+
+      if (!resSupa.ok) {
+        throw new Error(dataSupa.error || "Failed to create file record");
+      }
 
       // reset form
       setFile(null);

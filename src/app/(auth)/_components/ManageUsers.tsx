@@ -11,7 +11,7 @@ interface ExtendedUser extends User {
     registration_number?: string;
     isdaa?: boolean;
     study_year?: string;
-  }[];
+  };
   user_roles?: {
     role: string;
   }[];
@@ -118,7 +118,7 @@ function ManageUsers({ initialUsers }: ManageUsersInterface) {
                 <tr
                   key={user.id ?? user.registration_number ?? Math.random()}
                   className={`border-t transition duration-150 ease-in ${
-                    user.student_enrollments?.[0]?.isdaa
+                    user.student_enrollments?.isdaa
                       ? "bg-primary/20 hover:bg-primary/30"
                       : "hover:bg-accent/30"
                   }`}
@@ -135,10 +135,10 @@ function ManageUsers({ initialUsers }: ManageUsersInterface) {
                     {user.registration_number || "Not mentioned"}
                   </td>
                   <td className="px-4 py-2">
-                    {user.student_enrollments?.[0]?.isdaa ? "Yes" : "No"}
+                    {user.student_enrollments?.isdaa ? "Yes" : "No"}
                   </td>
                   <td className="px-4 py-2">
-                    {user.student_enrollments?.[0]?.study_year || "—"}
+                    {user.student_enrollments?.study_year || "—"}
                   </td>
                   <td className="px-4 py-2 text-center">
                     <span

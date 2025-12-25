@@ -20,7 +20,6 @@ function ManageInvites() {
     const fetchInvites = async () => {
       const res = await fetch("/api/admin/invite/manage");
       const data = await res.json();
-      console.log(data);
 
       setPendingInvites(data.pendingAdmins);
     };

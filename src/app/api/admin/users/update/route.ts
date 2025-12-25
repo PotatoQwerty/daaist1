@@ -21,7 +21,6 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const { targetUserId, role, firstname, lastname, username } = body;
-    console.log(targetUserId, role, firstname, lastname, username);
 
     if (!targetUserId) {
       return NextResponse.json(

@@ -38,6 +38,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ImageSkeleton from "./ImageSkeleton";
 
 const NAV_LINKS = [
   { href: "/", label: "Home", icon: <Home /> },
@@ -71,7 +72,7 @@ export default function Navbar() {
       : pathname?.startsWith(href + "/") || pathname === href;
 
   if (!mounted) return null;
-  if (loading) return null;
+
   return (
     <nav className="flex justify-between items-center w-full p-4 bg-background/60 backdrop-blur-xl border-b border-white/10 shadow-sm sticky top-0 left-0 right-0 z-50 supports-backdrop-filter:bg-background/60">
       {/* Logo */}
@@ -131,17 +132,21 @@ export default function Navbar() {
                 type="button"
                 className="relative w-9 h-9 rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-ring transition-all focus:outline-none"
               >
-                <Image
-                  src={
-                    user?.image ||
-                    session.user.image ||
-                    "/images/placeholder.png"
-                  }
-                  alt="Profile"
-                  sizes="36px"
-                  fill
-                  className="object-cover"
-                />
+                {loading ? (
+                  <ImageSkeleton />
+                ) : (
+                  <Image
+                    src={
+                      user?.image ||
+                      session.user.image ||
+                      "/images/placeholder.png"
+                    }
+                    alt="Profile"
+                    sizes="36px"
+                    fill
+                    className="object-cover"
+                  />
+                )}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { User } from "next-auth";
+import toast from "react-hot-toast";
 
 interface SelectOption {
   value: string;
@@ -56,12 +57,14 @@ export default function EditUserModal({
 
       if (res.ok) {
         onSave(data.user);
+        toast.success("User updated successfully!");
       } else {
         alert(data.error || "Failed to update user");
+        toast.error(`Something went wrong, couldn't update user!`);
       }
     } catch (error) {
       console.error("Request error:", error);
-      alert("Something went wrong: ");
+      alert("Something went wrong");
     }
   };
 
