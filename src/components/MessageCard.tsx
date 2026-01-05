@@ -1,4 +1,4 @@
-import React from "react";
+
 
 import { Info, CloudAlert } from "lucide-react";
 interface MessageCardProps {

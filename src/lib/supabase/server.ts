@@ -7,6 +7,4 @@ if (!supabaseUrl || !supabaseServiceRK) {
   throw new Error("Missing Vars (server)");
 }
 
-export const supabaseServer = createClient(supabaseUrl, supabaseServiceRK, {
-  db: { schema: "next_auth" },
-});
+export const supabaseServer = createClient(supabaseUrl, supabaseServiceRK);

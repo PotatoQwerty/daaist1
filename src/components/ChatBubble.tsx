@@ -1,6 +1,6 @@
 "use client";
-import { getChatMessages, addChatMessage } from "@/lib/Chat"; // Assuming you have the add function
-import { MessageCircle, Send, X, Loader2 } from "lucide-react";
+import { getChatMessages, addChatMessage } from "@/lib/Chat";
+import { MessageCircle, Send, X, Loader2, AlertCircle } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import Message from "./Message";
 import { useSession } from "next-auth/react";
@@ -11,7 +11,10 @@ function ChatBubble() {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
   const { data: session } = useSession();
+  
 
   // Ref to auto-scroll to bottom
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -26,7 +29,7 @@ function ChatBubble() {
       };
       fetchMessages();
     }
-  }, [isOpen]); // Only fetch messages when opened
+  }, [isOpen, messages.length]);
 
   // Subscribe once for realtime inserts
   useEffect(() => {
@@ -71,13 +74,26 @@ function ChatBubble() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Auto-dismiss error after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session || !session.user.isdaa) return;
     if (!newMessage.trim()) return;
 
-    // Optimistic Update (Show message immediately before DB confirms)
+    // Clear any previous errors
+    setError(null);
+    setIsSending(true);
 
+    // Optimistic Update (Show message immediately before DB confirms)
     const tempId = crypto.randomUUID();
 
     const tempMsg = {
@@ -99,12 +115,14 @@ function ChatBubble() {
 
     const res = await addChatMessage(payload);
 
+    setIsSending(false);
+
     if (!res) {
-      // mark as failed (could also remove or add retry UI)
+      // Mark as failed and show error message
       setMessages((prev) =>
         prev.map((m) => (m.id === tempId ? { ...m, isFailed: true } : m))
       );
-      alert("Failed to send message.");
+      setError("Failed to send message. Please try again.");
       return;
     }
 
@@ -119,6 +137,7 @@ function ChatBubble() {
       return prev.map((m) => (m.id === tempId ? res : m));
     });
   };
+
   const renderedMessages = useMemo(() => {
     return messages.map((msg, index) => {
       const isLastInSequence =
@@ -133,11 +152,14 @@ function ChatBubble() {
           showAvatar={isLastInSequence}
           img={msg.user_image}
           username={msg.user_username}
+          isFailed={msg.isFailed}
         />
       );
     });
   }, [messages, session?.user?.id]);
+
   if (!session || !session.user.isdaa) return null;
+
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {/* CHAT WINDOW */}
@@ -177,6 +199,22 @@ function ChatBubble() {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Error Message Banner */}
+          {error && (
+            <div className="mx-3 mb-2 p-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm animate-in slide-in-from-bottom-2 fade-in duration-200">
+              <AlertCircle className="size-4 shrink-0" />
+              <span className="flex-1">{error}</span>
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                className="hover:bg-red-100 p-1 rounded transition-colors"
+                aria-label="Dismiss error"
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          )}
+
           {/* Input Area (Fixed at bottom) */}
           <form
             onSubmit={handleSend}
@@ -189,14 +227,19 @@ function ChatBubble() {
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
               className="flex-1 py-2 px-3 bg-background rounded-full text-sm focus:outline-none border-white border focus:ring-2 focus:ring-primary/50"
+              disabled={isSending}
             />
             <button
               title="send message"
               type="submit"
-              disabled={!newMessage.trim()}
+              disabled={!newMessage.trim() || isSending}
               className="bg-primary text-primary-foreground p-2 rounded-full hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <Send className="size-5" />
+              {isSending ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : (
+                <Send className="size-5" />
+              )}
             </button>
           </form>
         </div>

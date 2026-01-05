@@ -52,7 +52,7 @@ export default function Navbar() {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
   const pathname = usePathname();
-  const { isAdmin, user, loading } = useUser();
+  const { isAdmin, user, loading, isSuperAdmin } = useUser();
 
   const [mounted, setMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -113,7 +113,7 @@ export default function Navbar() {
         <ThemeSwitch />
 
         {/* Admin Upload */}
-        {isAdmin && (
+        {(isAdmin || isSuperAdmin) && (
           <Link
             href="/upload"
             className="hidden md:flex items-center justify-center gap-1 bg-accent text-white rounded-sm p-2 hover:bg-secondary transition duration-300"
@@ -167,7 +167,7 @@ export default function Navbar() {
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              {isAdmin && (
+              {(isAdmin || isSuperAdmin) && (
                 <DropdownMenuItem asChild>
                   <Link href="/admin" className="cursor-pointer">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -230,7 +230,7 @@ export default function Navbar() {
                     {link.label}
                   </Link>
                 ))}
-                {isAdmin && (
+                {(isAdmin || isSuperAdmin) && (
                   <Link
                     href="/upload"
                     className="flex items-center justify-center gap-1 text-lg font-bold hover:text-foreground bg-accent p-2 w-full rounded-lg text-white "

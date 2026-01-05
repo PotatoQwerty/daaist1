@@ -26,9 +26,9 @@ export default async function AdminLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
   if (!session?.user?.id) notFound();
-  const { isAdmin } = await getUserRoles(session.user.id);
+  const { isAdmin, isSuperAdmin } = await getUserRoles(session.user.id);
 
-  if (!isAdmin) notFound();
+  if (!isAdmin && !isSuperAdmin) notFound();
   return (
     <html lang="en" suppressHydrationWarning className={`${josefin.variable}`}>
       <body>

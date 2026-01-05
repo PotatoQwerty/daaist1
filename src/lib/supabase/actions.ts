@@ -44,7 +44,8 @@ export async function getUserData(userId: string) {
   if (rolesError) console.error("Roles fetch error:", rolesError);
 
   const roles = rolesData?.map((r) => r.role) || [];
-  const isAdmin = roles.includes("admin") || roles.includes("super_admin");
+  const isAdmin = roles.includes("admin");
+  const isSuperAdmin = roles.includes("super_admin");
 
   const completeUser = profile
     ? {
@@ -58,10 +59,100 @@ export async function getUserData(userId: string) {
     user: completeUser,
     roles,
     isAdmin,
+    isSuperAdmin,
   };
 }
 
 export async function getUserRoles(userId: string) {
-  const { roles, isAdmin } = await getUserData(userId);
-  return { roles, isAdmin };
+  const { roles, isAdmin, isSuperAdmin } = await getUserData(userId);
+  return { roles, isAdmin, isSuperAdmin };
+}
+
+export async function getClubs() {
+  const { data: clubs, error } = await supabaseServer
+    .schema("public")
+    .from("clubs")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching clubs:", error);
+    return [];
+  }
+  return clubs;
+}
+
+export async function getClubBySlug(slug: string) {
+  const { data: club, error } = await supabaseServer
+    .schema("public")
+    .from("clubs")
+    .select("*")
+    .eq("slug", slug)
+    .single();
+
+  if (error) {
+    console.error("Error fetching club by slug:", error);
+    return null;
+  }
+  return club;
+}
+export async function getEvents() {
+  const { data, error } = await supabaseServer
+    .schema("public")
+    .from("events")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("Error fetching events:", error);
+    return [];
+  }
+  return data;
+}
+export async function getEventById(id: string) {
+  const { data, error } = await supabaseServer
+    .schema("public")
+    .from("events")
+    .select("*")
+    .eq("club_id", id);
+
+  if (error) {
+    console.error("Error fetching event by slug:", error);
+    return null;
+  }
+  return data;
+}
+export const fetchUsers = async () => {
+  const { data: users } = await supabaseServer.schema("public").from("profiles")
+    .select(`
+  user_id,
+  firstname,
+  lastname,
+  username,
+  user_roles ( role ),
+  student_enrollments ( study_year, isdaa ),
+  registration_number
+`);
+  if (!users) {
+    console.error("Error fetching users");
+    return [];
+  }
+  return users;
+};
+
+export async function getUserClubRole(userId: string, clubId: string) {
+  const { data, error } = await supabaseServer
+    .schema("public")
+    .from("club_members")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("club_id", clubId)
+    .single();
+
+  if (error) {
+    if (error.code !== "PGRST116") {
+      console.error("Error fetching club role:", error);
+    }
+    return null;
+  }
+  return data?.role || null;
 }

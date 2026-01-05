@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import type { User } from "next-auth";
 import toast from "react-hot-toast";
+import { X, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface SelectOption {
   value: string;
@@ -29,6 +33,7 @@ export default function EditUserModal({
     lastname: user.lastname,
     role: user.role,
   });
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleFormChanges = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -37,6 +42,7 @@ export default function EditUserModal({
   };
 
   const handleSave = async () => {
+    setIsSaving(true);
     try {
       const res = await fetch(`/api/admin/users/update`, {
         method: "POST",
@@ -58,6 +64,7 @@ export default function EditUserModal({
       if (res.ok) {
         onSave(data.user);
         toast.success("User updated successfully!");
+        onClose();
       } else {
         alert(data.error || "Failed to update user");
         toast.error(`Something went wrong, couldn't update user!`);
@@ -65,82 +72,129 @@ export default function EditUserModal({
     } catch (error) {
       console.error("Request error:", error);
       alert("Something went wrong");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0  bg-background/80 flex items-center justify-center z-50 p-4 text-black">
-      <div className="p-6 rounded-lg w-[440px] shadow-lg  bg-white">
-        <h2 className="text-xl font-bold">Edit User:</h2>
-
-        <label htmlFor="firstname">First Name</label>
-        <input
-          className="w-full p-2 rounded-md border-foreground border "
-          type="text"
-          name="firstname"
-          id="firstname"
-          value={formData.firstname || ""}
-          onChange={handleFormChanges}
-        />
-
-        <label htmlFor="lastname">Last Name</label>
-        <input
-          className="w-full p-2 rounded-md border-foreground border"
-          type="text"
-          name="lastname"
-          id="lastname"
-          value={formData.lastname || ""}
-          onChange={handleFormChanges}
-        />
-        {sessionUser === user.id ? (
-          <>
-            <label htmlFor="role">Role</label>
-            <select
-              disabled
-              name="role"
-              id="role"
-              className="w-full p-2 rounded-md border-foreground border disabled:bg-accent/20"
-              onChange={handleFormChanges}
-            >
-              <option defaultChecked value="change">
-                You can&#39;t change your own role.
-              </option>
-            </select>
-          </>
-        ) : (
-          <>
-            <label htmlFor="role">Role</label>
-            <select
-              name="role"
-              id="role"
-              className="w-full p-2 rounded-md border-foreground border"
-              onChange={handleFormChanges}
-            >
-              <option value="">Please select a new role</option>
-              {roleOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </>
-        )}
-
-        <div className="flex justify-end gap-2 p-4">
-          <button
-            type="button"
-            className="bg-green-500 rounded-lg p-2"
-            onClick={handleSave}
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            className="bg-accent rounded-lg p-2 hover:bg-accent/70"
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+      <div
+        className="w-full max-w-md bg-card border rounded-xl shadow-lg animate-in zoom-in-95 duration-200 flex flex-col"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-bold tracking-tight kabel-bold">
+            Edit User
+          </h2>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
+            className="h-8 w-8 rounded-full"
           >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="space-y-2">
+            <label
+              htmlFor="firstname"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              First Name
+            </label>
+            <Input
+              type="text"
+              name="firstname"
+              id="firstname"
+              value={formData.firstname || ""}
+              onChange={handleFormChanges}
+              placeholder="First Name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="lastname"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Last Name
+            </label>
+            <Input
+              type="text"
+              name="lastname"
+              id="lastname"
+              value={formData.lastname || ""}
+              onChange={handleFormChanges}
+              placeholder="Last Name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="role"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Role
+            </label>
+            {sessionUser === user.id ? (
+              <div className="relative">
+                <select
+                  disabled
+                  name="role"
+                  id="role"
+                  className={cn(
+                    "flex h-9 w-full rounded-md border border-input bg-muted px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm opacity-50"
+                  )}
+                  onChange={handleFormChanges}
+                >
+                  <option defaultChecked value="change">
+                    You can&#39;t change your own role.
+                  </option>
+                </select>
+              </div>
+            ) : (
+              <select
+                name="role"
+                id="role"
+                value={formData.role || ""}
+                onChange={handleFormChanges}
+                className={cn(
+                  "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm hover:cursor-pointer"
+                )}
+              >
+                <option value="" disabled>
+                  Please select a new role
+                </option>
+                {roleOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 p-6 pt-2">
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
-          </button>
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="min-w-[80px]"
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>Save</>
+            )}
+          </Button>
         </div>
       </div>
     </div>

@@ -1,19 +1,19 @@
-"use client";
-import { useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { RedirectType, redirect } from "next/navigation";
-import { RoleGate } from "@/components/RoleGate";
-function EventPage() {
-  const { data: session, status } = useSession();
-  useEffect(() => {
-    if (!session && status === "loading")
-      return redirect("/", RedirectType.replace);
-  }, [session, status]);
+import { auth } from "@/auth";
+import { getUserRoles } from "@/lib/supabase/actions";
+import { notFound } from "next/navigation";
+
+async function EventsPage() {
+  const session = await auth();
+  if (!session) notFound();
+  const { isAdmin, isSuperAdmin } = await getUserRoles(session.user.id);
+  if (!isAdmin && !isSuperAdmin) notFound();
   return (
-    <RoleGate AllowedRoles={["admin"]}>
-      <div>Event page</div>
-    </RoleGate>
+    <div className="flex items-center justify-center h-screen">
+      <h1 className="animate-spin text-4xl font-bold hover:animate-none">
+        Still working on this 🤨
+      </h1>
+    </div>
   );
 }
 
-export default EventPage;
+export default EventsPage;

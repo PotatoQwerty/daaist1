@@ -3,7 +3,7 @@ import { RoleGate } from "@/components/RoleGate";
 import ManageUsers from "@/app/(auth)/_components/ManageUsers";
 import { supabaseServer } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { getUserRoles } from "@/lib/supabase/actions";
+import { fetchUsers, getUserRoles } from "@/lib/supabase/actions";
 export const revalidate = 1800;
 
 export const metadata = {
@@ -16,21 +16,11 @@ export const metadata = {
 export default async function AdminUsersPage() {
   const session = await auth();
   if (!session) notFound();
-  const { isAdmin } = await getUserRoles(session.user.id);
+  const { isAdmin, isSuperAdmin } = await getUserRoles(session.user.id);
 
-  if (!isAdmin) notFound();
+  if (!isAdmin && !isSuperAdmin) notFound();
 
-  const { data: users, error } = await supabaseServer
-    .schema("public")
-    .from("profiles").select(`
-  user_id,
-  firstname,
-  lastname,
-  username,
-  user_roles ( role ),
-  student_enrollments ( study_year, isdaa ),
-  registration_number
-`);
+  const users = await fetchUsers();
 
   return (
     <RoleGate AllowedRoles={["admin", "super_admin"]}>

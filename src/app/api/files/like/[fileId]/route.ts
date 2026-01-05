@@ -9,7 +9,6 @@ export async function PATCH(
   const session = await auth();
   const userId = session?.user.id;
 
-  // 👇 await the promise first
   const { fileId } = await params;
 
   if (!userId) {

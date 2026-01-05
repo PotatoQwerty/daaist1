@@ -14,6 +14,7 @@ interface UserContextType {
   user: any | null; // Replace 'any' with your Profile type if available
   roles: string[];
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   loading: boolean;
   refreshUser: () => Promise<void>;
 }
@@ -22,6 +23,7 @@ const UserContext = createContext<UserContextType>({
   user: null,
   roles: [],
   isAdmin: false,
+  isSuperAdmin: false,
   loading: true,
   refreshUser: async () => {},
 });
@@ -33,6 +35,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const refreshUser = async () => {
@@ -49,6 +52,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setUser(data.user);
       setRoles(data.roles);
       setIsAdmin(data.isAdmin);
+      setIsSuperAdmin(data.isSuperAdmin);
       setLoading(false);
     } catch (error) {
       console.error("Failed to fetch user data:", error);
@@ -63,7 +67,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <UserContext.Provider
-      value={{ user, roles, isAdmin, loading, refreshUser }}
+      value={{ user, roles, isAdmin, loading, refreshUser, isSuperAdmin }}
     >
       {children}
     </UserContext.Provider>

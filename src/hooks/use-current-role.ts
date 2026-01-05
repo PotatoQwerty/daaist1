@@ -1,6 +1,6 @@
 import { useUser } from "@/context/user-context";
 
 export const useCurrentRole = () => {
-  const { roles, isAdmin, loading } = useUser();
-  return { roles, isAdmin, loading };
+  const { roles, isAdmin, loading, isSuperAdmin } = useUser();
+  return { roles, isAdmin, loading, isSuperAdmin };
 };

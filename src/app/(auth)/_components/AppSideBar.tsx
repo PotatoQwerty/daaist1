@@ -21,6 +21,7 @@ import {
   User,
   Sun,
   Moon,
+  School,
 } from "lucide-react";
 
 import Image from "next/image";
@@ -37,6 +38,7 @@ const items = [
   { title: "Manage Users", link: "/admin/manage/users", icon: User },
   { title: "Manage Events", link: "/admin/manage/events", icon: PartyPopper },
   { title: "Manage Posts", link: "/admin/manage/posts", icon: FileCheck2 },
+  { title: "Manage Clubs", link: "/admin/manage/clubs", icon: School },
 ];
 
 export function AppSidebar() {

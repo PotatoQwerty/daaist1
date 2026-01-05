@@ -21,6 +21,7 @@ declare module "next-auth" {
     };
   }
   export interface User {
+    user_id?: string;
     id: string;
     firstname?: string;
     lastname: string;
