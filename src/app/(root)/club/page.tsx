@@ -6,13 +6,16 @@ export async function generateMetadata() {
     description,
   };
 }
+
 import Carossel from "@/components/Carossel";
 import ClubCard from "@/components/ClubCard";
 import { getClubs, getEvents } from "@/lib/supabase/actions";
 
+export const revalidate = 30;
+
 async function ClubPage() {
-  const clubs = await getClubs();
-  const events = await getEvents();
+  const [clubs, events] = await Promise.all([getClubs(), getEvents()]);
+
   return (
     <div className="min-h-screen flex flex-col items-center py-20 px-4 sm:px-8">
       <div className="w-full max-w-7xl space-y-4 text-center">

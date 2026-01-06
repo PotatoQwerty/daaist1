@@ -6,8 +6,8 @@ import { getUserRoles } from "@/lib/supabase/actions";
 export default async function AdminPage() {
   const session = await auth();
   if (!session) notFound();
-  const { isAdmin } = await getUserRoles(session.user.id);
-  if (!isAdmin) notFound();
+  const { isAdmin, isSuperAdmin } = await getUserRoles(session.user.id);
+  if (!isAdmin || !isSuperAdmin) notFound();
 
   return (
     <div className="min-h-screen w-full bg-background p-6 md:p-12">

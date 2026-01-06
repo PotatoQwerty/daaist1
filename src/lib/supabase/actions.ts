@@ -101,13 +101,15 @@ export async function getEvents() {
     .schema("public")
     .from("events")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("start_date", { ascending: true });
+
   if (error) {
     console.error("Error fetching events:", error);
     return [];
   }
-  return data;
+  return data ?? [];
 }
+
 export async function getEventById(id: string) {
   const { data, error } = await supabaseServer
     .schema("public")
