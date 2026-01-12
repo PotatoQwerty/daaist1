@@ -9,14 +9,14 @@ import {
   YearOption,
   SubjectOption,
 } from "@/constants/uploadConstants";
-import { supabaseClient } from "@/lib/supabase/client";
+
 import toast from "react-hot-toast";
 import { CircleCheck, Loader2Icon } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useUser } from "@/context/user-context";
 //TODO: maybe create a docs table in the backend
 export default function UploadForm() {
-  const { data: session } = useSession();
-  const userId = session?.user.id || null;
+  const { session } = useUser();
+  const userId = session?.user?.id || null;
   const [cat, setCat] = useState("");
   const [subjectOptionsForYear, setSubjectOptionsForYear] = useState<
     SubjectOption[] | []

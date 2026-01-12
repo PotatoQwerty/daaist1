@@ -1,14 +1,17 @@
-import { auth } from "@/auth";
-import { supabaseServer } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-export async function GET() {
-  const session = await auth();
+export async function GET(request: Request) {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabaseServer
+  const { data, error } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", session.user.id);

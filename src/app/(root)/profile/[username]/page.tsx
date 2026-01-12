@@ -44,13 +44,11 @@ export default async function UserProfile({
     getLikedFiles(userData.user_id),
   ]);
 
-  // 3. Construct the full user object expected by the client
   const initialUser = {
     ...userData,
     uploads,
     likes,
   };
-  
 
   return <ProfileClient initialUser={initialUser} />;
 }

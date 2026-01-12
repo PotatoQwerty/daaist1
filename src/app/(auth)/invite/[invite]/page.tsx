@@ -1,13 +1,32 @@
 "use client";
-import { signIn, useSession } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AdminOnboarding from "../../_components/AdminOnboarding";
+
 function Page() {
-  const { data: session } = useSession();
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [isValid, setIsValid] = useState<boolean>(false);
   const params = useParams();
   const rawTokenFromUrl = params.invite;
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   useEffect(() => {
     const handleValidate = async () => {
       if (!rawTokenFromUrl) return;
@@ -25,6 +44,9 @@ function Page() {
     };
     handleValidate();
   }, [session, rawTokenFromUrl]);
+
+  if (loading) return <div>Loading...</div>;
+
   if (!session)
     return (
       <div className="w-full h-screen flex items-center justify-center">
@@ -32,8 +54,11 @@ function Page() {
           className="p-2 bg-accent rounded-lg hover:opacity-80 transition ease-in-out duration-200"
           type="button"
           onClick={() =>
-            signIn("google", {
-              callbackUrl: `/admin-invite/${rawTokenFromUrl}`,
+            createClient().auth.signInWithOAuth({
+              provider: "google",
+              options: {
+                redirectTo: `${window.location.origin}/admin-invite/${rawTokenFromUrl}`,
+              },
             })
           }
         >

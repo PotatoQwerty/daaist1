@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase/server";
-import { auth } from "@/auth";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { getUserClubRole } from "@/lib/supabase/actions";
 
 export const GET = async (request: Request) => {
@@ -29,7 +28,10 @@ export const GET = async (request: Request) => {
   return NextResponse.json({ data }, { status: 200 });
 };
 export const POST = async (red: Request) => {
-  const session = await auth();
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await red.json();

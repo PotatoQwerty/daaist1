@@ -1,4 +1,3 @@
-import SessionWrapper from "@/components/SessionWrapper";
 import type { Metadata } from "next";
 import "@/app/globals.css";
 import { ThemeProvider } from "next-themes";
@@ -6,10 +5,11 @@ import { Josefin_Sans } from "next/font/google";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/app/(auth)/_components/AppSideBar";
 import { Toaster } from "react-hot-toast";
-import { auth } from "@/auth";
 import { notFound } from "next/navigation";
 import { getUserRoles } from "@/lib/supabase/actions";
 import { UserProvider } from "@/context/user-context";
+import { createClient } from "@/lib/supabase/server";
+
 const josefin = Josefin_Sans({
   subsets: ["latin"],
   variable: "--font-josefin",
@@ -24,9 +24,12 @@ export const metadata: Metadata = {
 export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const session = await auth();
-  if (!session?.user?.id) notFound();
-  const { isAdmin, isSuperAdmin } = await getUserRoles(session.user.id);
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.id) notFound();
+  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
 
   if (!isAdmin && !isSuperAdmin) notFound();
   return (
@@ -44,9 +47,7 @@ export default async function AdminLayout({
                 <SidebarTrigger />
               </div>
               <Toaster position="top-right" />
-              <SessionWrapper>
-                <UserProvider>{children}</UserProvider>
-              </SessionWrapper>
+              <UserProvider>{children}</UserProvider>
             </main>
           </SidebarProvider>
         </ThemeProvider>

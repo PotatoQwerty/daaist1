@@ -1,25 +1,26 @@
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { supabaseServer } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
-export default async function ProfileRedirectPage() {
-  const session = await auth();
+export default async function Profile() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session?.user?.id) {
+  if (!user?.id) {
     redirect("/");
   }
 
   // Fetch username directly from DB to avoid stale session data
-  const { data: profile } = await supabaseServer
-    .schema("public") // explicit schema is good practice as seen in your other files
+  const { data: profile } = await supabase
+    .schema("public")
     .from("profiles")
     .select("username")
-    .eq("user_id", session.user.id)
+    .eq("user_id", user.id)
     .single();
 
   if (!profile?.username) {
     // If no profile found, maybe they haven't onboarded yet or something is wrong
-    // Redirecting to home or potentially onboarding check could go here
     redirect("/");
   }
 

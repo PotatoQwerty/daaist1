@@ -3,26 +3,29 @@ import { supabaseServer } from "@/lib/supabase/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ level: string }> }
+  { params }: { params: { level: string } }
 ) {
-  const { level } = await params;
+  const { level } = params;
+
+  if (!level) {
+    return NextResponse.json({ error: "Level is required" }, { status: 400 });
+  }
 
   try {
-    const { data, error } = await supabaseServer
+    const { data: files, error } = await supabaseServer
       .schema("public")
       .from("files")
       .select("*")
-      .eq("level", level);
+      .eq("level", level); // Ensure the column name matches your database schema
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw error;
     }
 
-    return NextResponse.json({ data }, { status: 200 });
-  } catch (error) {
-    console.error("Server error:", error);
+    return NextResponse.json({ files }, { status: 200 });
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: error.message || "Something went wrong" },
       { status: 500 }
     );
   }

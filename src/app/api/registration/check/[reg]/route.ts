@@ -22,6 +22,8 @@ export async function GET(
     .eq("registration_number", registration_number)
     .single();
 
+  console.log(error?.message);
+
   if (!studiesDaa) {
     return NextResponse.json({ error: "Not a DAA student" }, { status: 404 });
   }

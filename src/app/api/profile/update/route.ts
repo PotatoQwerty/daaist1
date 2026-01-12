@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase/server";
-import { auth } from "@/auth";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   try {
-    const session = await auth();
+    const supabase = await createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -29,13 +31,7 @@ export async function POST(req: Request) {
     if (image !== undefined) updateData.image = image;
     if (username !== undefined) updateData.username = username;
 
-    // Some fields might belong to other tables if the user schema is split,
-    // but based on `profiles` schema in the image, these seem to be the main ones.
-    // Assuming `studyyear` and `isdaa` might be in `students` or `profiles` depending on recent changes,
-    // but looking at `profiles` in the diagram, it has `firstname`, `lastname`, `username`, `bio`, `phone`, `image`.
-    // We will stick to `profiles` table updates for now.
-
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabase
       .schema("public")
       .from("profiles")
       .update(updateData)

@@ -2,15 +2,19 @@ import { NextResponse } from "next/server";
 import { r2Client } from "@/lib/r2Client";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { redirect, RedirectType } from "next/navigation";
 import { getUserRoles } from "@/lib/supabase/actions";
-import { auth } from "@/auth";
+import { createClient } from "@/lib/supabase/server";
 
 export const PUT = async (request: Request) => {
-  const session = await auth();
-  if (!session) redirect("/", RedirectType.replace);
-  const { isAdmin } = await getUserRoles(session?.user.id!);
-  if (!isAdmin || !session) redirect("/", RedirectType.replace);
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
+  if ((!isAdmin && !isSuperAdmin) || !user)
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   try {
     const formData = await request.formData();
@@ -18,7 +22,7 @@ export const PUT = async (request: Request) => {
     const category = formData.get("category") as string | null;
     const level = formData.get("level") as string | null;
     const subject = formData.get("subject") as string | null;
-    const safeTitle = title?.replace(/ /g, "-");
+    const safeTitle = title?.replace(/ /g, "-") || "untitled";
     const contentType = formData.get("type") as string;
 
     // Build object key

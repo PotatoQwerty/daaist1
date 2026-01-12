@@ -52,14 +52,14 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem={true}
         >
-          <SessionWrapper>
-            <UserProvider>
-              <Toaster position="top-right" />
-              <Navbar />
-              {children}
-              <ChatBubble />
-            </UserProvider>
-          </SessionWrapper>
+          {/* <SessionWrapper> */}
+          <UserProvider>
+            <Toaster position="top-right" />
+            <Navbar />
+            {children}
+            <ChatBubble />
+          </UserProvider>
+          {/* </SessionWrapper> */}
         </ThemeProvider>
         <Footer />
       </body>

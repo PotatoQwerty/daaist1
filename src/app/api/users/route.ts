@@ -1,22 +1,16 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import { supabaseServer } from "@/lib/supabase/server";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { getUserRoles } from "@/lib/supabase/actions";
 
 export async function GET() {
-  const session = await auth();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session?.user?.id) {
+  if (!user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
-
-  const { isAdmin } = await getUserRoles(session.user.id);
-  if (!isAdmin) {
-    return NextResponse.json(
-      { error: "You do not have permission to do this action" },
-      { status: 403 }
-    );
-  }
+  } 
 
   const { data, error } = await supabaseServer.from("profiles").select(`
       user_id,

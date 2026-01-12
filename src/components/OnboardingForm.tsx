@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import IsDaaSelector from "./IsDaaSelector";
-import { useSession } from "next-auth/react";
 import swal from "sweetalert2";
+import { useUser } from "@/context/user-context";
+
 function OnboardingForm() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { session } = useUser();
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [hidden, setHidden] = useState<boolean>(true);
   const [foundDaa, setFoundDaa] = useState<boolean>(false);

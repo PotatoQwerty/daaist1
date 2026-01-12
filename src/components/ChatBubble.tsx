@@ -3,18 +3,17 @@ import { getChatMessages, addChatMessage } from "@/lib/Chat";
 import { MessageCircle, Send, X, Loader2, AlertCircle } from "lucide-react";
 import { useState, useEffect, useRef, useMemo } from "react";
 import Message from "./Message";
-import { useSession } from "next-auth/react";
-import { supabaseClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
+import { useUser } from "@/context/user-context";
 
 function ChatBubble() {
+  const { session, user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
-  const { data: session } = useSession();
-  
 
   // Ref to auto-scroll to bottom
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -33,7 +32,8 @@ function ChatBubble() {
 
   // Subscribe once for realtime inserts
   useEffect(() => {
-    const channel = supabaseClient
+    const supabase = createClient();
+    const channel = supabase
       .channel("public-chat")
       .on(
         "postgres_changes",
@@ -65,7 +65,7 @@ function ChatBubble() {
       .subscribe();
 
     return () => {
-      supabaseClient.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -86,7 +86,7 @@ function ChatBubble() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session || !session.user.isdaa) return;
+    if (!session || !user?.isdaa) return;
     if (!newMessage.trim()) return;
 
     // Clear any previous errors
@@ -101,16 +101,20 @@ function ChatBubble() {
       content: newMessage,
       created_at: new Date().toISOString(),
       user_id: session?.user.id,
-      user_image: session.user.image,
+      user_image: session.user.user_metadata?.avatar_url || "/assets/pdp.jpg",
+      user_username: user.username,
       isTemp: true,
     };
 
     setMessages((prev) => [...prev, tempMsg]);
     setNewMessage("");
 
-    // Send minimal payload to server (avoid sending temp fields)
+    // Send payload to server
     const payload = {
       content: tempMsg.content,
+      user_id: tempMsg.user_id,
+      user_image: tempMsg.user_image,
+      user_username: tempMsg.user_username,
     };
 
     const res = await addChatMessage(payload);
@@ -158,10 +162,10 @@ function ChatBubble() {
     });
   }, [messages, session?.user?.id]);
 
-  if (!session || !session.user.isdaa) return null;
+  if (!session || !user?.isdaa) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end">
       {/* CHAT WINDOW */}
       {isOpen && (
         <div className="mb-4 w-[350px] h-[500px] bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">

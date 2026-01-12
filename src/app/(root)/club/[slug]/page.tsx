@@ -3,7 +3,7 @@ import {
   getEventById,
   getUserClubRole,
 } from "@/lib/supabase/actions";
-import { auth } from "@/auth";
+import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import banner from "../../../../../public/images/banner.jpg";
@@ -41,7 +41,10 @@ async function ClubDetailsPage({
   if (!club) return notFound();
   const events = await getEventById(club.id);
 
-  const session = await auth();
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const userId = session?.user?.id;
   const role = userId ? await getUserClubRole(userId, club.id) : null;
 

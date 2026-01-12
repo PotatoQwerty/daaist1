@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import type { User } from "next-auth";
 import toast from "react-hot-toast";
 import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,16 @@ import { cn } from "@/lib/utils";
 interface SelectOption {
   value: string;
   label: string;
+}
+
+interface User {
+  user_id: string; // Changed from id to user_id to match Supabase
+  firstname?: string | null;
+  lastname?: string | null;
+  role?: string;
+  registration_number?: string;
+  id?: string;
+  // Add other fields as needed
 }
 
 export default function EditUserModal({
@@ -141,7 +150,7 @@ export default function EditUserModal({
             >
               Role
             </label>
-            {sessionUser === user.id ? (
+            {sessionUser === user.user_id ? (
               <div className="relative">
                 <select
                   disabled

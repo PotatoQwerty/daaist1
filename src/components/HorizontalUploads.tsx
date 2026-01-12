@@ -27,7 +27,7 @@ export default function HorizontalUploads({
   };
 
   return (
-    <div className="relative w-full border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50 min-h-[300px] flex items-center">
+    <div className="relative w-full border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50 min-h-[350px] flex items-center">
       {/* Scrollable row */}
       <div
         ref={scrollRef}
@@ -52,7 +52,7 @@ export default function HorizontalUploads({
               <ChevronRightIcon className="w-5 h-5" />
             </button>
             {uploads.map((i) => (
-              <div key={i.id} className="shrink-0 snap-start w-60 h-[280px]">
+              <div key={i.id} className="shrink-0 snap-start w-64 h-[320px]">
                 <UploadedCard
                   isOwnProfile={isOwnProfile}
                   type={i.type}

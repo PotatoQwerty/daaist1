@@ -1,19 +1,21 @@
-import { auth } from "@/auth";
 import { getUserRoles } from "@/lib/supabase/actions";
-import { supabaseServer } from "@/lib/supabase/server";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
     // 1. Check authentication
-    const session = await auth();
-    if (!session) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 2. Check authorization
-    const { isSuperAdmin } = await getUserRoles(session.user.id);
+    const { isSuperAdmin } = await getUserRoles(user.id);
     if (!isSuperAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

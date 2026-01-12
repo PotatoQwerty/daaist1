@@ -1,14 +1,15 @@
-import { supabaseServer } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function getUserByUsername(username: string) {
-  const { data, error } = await supabaseServer
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .schema("public")
     .from("profiles")
     .select("*")
     .eq("username", username)
     .single();
 
-  const { data: enrollmentData } = await supabaseServer
+  const { data: enrollmentData } = await supabase
     .schema("public")
     .from("student_enrollments")
     .select("study_year, isdaa")
@@ -24,7 +25,8 @@ export async function getUserByUsername(username: string) {
 }
 
 export async function getFilesByUserId(userId: string) {
-  const { data, error } = await supabaseServer
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .schema("public")
     .from("files")
     .select("*")
@@ -35,7 +37,8 @@ export async function getFilesByUserId(userId: string) {
 }
 
 export async function getLikedFiles(userId: string) {
-  const { data, error } = await supabaseServer
+  const supabase = await createClient();
+  const { data, error } = await supabase
     .schema("public")
     .from("likes")
     .select(

@@ -1,34 +1,36 @@
 import { RoleGate } from "@/components/RoleGate";
 import ManageFiles from "@/app/(auth)/_components/ManageFiles";
-import { supabaseServer } from "@/lib/supabase/server";
-import { auth } from "@/auth";
+import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { File } from "@/types/next-auth";
 import { getUserRoles } from "@/lib/supabase/actions";
+export const revalidate = 1800;
 export const metadata = {
-  title: "DAA'ist | Manage Posts",
-  robots: {
-    index: false,
-    follow: false,
+  title: "Daa'ist — Manage Posts",
+  description: "Manage Daa'ist posts.",
+  alternates: {
+    canonical: "https://daaist.com/admin/manage/posts",
   },
 };
 export default async function ManagePosts() {
-  const session = await auth();
-  if (!session) notFound();
-  const { isAdmin, isSuperAdmin } = await getUserRoles(session.user.id);
-  if (!isAdmin && !isSuperAdmin) notFound();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const { data: files, error } = await supabaseServer
-    .schema("public")
-    .from("files_with_users")
-    .select("*");
-  if (error) {
-    console.error("Fetch courses error:", error);
-  }
+  if (!user) return notFound();
+
+  const userRole = await getUserRoles(user.id);
+
+  const { data: posts, error } = await supabase.from("files").select("*");
+
+  if (!userRole) return notFound();
 
   return (
-    <RoleGate AllowedRoles={["admin", "super_admin"]}>
-      <ManageFiles initialFiles={files as File[]} />
-    </RoleGate>
+    <div className="flex flex-col w-full">
+      <RoleGate AllowedRoles={["admin", "super_admin"]}>
+        <ManageFiles initialFiles={(posts as File[]) ?? []} />
+      </RoleGate>
+    </div>
   );
 }

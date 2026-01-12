@@ -1,9 +1,8 @@
-import SessionWrapper from "@/components/SessionWrapper";
 import type { Metadata } from "next";
 import "@/app/globals.css";
 import { ThemeProvider } from "next-themes";
 import { Josefin_Sans } from "next/font/google";
-
+import { UserProvider } from "@/context/user-context";
 import { Toaster } from "react-hot-toast";
 
 const josefin = Josefin_Sans({
@@ -29,7 +28,7 @@ export default async function AdminLayout({
           defaultTheme="system"
         >
           <main className="kabel-reg w-full min-h-screen bg-background">
-            <SessionWrapper>{children}</SessionWrapper>
+            <UserProvider>{children}</UserProvider>
           </main>
         </ThemeProvider>
       </body>

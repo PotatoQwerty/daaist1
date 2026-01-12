@@ -1,12 +1,23 @@
 "use client";
 
+// "use client"; // Already at top
+
 import { useMemo, useEffect, useState } from "react";
 import Link from "next/link";
 import EditUserModal from "./EditUserModal";
 import { ChevronDown, Edit } from "lucide-react";
-import type { User } from "next-auth";
-import { useSession } from "next-auth/react";
-interface ExtendedUser extends User {
+
+// Removed next-auth imports
+
+interface ExtendedUser {
+  id?: string;
+  user_id: string;
+  firstname?: string | null;
+  lastname?: string | null;
+  username?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: string;
   student_enrollments?: {
     registration_number?: string;
     isdaa?: boolean;
@@ -20,9 +31,11 @@ interface ExtendedUser extends User {
 
 interface ManageUsersInterface {
   initialUsers: any[]; // relaxed type for initial input
+  currentUserId: string;
 }
-function ManageUsers({ initialUsers }: ManageUsersInterface) {
-  const { data: session } = useSession();
+function ManageUsers({ initialUsers, currentUserId }: ManageUsersInterface) {
+  // const { data: session } = useSession(); // Removed
+
   const [users, setUsers] = useState<ExtendedUser[]>(initialUsers || []);
   const [filteredUsers, setFilteredUsers] = useState<ExtendedUser[]>([]);
   const [editingUser, setEditingUser] = useState<ExtendedUser | null>(null);
@@ -128,7 +141,7 @@ function ManageUsers({ initialUsers }: ManageUsersInterface) {
                   <td className="px-4 py-2">
                     {user.username || "Unknown"}{" "}
                     <span className="text-accent font-bold">
-                      {user.user_id === session?.user?.id ? "(Me)" : ""}
+                      {user.user_id === currentUserId ? "(Me)" : ""}
                     </span>
                   </td>
                   <td className="px-4 py-2">
@@ -200,7 +213,7 @@ function ManageUsers({ initialUsers }: ManageUsersInterface) {
               setEditingUser(null);
             }}
             user={editingUser}
-            sessionUser={session?.user?.id || ""}
+            sessionUser={currentUserId}
           />
         )}
       </div>

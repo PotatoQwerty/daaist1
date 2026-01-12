@@ -1,17 +1,20 @@
-import { auth } from "@/auth";
-import { supabaseServer } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const session = await auth();
-  if (!session) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
     return NextResponse.json({ onboarded: null }, { status: 401 });
   }
-  const { data: onboarded, error } = await supabaseServer
+
+  const { data: onboarded, error } = await supabase
     .schema("public")
     .from("onboarding_status")
     .select("onboarded")
-    .eq("user_id", session?.user.id);
+    .eq("user_id", user.id);
 
   if (error)
     return NextResponse.json(

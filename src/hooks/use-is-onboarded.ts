@@ -1,14 +1,36 @@
 "use client";
-
+import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 export function useIsOnBoarded() {
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
-  const { data: session } = useSession();
+  const [session, setSession] = useState<any>(undefined);
+  const supabase = createClient();
 
   useEffect(() => {
-    if (!session) return;
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log(session);
+      setSession(session);
+    });
+
+    // Subscribe to auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (session === undefined) return; // Wait for session load attempt
+
+    if (!session) {
+      setLoading(false);
+      return;
+    }
 
     const fetchStatus = async () => {
       try {

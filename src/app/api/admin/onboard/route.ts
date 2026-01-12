@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase/server";
-import { auth } from "@/auth";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { sha256 } from "@/lib/admin";
 
 export async function POST(req: Request) {
-  const session = await auth();
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

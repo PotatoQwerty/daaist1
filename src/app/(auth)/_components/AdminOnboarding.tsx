@@ -4,27 +4,24 @@ import React, { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import { ParamValue } from "next/dist/server/request/params";
-import { useSession } from "next-auth/react";
+import { useUser } from "@/context/user-context";
 import { redirect, RedirectType } from "next/navigation";
+
 function AdminOnboarding({ token }: { token: ParamValue }) {
   const formRef = useRef<HTMLDivElement>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [form, setForm] = useState<{
     firstname: string;
     lastname: string;
-    // email: string;
-    // department: string;
     phone: string;
     username: string;
   }>({
     firstname: "",
     lastname: "",
-    // email: "",
     username: "",
-    // department: "",
     phone: "",
   });
-  const { data: session, status } = useSession();
+  const { session, loading } = useUser();
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -64,7 +61,7 @@ function AdminOnboarding({ token }: { token: ParamValue }) {
     redirect("/admin", RedirectType.replace);
   };
 
-  if (status == "loading" && !session)
+  if (loading && !session)
     return (
       <div className="w-full h-screen items-center justify-center">
         <span className="flex gap-1">

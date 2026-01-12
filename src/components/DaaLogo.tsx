@@ -13,6 +13,7 @@ export default function DaaLogo() {
         height={250}
         width={250}
         alt="daa logo"
+        loading="eager"
         className="opacity-90 hover:opacity-100 hover:scale-110 transition-all duration-300 ease-in-out"
       />
     </Link>

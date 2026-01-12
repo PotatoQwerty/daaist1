@@ -1,5 +1,5 @@
 import CreateClubForm from "@/app/(auth)/_components/CreateClubForm";
-import { auth } from "@/auth";
+import { createClient } from "@/lib/supabase/server";
 import { RoleGate } from "@/components/RoleGate";
 import { getClubs, getUserRoles } from "@/lib/supabase/actions";
 import { notFound } from "next/navigation";
@@ -12,7 +12,10 @@ import {
 import Image from "next/image";
 
 async function ClubsPage() {
-  const session = await auth();
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session) notFound();
   const { isSuperAdmin } = await getUserRoles(session.user.id);
   if (!isSuperAdmin) notFound();

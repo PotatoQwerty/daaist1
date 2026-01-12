@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase/server";
-import { auth } from "@/auth";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ fileId: string }> }
 ) {
-  const session = await auth();
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const userId = session?.user.id;
 
   const { fileId } = await params;
@@ -29,7 +31,7 @@ export async function PATCH(
 
   // 2️⃣ Toggle logic (using fileId, not the whole object)
   const newLikes = currentLikes.includes(fileId)
-    ? currentLikes.filter((likedId) => likedId !== fileId)
+    ? currentLikes.filter((likedId: string) => likedId !== fileId)
     : [...currentLikes, fileId];
 
   // 3️⃣ Update Supabase record

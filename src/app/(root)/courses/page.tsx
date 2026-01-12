@@ -1,6 +1,6 @@
 import { yearOptions } from "@/constants/uploadConstants";
 import Link from "next/link";
-import { auth } from "@/auth";
+import { createClient } from "@/lib/supabase/server";
 export const metadata = {
   title: "Daa'ist — Courses by Year",
   description:
@@ -9,8 +9,12 @@ export const metadata = {
     canonical: "https://daaist.com/courses",
   },
 };
-export default async function FilesList() {
-  const session = await auth();
+export default async function Courses() {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const { data: courses, error } = await supabase.from("courses").select("*");
   if (!session) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center px-4 py-10">

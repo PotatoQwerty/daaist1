@@ -1,12 +1,13 @@
 "use server";
-import { auth } from "@/auth";
 import { supabaseServer } from "./supabase/server";
 
 export async function getChatMessages() {
-  const session = await auth();
-  if (!session?.user || !session.user.isdaa) {
-    throw new Error("Unauthorized");
-  }
+  //   const session = await auth.api.getSession({
+  //     headers: await headers()
+  // })
+  //   if (!session?.user || !session.user.isdaa) {
+  //     throw new Error("Unauthorized");
+  //   }
 
   try {
     // Query the VIEW, not the table
@@ -30,10 +31,12 @@ export async function addChatMessage(message: {
   user_image: string;
   user_username: string;
 }) {
-  const session = await auth();
-  if (!session?.user || !session.user.isdaa) {
-    throw new Error("Unauthorized");
-  }
+  //   const session = await auth.api.getSession({
+  //     headers: await headers()
+  // })
+  // if (!session?.user || !session.user.isdaa) {
+  //   throw new Error("Unauthorized");
+  // }
 
   try {
     const { data: messageSent, error } = await supabaseServer
@@ -41,9 +44,9 @@ export async function addChatMessage(message: {
       .from("messages")
       .insert({
         content: message.content,
-        user_id: session.user.id,
-        user_image: session.user.image,
-        user_username: session.user.username,
+        user_id: message.user_id,
+        user_image: message.user_image,
+        user_username: message.user_username,
       })
       .select()
       .single();

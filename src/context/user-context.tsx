@@ -7,7 +7,7 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { useSession } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
 import { getUserData } from "@/lib/supabase/actions";
 
 interface UserContextType {
@@ -17,6 +17,7 @@ interface UserContextType {
   isSuperAdmin: boolean;
   loading: boolean;
   refreshUser: () => Promise<void>;
+  session: any | null;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -26,23 +27,46 @@ const UserContext = createContext<UserContextType>({
   isSuperAdmin: false,
   loading: true,
   refreshUser: async () => {},
+  session: null,
 });
 
 export const useUser = () => useContext(UserContext);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const { data: session, status } = useSession();
+  const [session, setSession] = useState<any>(null);
   const [user, setUser] = useState<any | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    // Get initial session
+    const initSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      if (!data.session) setLoading(false);
+    };
+    initSession();
+
+    // Subscribe to auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      if (!session) setLoading(false);
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
 
   const refreshUser = async () => {
     if (!session?.user?.id) {
       setUser(null);
       setRoles([]);
       setIsAdmin(false);
+      setIsSuperAdmin(false);
       setLoading(false);
       return;
     }
@@ -61,13 +85,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    if (status === "loading") return;
+    if (!session) {
+      setUser(null);
+      setRoles([]);
+      setIsAdmin(false);
+      setIsSuperAdmin(false);
+      setLoading(false);
+      return;
+    }
+    setLoading(true); // Start loading user data
     refreshUser();
-  }, [session, status]);
+  }, [session]);
 
   return (
     <UserContext.Provider
-      value={{ user, roles, isAdmin, loading, refreshUser, isSuperAdmin }}
+      value={{
+        user,
+        roles,
+        isAdmin,
+        loading,
+        refreshUser,
+        isSuperAdmin,
+        session,
+      }}
     >
       {children}
     </UserContext.Provider>

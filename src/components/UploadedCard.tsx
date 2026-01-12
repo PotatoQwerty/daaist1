@@ -1,4 +1,5 @@
 import { MoreVertical, Trash2, FileIcon } from "lucide-react";
+import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 
 export default function UploadedCard({
@@ -77,22 +78,19 @@ export default function UploadedCard({
       </div>
 
       {/* File Preview Section */}
-      <div className="relative flex flex-col items-center justify-center pt-8 pb-4 px-4 overflow-hidden h-48">
+      <div className="relative flex flex-col items-center justify-center pt-8 pb-4 px-4 overflow-hidden h-40">
         <div className="absolute inset-0 bg-radial-gradient from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
         <div className="relative w-full h-full flex items-center justify-center transform group-hover:scale-105 transition-transform duration-500 ease-out">
           {/* Since we don't have a URL for image preview in the props passed to UploadedCard effectively (link is passed), assuming basic icon for now or we could try to use link if it's an image. FileCard uses 'url'. UploadedCard has 'link'. */}
           {type.includes("image") ? (
             // Assuming 'link' is the accessible URL
             <div className="relative w-full h-full bg-white/40 dark:bg-white/5 rounded-2xl shadow-inner border border-white/40 overflow-hidden">
-              {/* Using img tag or Next Image if we import it. FileCard uses Next Image. I'll use simple img for now to avoid dealing with next/image config issues unless previously used, but FileCard used it. Let's use simple div with icon if not sure, or try img. FileCard uses Image. Let's stick to icon for safety or just basic div if no image logic is robust here. 
-               Wait, UploadedCard didn't have image preview logic before, just text. FileCard DOES. 
-               I should probably just use FileIcon for consistency unless I'm sure 'link' is an image url. 
-               The 'type' prop is passed. 
-               */}
-              <img
+              <Image
                 src={link || ""}
                 alt={title || "Image Preview"}
-                className="object-cover w-full h-full rounded-xl"
+                fill
+                className="object-cover w-full h-full rounded-xl transition-transform duration-500 hover:scale-110"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             </div>
           ) : (

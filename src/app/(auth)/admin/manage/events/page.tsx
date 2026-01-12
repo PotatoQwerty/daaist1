@@ -1,9 +1,12 @@
-import { auth } from "@/auth";
 import { getUserRoles } from "@/lib/supabase/actions";
 import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
 async function EventsPage() {
-  const session = await auth();
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session) notFound();
   const { isAdmin, isSuperAdmin } = await getUserRoles(session.user.id);
   if (!isAdmin && !isSuperAdmin) notFound();

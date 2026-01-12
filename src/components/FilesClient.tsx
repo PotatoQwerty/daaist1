@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useUser } from "@/context/user-context";
 import FileList from "@/components/FileList";
 import MessageCard from "@/components/MessageCard";
 import { File } from "@/types/next-auth";
@@ -23,7 +23,7 @@ export default function FilesClient({ initialFiles, level }: FilesClientProps) {
   const [liked, setLiked] = useState<{ id: string }[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const [onlySum, setOnlySum] = useState<boolean>(false);
-  const { data: session, status } = useSession();
+  const { session, loading } = useUser();
   const userId = session?.user?.id;
 
   const filesToDisplay = initialFiles.filter(
@@ -33,7 +33,7 @@ export default function FilesClient({ initialFiles, level }: FilesClientProps) {
   );
 
   useEffect(() => {
-    if (status !== "authenticated" || !userId) return;
+    if (loading || !session || !userId) return;
 
     const fetchLikedPosts = async () => {
       try {

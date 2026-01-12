@@ -1,5 +1,7 @@
 import HomeClient from "@/components/HomeClient";
-import { auth } from "@/auth";
+import { isOnboarded } from "@/lib/supabase/actions";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 export const metadata = {
   title: "Daa'ist — Home",
   description:
@@ -20,7 +22,20 @@ export const metadata = {
   ],
   alternates: { canonical: "https://daaist.com/" },
 };
-
 export default async function HomePage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return <HomeClient />;
+  }
+  const onboarded = await isOnboarded(user.id);
+
+  if (!onboarded) {
+    redirect("/onboarding");
+  }
+
   return <HomeClient />;
 }

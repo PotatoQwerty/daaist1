@@ -1,14 +1,24 @@
-import { auth } from "@/auth";
+import { createClient } from "@/lib/supabase/server";
 import OnboardingForm from "@/components/OnboardingForm";
 import { isOnboarded } from "@/lib/supabase/actions";
 import { redirect } from "next/navigation";
+export const metadata = {
+  title: "Daaist - Onboarding",
+  description: "Onboarding page for Daaist",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+export default async function OnboardingPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default async function Onboarding() {
-  const session = await auth();
+  if (!user) return null;
 
-  if (!session) return null;
-
-  const onboarded = await isOnboarded(session?.user.id);
+  const onboarded = await isOnboarded(user.id);
 
   if (onboarded) {
     redirect("/");

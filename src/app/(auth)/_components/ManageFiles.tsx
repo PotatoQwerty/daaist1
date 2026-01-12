@@ -1,9 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
-import { FileIcon, Edit, FileX, MoreVertical, Loader2Icon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2Icon } from "lucide-react";
 import type { File } from "../../../types/next-auth";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
@@ -33,11 +31,17 @@ function ManageFiles({ initialFiles }: FilesClientProps) {
     if (confirm.isConfirmed) {
       toast.promise(
         (async () => {
-          const res = await fetch("/api/files/manage/delete", {
+          let fileKey = "";
+          try {
+            const urlObj = new URL(fileUrl);
+            fileKey = urlObj.pathname.substring(1);
+          } catch (e) {
+            console.error("Invalid URL", e);
+            throw new Error("Invalid file URL");
+          }
+
+          const res = await fetch(`/api/files/${fileKey}`, {
             method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            credentials: "same-origin",
-            body: JSON.stringify({ fileUrl }),
           });
 
           const data = await res.json();

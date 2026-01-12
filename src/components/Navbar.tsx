@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import {
@@ -49,27 +49,34 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar() {
-  const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
   const pathname = usePathname();
-  const { isAdmin, user, loading, isSuperAdmin } = useUser();
+  const { isAdmin, user, loading, isSuperAdmin, session } = useUser();
+  const supabase = createClient();
 
   const [mounted, setMounted] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const isActive = (href: string) =>
     href === "/"
       ? pathname === "/"
       : pathname?.startsWith(href + "/") || pathname === href;
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const handleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `/`,
+      },
+    });
+  };
 
   if (!mounted) return null;
 
@@ -124,7 +131,15 @@ export default function Navbar() {
         )}
 
         {/* Session / Profile */}
-        {session ? (
+        {loading ? (
+          <button
+            title="Loading..."
+            type="button"
+            className="relative w-9 h-9 rounded-full overflow-hidden border border-border animate-pulse bg-muted"
+          >
+            <ImageSkeleton />
+          </button>
+        ) : session ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -132,31 +147,31 @@ export default function Navbar() {
                 type="button"
                 className="relative w-9 h-9 rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-ring transition-all focus:outline-none"
               >
-                {loading ? (
-                  <ImageSkeleton />
-                ) : (
-                  <Image
-                    src={
-                      user?.image ||
-                      session.user.image ||
-                      "/images/placeholder.png"
-                    }
-                    alt="Profile"
-                    sizes="36px"
-                    fill
-                    className="object-cover"
-                  />
-                )}
+                <Image
+                  src={
+                    user?.image ||
+                    session?.user?.user_metadata?.avatar_url ||
+                    "/images/placeholder.png"
+                  }
+                  alt="Profile"
+                  sizes="36px"
+                  fill
+                  className="object-cover"
+                />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {session.user.name}
+                    {user?.firstname && user?.lastname
+                      ? `${user.firstname} ${user.lastname}`
+                      : user?.name ||
+                        session?.user?.user_metadata?.name ||
+                        session?.user?.email}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {session.user.email}
+                    {user?.email || session?.user?.email}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -177,8 +192,8 @@ export default function Navbar() {
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-red-600 focus:text-red-600 cursor-pointer"
-                onClick={() => signOut()}
+                className="text-red-600 focus:text-white cursor-pointer"
+                onClick={handleSignOut}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Sign out</span>
@@ -188,7 +203,7 @@ export default function Navbar() {
         ) : (
           <button
             type="button"
-            onClick={() => signIn("google")}
+            onClick={handleSignIn}
             className="p-2 bg-accent rounded-lg hover:bg-primary/90 hover:text-white transition-all ease-in-out duration-150"
           >
             Sign In
@@ -242,7 +257,7 @@ export default function Navbar() {
                 {!session && (
                   <button
                     type="button"
-                    onClick={() => signIn("google")}
+                    onClick={handleSignIn}
                     className="text-lg font-medium text-left text-foreground/60 hover:text-foreground"
                   >
                     Sign In

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase/server";
-import { auth } from "@/auth";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
 import { getUserClubRole } from "@/lib/supabase/actions";
 
@@ -26,7 +25,11 @@ export const GET = async (request: Request) => {
 };
 
 export const POST = async (request: Request) => {
-  const session = await auth();
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -65,7 +68,7 @@ export const POST = async (request: Request) => {
 
     const bannerFileName = `clubs/events/${id}`;
 
-    const { error: uploadError } = await supabaseServer.storage
+    const { error: uploadError } = await supabase.storage
       .from("daa")
       .upload(bannerFileName, file, {
         contentType: file.type,
@@ -76,7 +79,7 @@ export const POST = async (request: Request) => {
       return NextResponse.json({ error: uploadError.message }, { status: 500 });
     }
 
-    const { data: bannerData } = supabaseServer.storage
+    const { data: bannerData } = supabase.storage
       .from("daa")
       .getPublicUrl(bannerFileName);
 
@@ -117,7 +120,10 @@ export const POST = async (request: Request) => {
 };
 
 export const DELETE = async (request: Request) => {
-  const session = await auth();
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -143,7 +149,7 @@ export const DELETE = async (request: Request) => {
     }
 
     // 3. If DB delete successful, delete from Storage
-    const { error: storageError } = await supabaseServer.storage
+    const { error: storageError } = await supabase.storage
       .from("daa")
       .remove([`clubs/events/${event_id}`]);
 

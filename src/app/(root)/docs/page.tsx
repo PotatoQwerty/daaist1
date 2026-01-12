@@ -1,8 +1,9 @@
-import { supabaseServer } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import FilesClient from "@/components/FilesClient";
-import { auth } from "@/auth";
 import Link from "next/link";
+
 export const revalidate = 3600; // Cache for 1 hour (ISR)
+
 export const metadata = {
   title: "Daa'ist — Documents",
   description: "Explore resources, and materials for all academic years.",
@@ -10,8 +11,13 @@ export const metadata = {
     canonical: "https://daaist.com/docs",
   },
 };
-export default async function DocsPage() {
-  const session = await auth();
+
+export default async function Documents() {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   if (!session) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center px-4 py-10">
@@ -40,7 +46,8 @@ export default async function DocsPage() {
       </div>
     );
   }
-  const { data: files, error } = await supabaseServer
+
+  const { data: files, error } = await supabase
     .schema("public")
     .from("files")
     .select("*")

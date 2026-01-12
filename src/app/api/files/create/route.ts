@@ -1,16 +1,18 @@
-import { auth } from "@/auth";
 import { getUserRoles } from "@/lib/supabase/actions";
-import { supabaseServer } from "@/lib/supabase/server";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { isAdmin } = await getUserRoles(session.user.id);
-  if (!isAdmin) {
+  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
+  if (!isAdmin && !isSuperAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -25,7 +27,7 @@ export async function POST(req: Request) {
     level: body.level,
     subject: body.subject,
     issum: body.issum,
-    uploaded_by: session.user.id,
+    uploaded_by: user.id,
   });
 
   if (error) {

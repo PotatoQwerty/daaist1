@@ -2,27 +2,46 @@
 
 import Loading from "@/components/Loading";
 import Link from "next/link";
-import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import MessageCard from "@/components/MessageCard";
 import { useIsOnBoarded } from "@/hooks/use-is-onboarded";
+import { createClient } from "@/lib/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 export default function HomeClient() {
   const { onboarded, loading } = useIsOnBoarded();
-  
-  const { status } = useSession();
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [session, setSession] = useState<User | null>(null);
   const router = useRouter();
+  const handleUserSignIn = async () => {
+    const supabase = await createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `/`,
+      },
+    });
+  };
 
   useEffect(() => {
-    if (status === "authenticated" && !loading && onboarded === false) {
-      router.push("/onboarding");
-    }
-  }, [status, loading, onboarded, router]);
+    const fetchSession = async () => {
+      const { data } = await createClient().auth.getUser();
 
-  if (status === "loading") return <Loading />;
+      if (!data.user && !loading && onboarded === false) {
+        router.push("/onboarding");
+      }
 
-  if (status === "unauthenticated") {
+      setSessionLoading(false);
+      setSession(data.user);
+    };
+
+    fetchSession();
+  }, [loading, onboarded, router]);
+
+  if (sessionLoading) return <Loading />;
+
+  if (!session) {
     return (
       <div className="w-full min-h-screen flex justify-center items-center p-4">
         <div className="relative w-[90%] sm:w-3/4 rounded-2xl bg-primary/60 flex flex-col items-center text-center space-y-4 p-6 sm:p-10">
@@ -42,7 +61,7 @@ export default function HomeClient() {
           </p>
           <button
             type="button"
-            onClick={() => signIn("google")}
+            onClick={handleUserSignIn}
             className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-primary p-0.5 text-white font-bold hover:scale-110 transition"
           >
             Let&apos;s get you started!

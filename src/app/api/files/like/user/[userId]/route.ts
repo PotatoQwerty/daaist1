@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase/server";
-import { auth } from "@/auth";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ userId: string }> }
 ) {
-  const session = await auth();
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   const { userId } = await params;
 
   if (!session || session.user?.id !== userId) {
@@ -40,7 +43,7 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Optionally map to only the files (if you don’t care about the "like" info)
-  const likedFiles = data.map((like) => like.files);
+  const likedFiles = data.map((like: any) => like.files);
 
   return NextResponse.json({ likedFiles });
 }

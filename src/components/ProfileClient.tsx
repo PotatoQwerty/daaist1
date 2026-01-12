@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "next-auth";
-import { useSession } from "next-auth/react";
+import { useUser } from "@/context/user-context";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { Stars, UserIcon, ShieldUser, FolderOpen, Heart } from "lucide-react";
@@ -15,22 +14,31 @@ import EmptyState from "@/components/EmptyState";
 import { yearOptions } from "@/constants/uploadConstants";
 import { useCurrentRole } from "@/hooks/use-current-role";
 
+interface ProfileUser {
+  id?: string;
+  user_id: string;
+  files?: any[];
+  uploads: any[];
+  likes: any[];
+  studyyear?: string;
+  bio?: string;
+  isdaa?: boolean;
+  role?: string;
+  firstname?: string;
+  lastname?: string;
+  username?: string;
+  image?: string;
+  email?: string;
+}
+
 interface ProfileClientProps {
-  initialUser: User & {
-    uploads: any[];
-    likes: any[];
-    user_id: string;
-    studyyear?: string;
-    bio?: string;
-    isdaa?: boolean;
-    role?: string;
-  };
+  initialUser: ProfileUser;
 }
 
 export default function ProfileClient({ initialUser }: ProfileClientProps) {
-  const { data: session } = useSession();
+  const { session } = useUser();
   const [user, setUser] = useState(initialUser);
-  const { isAdmin, roles } = useCurrentRole();
+  const { isAdmin, isSuperAdmin } = useCurrentRole();
 
   const isOwnProfile = session?.user.id === user.user_id;
 
@@ -38,7 +46,16 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     try {
       toast.promise(
         (async () => {
-          const res = await fetch(`/api/files/${fileUrl}`, {
+          let fileKey = "";
+          try {
+            const urlObj = new URL(fileUrl);
+            fileKey = urlObj.pathname.substring(1);
+          } catch (e) {
+            console.error("Invalid URL", e);
+            fileKey = fileUrl;
+          }
+
+          const res = await fetch(`/api/files/${fileKey}`, {
             method: "DELETE",
           });
           if (!res.ok) throw new Error("Failed to delete file");
@@ -135,18 +152,18 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 {displayYear?.label || "Unknown"}
               </span>
               <span className="flex items-center gap-1 text-sm text-slate-100 font-medium bg-accent/80 px-3 py-1 rounded-full shadow-sm">
-                {user.isdaa ? (
-                  <Stars
-                    className="size-5"
-                    fill="var(--secondary)"
-                    stroke="none"
-                  />
-                ) : isAdmin ? (
+                {isAdmin || isSuperAdmin ? (
                   <ShieldUser
                     className="size-5"
                     fill="var(--secondary)"
                     stroke="var(--primary)"
                     strokeWidth="1px"
+                  />
+                ) : user.isdaa ? (
+                  <Stars
+                    className="size-5"
+                    fill="var(--secondary)"
+                    stroke="none"
                   />
                 ) : (
                   <UserIcon
@@ -156,7 +173,11 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   />
                 )}
                 <span>
-                  {user.isdaa ? `DAA'ist` : isAdmin ? `Admin` : "Guest"}
+                  {isAdmin || isSuperAdmin
+                    ? `Admin`
+                    : user.isdaa
+                    ? `DAA'ist`
+                    : "Guest"}
                 </span>
               </span>
             </div>

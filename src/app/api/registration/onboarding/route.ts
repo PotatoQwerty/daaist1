@@ -1,15 +1,19 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { createClient } from "@/lib/supabase/auth/server";
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const supabase = await createClient();
 
-  if (!session?.user?.id) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
   // Make sure to parse the body correctly based on how you send it
   // If you send JSON.stringify({ form: values }), this is correct.
   const { form } = await request.json();
@@ -23,14 +27,11 @@ export async function POST(request: Request) {
     isdaa,
   } = form || {};
 
-  /* ---------------------------------------------------------
-     1️⃣ Update Profile (Safe: Upsert handles retries)
-     --------------------------------------------------------- */
   const { error: profileError } = await supabaseServer
     .schema("public")
     .from("profiles")
     .upsert({
-      user_id: userId, // Matches the PK or Unique constraint
+      user_id: userId,
       firstname,
       lastname,
       username,
@@ -70,12 +71,24 @@ export async function POST(request: Request) {
           isdaa: isdaa,
         },
         { onConflict: "user_id" }
-      ); // <--- Explicitly target user_id conflict
+      );
 
     if (enrollmentError) {
       console.error("Enrollment error:", enrollmentError);
       return NextResponse.json({ error: "Enrollment failed" }, { status: 500 });
     }
+  }
+  const { error: roleError } = await supabaseServer
+    .schema("public")
+    .from("roles")
+    .upsert({
+      user_id: userId,
+      role: "student",
+    });
+
+  if (roleError) {
+    console.error("Role update error:", roleError);
+    return NextResponse.json({ error: "Role update failed" }, { status: 500 });
   }
 
   /* ---------------------------------------------------------
