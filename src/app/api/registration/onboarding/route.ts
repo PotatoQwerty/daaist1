@@ -80,7 +80,7 @@ export async function POST(request: Request) {
   }
   const { error: roleError } = await supabaseServer
     .schema("public")
-    .from("roles")
+    .from("user_roles")
     .upsert({
       user_id: userId,
       role: "student",
