@@ -5,7 +5,6 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    // 1. Check authentication
     const supabase = await createClient();
     const {
       data: { user },
@@ -30,6 +29,11 @@ export async function POST(request: Request) {
     const logoFile = formData.get("logoFile") as File | null;
     const bannerFile = formData.get("bannerFile") as File | null;
     const president_id = formData.get("president_id") as string;
+    const socials = {
+      facebook: formData.get("facebook") as string,
+      instagram: formData.get("instagram") as string,
+      tiktok: formData.get("tiktok") as string,
+    };
 
     // Optional: Add validation
     if (
@@ -92,10 +96,11 @@ export async function POST(request: Request) {
         name,
         slug,
         description,
+        socials: socials,
         logo_url: logoUrl.publicUrl,
         banner_url: bannerUrl.publicUrl,
         is_active,
-        created_by: session.user.id,
+        created_by: user.id,
       })
       .select()
       .single();

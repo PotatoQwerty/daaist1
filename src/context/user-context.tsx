@@ -5,6 +5,8 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
+  useRef,
   ReactNode,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -41,10 +43,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
+  // Track the current session access token to prevent unnecessary updates
+  const currentSessionToken = useRef<string | null>(null);
+
   useEffect(() => {
     // Get initial session
     const initSession = async () => {
       const { data } = await supabase.auth.getSession();
+      if (data.session?.access_token) {
+        currentSessionToken.current = data.session.access_token;
+      }
       setSession(data.session);
       if (!data.session) setLoading(false);
     };
@@ -54,14 +62,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      if (!session) setLoading(false);
+      // Only update state if the session actually changed
+      const newToken = session?.access_token || null;
+      if (newToken !== currentSessionToken.current) {
+        currentSessionToken.current = newToken;
+        setSession(session);
+        if (!session) setLoading(false);
+      }
     });
 
     return () => subscription?.unsubscribe();
   }, []);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     if (!session?.user?.id) {
       setUser(null);
       setRoles([]);
@@ -82,7 +95,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       console.error("Failed to fetch user data:", error);
       setLoading(false);
     }
-  };
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (!session) {
@@ -95,7 +108,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
     setLoading(true); // Start loading user data
     refreshUser();
-  }, [session]);
+  }, [session, refreshUser]);
 
   return (
     <UserContext.Provider

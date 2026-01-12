@@ -75,12 +75,25 @@ export const PATCH = async () => {
   return NextResponse.json({ status: 200 });
 };
 
-export const DELETE = async () => {
+export const DELETE = async (req: Request) => {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = await req.json();
+
+  const role = await getUserClubRole(session.user.id, body.club_id);
+  const isPresident = role === "president";
+  if (!isPresident) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { error } = await supabaseServer
     .schema("public")
     .from("club_members")
     .delete()
-    .eq("id", "");
+    .eq("id", body.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

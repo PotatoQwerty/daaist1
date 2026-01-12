@@ -281,3 +281,20 @@
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
+
+.socials a svg {
+  fill: black;
+  transition: fill 0.25s ease;
+}
+
+.socials a:hover .facebook {
+  fill: #1877f2;
+}
+
+.socials a:hover .instagram {
+  fill: url(#igGradient);
+}
+
+.socials a:hover .tiktok {
+  fill: #fe2c55;
+}

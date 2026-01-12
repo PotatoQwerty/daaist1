@@ -15,6 +15,11 @@ function CreateClubForm() {
     description: "",
     logo_url: "",
     banner_url: "",
+    socials: {
+      facebook: "",
+      instagram: "",
+      tiktok: "",
+    },
     is_active: true,
   });
 
@@ -194,6 +199,9 @@ function CreateClubForm() {
         formData.append("bannerFile", bannerFile);
         formData.append("is_active", JSON.stringify(clubData.is_active));
         formData.append("president_id", presidentId);
+        formData.append("facebook", clubData.socials.facebook);
+        formData.append("instagram", clubData.socials.instagram);
+        formData.append("tiktok", clubData.socials.tiktok);
 
         const res = await fetch("/api/admin/clubs/create", {
           body: formData,
@@ -212,6 +220,7 @@ function CreateClubForm() {
           logo_url: "",
           banner_url: "",
           is_active: true,
+          socials: { facebook: "", instagram: "", tiktok: "" },
         });
         setLogoFile(undefined);
         setBannerFile(undefined);
@@ -363,6 +372,88 @@ function CreateClubForm() {
                 <p className="text-xs text-muted-foreground">
                   The selected user will be assigned as the Club President.
                 </p>
+              </div>
+            </div>
+
+            {/* Social Media Links */}
+            <div className="bg-card rounded-xl border shadow-sm p-6 space-y-6">
+              <h2 className="text-xl font-semibold kabel-bold flex items-center gap-2">
+                Social Media
+              </h2>
+
+              {/* Facebook */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="facebook"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Facebook URL
+                </label>
+                <Input
+                  type="url"
+                  id="facebook"
+                  name="facebook"
+                  value={clubData.socials.facebook}
+                  onChange={(e) =>
+                    setClubData({
+                      ...clubData,
+                      socials: {
+                        ...clubData.socials,
+                        facebook: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="https://facebook.com/..."
+                />
+              </div>
+
+              {/* Instagram */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="instagram"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Instagram URL
+                </label>
+                <Input
+                  type="url"
+                  id="instagram"
+                  name="instagram"
+                  value={clubData.socials.instagram}
+                  onChange={(e) =>
+                    setClubData({
+                      ...clubData,
+                      socials: {
+                        ...clubData.socials,
+                        instagram: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="https://instagram.com/..."
+                />
+              </div>
+
+              {/* TikTok */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="tiktok"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  TikTok URL
+                </label>
+                <Input
+                  type="url"
+                  id="tiktok"
+                  name="tiktok"
+                  value={clubData.socials.tiktok}
+                  onChange={(e) =>
+                    setClubData({
+                      ...clubData,
+                      socials: { ...clubData.socials, tiktok: e.target.value },
+                    })
+                  }
+                  placeholder="https://tiktok.com/..."
+                />
               </div>
             </div>
 
