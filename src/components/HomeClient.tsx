@@ -29,28 +29,27 @@ export default function HomeClient() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      {/* INFO SECTION - Previously strictly for non-logged in users, now integrated generally or kept for context */}
-      {!session && (
-        <section className="bg-muted py-12 px-6">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
-            <h1 className="text-4xl font-bold">Daa'ist</h1>
-            <h2 className="text-2xl font-bold">
-              Built by Students for Students
-            </h2>
-            <p className="text-muted-foreground">
-              Daa&#39;ist is a community-driven platform where architecture
-              students can share and access academic resources, collaborate on
-              projects, join clubs, and connect with peers. Our mission is to
-              empower students by centralizing educational materials and
-              fostering collaboration within the architecture community.
-            </p>
+      {/* APP INFO SECTION - Always visible to explain app purpose for OAuth verification */}
+      <section className="bg-muted py-12 px-6">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+          <h1 className="text-4xl font-bold">Daa&apos;ist</h1>
+          <h2 className="text-2xl font-bold">Built by Students for Students</h2>
+          <p className="text-muted-foreground">
+            Daa&apos;ist is a community-driven platform where architecture
+            students at the Département d&apos;Architecture d&apos;Alger can
+            share and access academic resources, collaborate on projects, join
+            clubs, and connect with peers. Our mission is to empower students by
+            centralizing educational materials and fostering collaboration
+            within the architecture community.
+          </p>
+          {!session && (
             <MessageCard
               type="info"
-              message="Please note that this website is developed and maintained by the club Archibenevoles. You might encounter some errors and bugs since you’re using one of the earliest versions of this website."
+              message="Please note that this website is developed and maintained by the club Archibenevoles. You might encounter some errors and bugs since you're using one of the earliest versions of this website."
             />
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
       {/* HERO */}
       <section className="relative flex flex-col items-center justify-center text-center py-24 px-6 bg-linear-to-tl from-primary to-accent text-white">

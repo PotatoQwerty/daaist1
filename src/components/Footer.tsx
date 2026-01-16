@@ -3,11 +3,9 @@ import Link from "next/link";
 
 function Footer() {
   const currentYear = new Date().getFullYear();
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
   const links = [
-    { href: `${origin}/privacy`, label: "Privacy" },
-    { href: `${origin}/terms`, label: "Terms" },
-    // { href: "/contact", label: "Contact" },
+    { href: "https://daaist.com/privacy", label: "Privacy Policy" },
+    { href: "https://daaist.com/terms", label: "Terms of Service" },
   ];
 
   return (
