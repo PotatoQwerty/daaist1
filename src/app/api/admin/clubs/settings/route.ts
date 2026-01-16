@@ -22,13 +22,13 @@ export async function POST(request: Request) {
     const instagram = formData.get("instagram") as string;
     const tiktok = formData.get("tiktok") as string;
     const is_active = formData.get("is_active") === "true";
-    const logoFile = formData.get("logo") as File | null;
-    const bannerFile = formData.get("banner") as File | null;
+    const logo_url = formData.get("logo_url") as string | null;
+    const banner_url = formData.get("banner_url") as string | null;
 
     if (!club_id) {
       return NextResponse.json(
         { error: "Club ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -37,17 +37,9 @@ export async function POST(request: Request) {
     if (role !== "president" && role !== "vice_president") {
       return NextResponse.json(
         { error: "You don't have permission to edit this club" },
-        { status: 403 }
+        { status: 403 },
       );
     }
-
-    // Get current club data to retrieve old image URLs and slug
-    const { data: currentClub } = await supabaseServer
-      .schema("public")
-      .from("clubs")
-      .select("logo_url, banner_url, slug")
-      .eq("id", club_id)
-      .single();
 
     // Prepare update object
     const updates: any = {
@@ -60,88 +52,14 @@ export async function POST(request: Request) {
       is_active,
     };
 
-    // Helper function to extract file path from Supabase URL
-    const extractFilePath = (url: string | null): string | null => {
-      if (!url) return null;
-      try {
-        const urlObj = new URL(url);
-        const pathParts = urlObj.pathname.split("/daa/");
-        return pathParts[1] || null;
-      } catch {
-        return null;
-      }
-    };
-
-    // Handle logo upload
-    if (logoFile && logoFile.size > 0) {
-      // Delete old logo if exists
-      if (currentClub?.logo_url) {
-        const oldLogoPath = extractFilePath(currentClub.logo_url);
-        if (oldLogoPath) {
-          await supabaseServer.storage.from("daa").remove([oldLogoPath]);
-        }
-      }
-
-      const logoFileName = `clubs/logo/${club_id}-${randomUUID()}-${
-        logoFile.name
-      }`;
-      const { error: logoErr } = await supabaseServer.storage
-        .from("daa")
-        .upload(logoFileName, logoFile, {
-          contentType: logoFile.type,
-          upsert: true,
-        });
-
-      if (logoErr) {
-        return NextResponse.json(
-          { error: `Logo upload failed: ${logoErr.message}` },
-          { status: 500 }
-        );
-      }
-
-      const { data: logoUrl } = supabaseServer.storage
-        .from("daa")
-        .getPublicUrl(logoFileName);
-
-      if (logoUrl) {
-        updates.logo_url = logoUrl.publicUrl;
-      }
+    // Update logo URL if provided
+    if (logo_url) {
+      updates.logo_url = logo_url;
     }
 
-    // Handle banner upload
-    if (bannerFile && bannerFile.size > 0) {
-      // Delete old banner if exists
-      if (currentClub?.banner_url) {
-        const oldBannerPath = extractFilePath(currentClub.banner_url);
-        if (oldBannerPath) {
-          await supabaseServer.storage.from("daa").remove([oldBannerPath]);
-        }
-      }
-
-      const bannerFileName = `clubs/banner/${club_id}-${randomUUID()}-${
-        bannerFile.name
-      }`;
-      const { error: bannerErr } = await supabaseServer.storage
-        .from("daa")
-        .upload(bannerFileName, bannerFile, {
-          contentType: bannerFile.type,
-          upsert: true,
-        });
-
-      if (bannerErr) {
-        return NextResponse.json(
-          { error: `Banner upload failed: ${bannerErr.message}` },
-          { status: 500 }
-        );
-      }
-
-      const { data: bannerUrl } = supabaseServer.storage
-        .from("daa")
-        .getPublicUrl(bannerFileName);
-
-      if (bannerUrl) {
-        updates.banner_url = bannerUrl.publicUrl;
-      }
+    // Update banner URL if provided
+    if (banner_url) {
+      updates.banner_url = banner_url;
     }
 
     // Update club in database
@@ -157,24 +75,31 @@ export async function POST(request: Request) {
       console.error("Database error:", error);
       return NextResponse.json(
         { error: `Failed to update club: ${error.message}` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Revalidate the club page to show updated data
-    if (currentClub?.slug) {
-      revalidatePath(`/club/${currentClub.slug}`);
+    const { data: clubData } = await supabaseServer
+      .schema("public")
+      .from("clubs")
+      .select("slug")
+      .eq("id", club_id)
+      .single();
+
+    if (clubData?.slug) {
+      revalidatePath(`/club/${clubData.slug}`);
     }
 
     return NextResponse.json(
       { message: "Club settings updated successfully", data },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

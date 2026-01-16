@@ -26,19 +26,29 @@ const ManageClubSettings = ({ club }: ManageClubSettingsProps) => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(
-    club.logo_url || null
+    club.logo_url || null,
   );
   const [bannerPreview, setBannerPreview] = useState<string | null>(
-    club.banner_url || null
+    club.banner_url || null,
   );
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Logo file size should be less than 5MB");
+      if (!file.type.startsWith("image/")) {
+        const errorMsg = "Please select an image file";
+        toast.error(errorMsg);
         return;
       }
+
+      if (file.size > MAX_FILE_SIZE) {
+        const errorMsg = "Logo file size must be less than 15MB";
+        toast.error(errorMsg);
+        return;
+      }
+
       setLogoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -50,11 +60,21 @@ const ManageClubSettings = ({ club }: ManageClubSettingsProps) => {
 
   const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("Banner file size should be less than 10MB");
+      if (!file.type.startsWith("image/")) {
+        const errorMsg = "Please select an image file";
+        toast.error(errorMsg);
         return;
       }
+
+      if (file.size > MAX_FILE_SIZE) {
+        const errorMsg = "Banner file size must be less than 15MB";
+        toast.error(errorMsg);
+        return;
+      }
+
       setBannerFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -64,11 +84,89 @@ const ManageClubSettings = ({ club }: ManageClubSettingsProps) => {
     }
   };
 
+  const uploadFileToR2 = async (
+    file: File,
+    category: string,
+  ): Promise<string | null> => {
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+
+    try {
+      if (file.size > MAX_FILE_SIZE) {
+        const errorMsg = "File size must be less than 15MB";
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      // Get signed URL from the API
+      const formData = new FormData();
+      formData.append("title", file.name);
+      formData.append("category", category);
+      formData.append("type", file.type);
+
+      const uploadUrlRes = await fetch("/api/upload-url", {
+        method: "PUT",
+        body: formData,
+      });
+
+      if (!uploadUrlRes.ok) {
+        throw new Error("Failed to get signed upload URL");
+      }
+
+      const { uploadUrl, publicUrl } = await uploadUrlRes.json();
+
+      // Upload file to R2 using signed URL
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload file to R2");
+      }
+
+      return publicUrl;
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : "Failed to upload file";
+      console.error("Error uploading file:", error);
+      toast.error(errorMsg);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      let logoUrl = club.logo_url;
+      let bannerUrl = club.banner_url;
+
+      // Upload files to R2 if they were changed
+      if (logoFile) {
+        const uploadedLogoUrl = await uploadFileToR2(logoFile, "clubs/logo");
+        if (!uploadedLogoUrl) {
+          setIsLoading(false);
+          return;
+        }
+        logoUrl = uploadedLogoUrl;
+      }
+
+      if (bannerFile) {
+        const uploadedBannerUrl = await uploadFileToR2(
+          bannerFile,
+          "clubs/banner",
+        );
+        if (!uploadedBannerUrl) {
+          setIsLoading(false);
+          return;
+        }
+        bannerUrl = uploadedBannerUrl;
+      }
+
       const formData = new FormData();
       formData.append("club_id", club.id);
       formData.append("description", description);
@@ -76,13 +174,8 @@ const ManageClubSettings = ({ club }: ManageClubSettingsProps) => {
       formData.append("instagram", instagram);
       formData.append("tiktok", tiktok);
       formData.append("is_active", isActive.toString());
-
-      if (logoFile) {
-        formData.append("logo", logoFile);
-      }
-      if (bannerFile) {
-        formData.append("banner", bannerFile);
-      }
+      formData.append("logo_url", logoUrl);
+      formData.append("banner_url", bannerUrl);
 
       const response = await fetch("/api/admin/clubs/settings", {
         method: "POST",
@@ -196,7 +289,7 @@ const ManageClubSettings = ({ club }: ManageClubSettingsProps) => {
                 className="hidden"
               />
               <p className="text-xs text-muted-foreground">
-                Recommended: Square image, max 5MB
+                Recommended: Square image, max 15MB
               </p>
             </div>
           </div>
@@ -233,7 +326,7 @@ const ManageClubSettings = ({ club }: ManageClubSettingsProps) => {
                 className="hidden"
               />
               <p className="text-xs text-muted-foreground">
-                Recommended: 16:9 ratio, max 10MB
+                Recommended: 16:9 ratio, max 15MB
               </p>
             </div>
           </div>
