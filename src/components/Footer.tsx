@@ -1,10 +1,11 @@
+"use client";
 import Link from "next/link";
 
 function Footer() {
   const currentYear = new Date().getFullYear();
   const links = [
-    { href: "/privacy", label: "Privacy" },
-    { href: "/terms", label: "Terms" },
+    { href: `${window.location.origin}/privacy`, label: "Privacy" },
+    { href: `${window.location.origin}/terms`, label: "Terms" },
     // { href: "/contact", label: "Contact" },
   ];
 

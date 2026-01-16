@@ -13,16 +13,6 @@ export default function HomeClient() {
   const [session, setSession] = useState<User | null>(null);
   const router = useRouter();
 
-  const handleUserSignIn = async () => {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
-    });
-  };
-
   useEffect(() => {
     const fetchSession = async () => {
       const { data } = await createClient().auth.getUser();
@@ -43,6 +33,7 @@ export default function HomeClient() {
       {!session && (
         <section className="bg-muted py-12 px-6">
           <div className="max-w-4xl mx-auto text-center space-y-6">
+            <h1 className="text-4xl font-bold">Daa'ist</h1>
             <h2 className="text-2xl font-bold">
               Built by Students for Students
             </h2>
@@ -73,13 +64,6 @@ export default function HomeClient() {
 
         {!session ? (
           <div className="flex flex-col items-center gap-6">
-            <button
-              type="button"
-              onClick={handleUserSignIn}
-              className="px-8 py-4 bg-white text-primary font-bold text-lg rounded-full shadow-lg hover:scale-105 transition"
-            >
-              Get Started with Google
-            </button>
             <p className="text-sm opacity-80 max-w-md">
               Join Daa&#39;ist to contribute resources, join clubs, and connect
               with your peers at Département d’Architecture d’Alger.
