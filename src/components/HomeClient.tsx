@@ -5,21 +5,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import MessageCard from "@/components/MessageCard";
-import { useIsOnBoarded } from "@/hooks/use-is-onboarded";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
 
 export default function HomeClient() {
-  const { onboarded, loading } = useIsOnBoarded();
   const [sessionLoading, setSessionLoading] = useState(true);
   const [session, setSession] = useState<User | null>(null);
   const router = useRouter();
+
   const handleUserSignIn = async () => {
-    const supabase = await createClient();
+    const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `/`,
+        redirectTo: `${window.location.origin}/`,
       },
     });
   };
@@ -27,52 +26,41 @@ export default function HomeClient() {
   useEffect(() => {
     const fetchSession = async () => {
       const { data } = await createClient().auth.getUser();
+      const user = data.user;
 
-      if (!data.user && !loading && onboarded === false) {
-        router.push("/onboarding");
-      }
-
+      setSession(user);
       setSessionLoading(false);
-      setSession(data.user);
     };
 
     fetchSession();
-  }, [loading, onboarded, router]);
+  }, [router]);
 
   if (sessionLoading) return <Loading />;
 
-  if (!session) {
-    return (
-      <div className="w-full min-h-screen flex justify-center items-center p-4">
-        <div className="relative w-[90%] sm:w-3/4 rounded-2xl bg-primary/60 flex flex-col items-center text-center space-y-4 p-6 sm:p-10">
-          <MessageCard
-            type="info"
-            message="Please note that this website is developed and maintained by the club Archibenvoles. 
-      You might encounter some errors and bugs since you’re using one of the earliest versions of this website. 
-      If you notice anything odd, please contact us."
-          />
-          <h1 className="font-bold text-2xl sm:text-3xl text-white">
-            Daa&#39;ist — Built by Students for Students...
-          </h1>
-          <p className="font-light text-lg sm:text-xl text-white">
-            Find documentation, past exams, courses, and more — all shared by
-            fellow architecture students at the Département d’Architecture
-            d’Alger.
-          </p>
-          <button
-            type="button"
-            onClick={handleUserSignIn}
-            className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-primary p-0.5 text-white font-bold hover:scale-110 transition"
-          >
-            Let&apos;s get you started!
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-background text-foreground">
+      {/* INFO SECTION - Previously strictly for non-logged in users, now integrated generally or kept for context */}
+      {!session && (
+        <section className="bg-muted py-12 px-6">
+          <div className="max-w-4xl mx-auto text-center space-y-6">
+            <h2 className="text-2xl font-bold">
+              Built by Students for Students
+            </h2>
+            <p className="text-muted-foreground">
+              Daa&#39;ist is a community-driven platform where architecture
+              students can share and access academic resources, collaborate on
+              projects, join clubs, and connect with peers. Our mission is to
+              empower students by centralizing educational materials and
+              fostering collaboration within the architecture community.
+            </p>
+            <MessageCard
+              type="info"
+              message="Please note that this website is developed and maintained by the club Archibenevoles. You might encounter some errors and bugs since you’re using one of the earliest versions of this website."
+            />
+          </div>
+        </section>
+      )}
+
       {/* HERO */}
       <section className="relative flex flex-col items-center justify-center text-center py-24 px-6 bg-linear-to-tl from-primary to-accent text-white">
         <h1 className="text-4xl md:text-6xl font-bold mb-4">
@@ -82,24 +70,43 @@ export default function HomeClient() {
           Access shared courses, past exams, and creative projects — all in one
           community-driven space.
         </p>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link
-            href="/courses"
-            className="px-6 py-3 bg-white text-primary font-semibold rounded-xl shadow hover:bg-gray-100 transition"
-          >
-            Explore Courses
-          </Link>
-          <Link
-            prefetch={false}
-            href="/club"
-            className="px-6 py-3 border border-white font-semibold rounded-xl hover:bg-white/10 transition"
-          >
-            Join a Club
-          </Link>
-        </div>
+
+        {!session ? (
+          <div className="flex flex-col items-center gap-6">
+            <button
+              type="button"
+              onClick={handleUserSignIn}
+              className="px-8 py-4 bg-white text-primary font-bold text-lg rounded-full shadow-lg hover:scale-105 transition"
+            >
+              Get Started with Google
+            </button>
+            <p className="text-sm opacity-80 max-w-md">
+              Join Daa&#39;ist to contribute resources, join clubs, and connect
+              with your peers at Département d’Architecture d’Alger.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link
+              href="/courses"
+              className="px-6 py-3 bg-white text-primary font-semibold rounded-xl shadow hover:bg-gray-100 transition"
+            >
+              Explore Courses
+            </Link>
+            <Link
+              prefetch={false}
+              href="/club"
+              className="px-6 py-3 border border-white font-semibold rounded-xl hover:bg-white/10 transition"
+            >
+              Join a Club
+            </Link>
+          </div>
+        )}
       </section>
 
-      {/* QUICK LINKS */}
+      {/* QUICK LINKS - Visible to everyone, but likely redirected if protected by middleware/page logic, 
+          but showing them here improves landing page content for Google. 
+          If the links themselves are protected, user will be redirected to login upon click. */}
       <section className="max-w-6xl mx-auto py-16 px-6">
         <h2 className="text-2xl font-bold mb-8 text-center">Quick Access</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">

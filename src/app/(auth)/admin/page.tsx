@@ -6,11 +6,11 @@ import { createClient } from "@/lib/supabase/server";
 export default async function AdminPage() {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) notFound();
-  const { isAdmin, isSuperAdmin } = await getUserRoles(session.user.id);
+  if (!user) notFound();
+  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
   if (!isAdmin && !isSuperAdmin) notFound();
 
   return (

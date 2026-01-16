@@ -8,21 +8,22 @@ export async function POST(req: Request) {
   try {
     const supabase = await createClient();
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { isAdmin } = await getUserRoles(session.user.id);
+    const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
 
-    if (!isAdmin) {
+    if (!isAdmin && !isSuperAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json();
-    const { targetUserId, role, firstname, lastname, username } = body;
+    const { targetUserId, roles, firstname, lastname, username } = body;
+    console.log("Roles received:", roles);
 
     if (!targetUserId) {
       return NextResponse.json(
@@ -52,29 +53,52 @@ export async function POST(req: Request) {
       }
     }
 
-    // Update Role
-    if (role) {
-      if (!ALLOWED_ROLES.includes(role)) {
-        return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    // Update Roles - roles is now an array of role strings
+    if (roles && Array.isArray(roles) && roles.length > 0) {
+      // Validate all roles
+      for (const role of roles) {
+        if (!ALLOWED_ROLES.includes(role)) {
+          return NextResponse.json(
+            { error: `Invalid role: ${role}` },
+            { status: 400 }
+          );
+        }
       }
 
-      // Upsert role management
-      // Assuming `user_roles` table: (user_id, role)
-      const { error: roleError } = await supabaseServer
+      // Delete existing roles for this user
+      const { error: deleteError } = await supabaseServer
         .schema("public")
         .from("user_roles")
-        .upsert({ user_id: targetUserId, role })
-        .select();
+        .delete()
+        .eq("user_id", targetUserId);
 
-      if (roleError) {
+      if (deleteError) {
         return NextResponse.json(
-          { error: "Failed to update role: " + roleError.message },
+          { error: "Failed to delete existing roles: " + deleteError.message },
+          { status: 500 }
+        );
+      }
+
+      // Insert new roles
+      const rolesToInsert = roles.map((role: string) => ({
+        user_id: targetUserId,
+        role,
+      }));
+
+      const { error: insertError } = await supabaseServer
+        .schema("public")
+        .from("user_roles")
+        .insert(rolesToInsert);
+
+      if (insertError) {
+        return NextResponse.json(
+          { error: "Failed to insert roles: " + insertError.message },
           { status: 500 }
         );
       }
     }
 
-    // Fetch updated user data to return
+    // Fetch updated user data to return, including roles
     const { data: updatedProfile } = await supabaseServer
       .schema("public")
       .from("profiles")
@@ -82,8 +106,18 @@ export async function POST(req: Request) {
       .eq("user_id", targetUserId)
       .single();
 
+    // Fetch updated roles
+    const { data: updatedRoles } = await supabaseServer
+      .schema("public")
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", targetUserId);
+
     return NextResponse.json({
-      user: updatedProfile,
+      user: {
+        ...updatedProfile,
+        user_roles: updatedRoles || [],
+      },
       message: "User updated successfully",
     });
   } catch (error) {

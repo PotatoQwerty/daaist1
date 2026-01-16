@@ -3,6 +3,7 @@ import ManageUsers from "@/app/(auth)/_components/ManageUsers";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { fetchUsers, getUserRoles } from "@/lib/supabase/actions";
+
 export const revalidate = 1800;
 
 export const metadata = {
@@ -15,12 +16,12 @@ export const metadata = {
 export default async function AdminUsersPage() {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) return notFound();
+  if (!user) return notFound();
 
-  const userRole = await getUserRoles(session.user.id);
+  const userRole = await getUserRoles(user.id);
 
   if (!userRole) return notFound();
 
@@ -29,7 +30,7 @@ export default async function AdminUsersPage() {
   return (
     <div className="flex flex-col w-full">
       <RoleGate AllowedRoles={["admin", "super_admin"]}>
-        <ManageUsers initialUsers={users} currentUserId={session.user.id} />
+        <ManageUsers initialUsers={users} currentUserId={user.id} />
       </RoleGate>
     </div>
   );

@@ -12,10 +12,10 @@ export const metadata = {
 export default async function Courses() {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const { data: courses, error } = await supabase.from("courses").select("*");
-  if (!session) {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md bg-card border border-accent/30 rounded-2xl p-8 text-center shadow-sm">

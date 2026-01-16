@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import Select from "react-select";
 
 interface SelectOption {
   value: string;
@@ -17,6 +17,7 @@ interface User {
   role?: string;
   registration_number?: string;
   id?: string;
+  user_roles?: { role: string }[]; // Array of role objects from Supabase
   // Add other fields as needed
 }
 
@@ -26,6 +27,7 @@ export default function EditUserModal({
   onClose,
   onSave,
   roleOptions = [
+    { value: "super_admin", label: "Super Admin" },
     { value: "admin", label: "Admin" },
     { value: "club", label: "Club" },
     { value: "student", label: "Student" },
@@ -37,17 +39,48 @@ export default function EditUserModal({
   onSave: (user: User) => void;
   roleOptions?: SelectOption[];
 }) {
+  // Helper to convert role string(s) or user_roles array to SelectOption array
+  const getRoleValue = (): SelectOption[] => {
+    // First check user_roles array (from ManageUsers)
+    if (user.user_roles && user.user_roles.length > 0) {
+      return user.user_roles
+        .map((r) => roleOptions.find((opt) => opt.value === r.role))
+        .filter(
+          (opt): opt is SelectOption => opt !== undefined && opt.value !== ""
+        );
+    }
+    // Fallback to role string
+    if (!user.role) return [];
+    const roles = user.role.split(",").map((r) => r.trim());
+    return roles
+      .map((r) => roleOptions.find((opt) => opt.value === r))
+      .filter(
+        (opt): opt is SelectOption => opt !== undefined && opt.value !== ""
+      );
+  };
+
   const [formData, setFormData] = useState({
     firstname: user.firstname,
     lastname: user.lastname,
     role: user.role,
   });
+  const [selectedRoles, setSelectedRoles] = useState<SelectOption[]>(
+    getRoleValue()
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   const handleFormChanges = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleRoleChange = (selected: readonly SelectOption[] | null) => {
+    const selectedArray = selected ? [...selected] : [];
+    setSelectedRoles(selectedArray);
+    // Store as comma-separated string
+    const roleString = selectedArray.map((opt) => opt.value).join(",");
+    setFormData({ ...formData, role: roleString });
   };
 
   const handleSave = async () => {
@@ -59,7 +92,10 @@ export default function EditUserModal({
         credentials: "same-origin",
         body: JSON.stringify({
           targetUserId: user.user_id,
-          ...formData,
+          firstname: formData.firstname,
+          lastname: formData.lastname,
+          // Send roles as an array for the API to handle properly
+          roles: selectedRoles.map((opt) => opt.value),
         }),
       });
 
@@ -152,39 +188,23 @@ export default function EditUserModal({
             </label>
             {sessionUser === user.user_id ? (
               <div className="relative">
-                <select
-                  disabled
-                  name="role"
-                  id="role"
-                  className={cn(
-                    "flex h-9 w-full rounded-md border border-input bg-muted px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm opacity-50"
-                  )}
-                  onChange={handleFormChanges}
-                >
-                  <option defaultChecked value="change">
-                    You can&#39;t change your own role.
-                  </option>
-                </select>
+                <Select
+                  isMulti
+                  isDisabled
+                  options={roleOptions}
+                  value={getRoleValue()}
+                  classNamePrefix="react-select"
+                />
               </div>
             ) : (
-              <select
-                name="role"
-                id="role"
-                value={formData.role || ""}
-                onChange={handleFormChanges}
-                className={cn(
-                  "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm hover:cursor-pointer"
-                )}
-              >
-                <option value="" disabled>
-                  Please select a new role
-                </option>
-                {roleOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <Select
+                isMulti
+                options={roleOptions}
+                value={selectedRoles}
+                onChange={handleRoleChange}
+                placeholder="Select roles..."
+                classNamePrefix="react-select"
+              />
             )}
           </div>
         </div>
@@ -195,7 +215,10 @@ export default function EditUserModal({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={
+              isSaving ||
+              (selectedRoles.length === 0 && sessionUser !== user.user_id)
+            }
             className="min-w-[80px]"
           >
             {isSaving ? (

@@ -1,13 +1,14 @@
 "use server";
+import { createClient } from "./supabase/auth/server";
 import { supabaseServer } from "./supabase/server";
 
 export async function getChatMessages() {
-  //   const session = await auth.api.getSession({
-  //     headers: await headers()
-  // })
-  //   if (!session?.user || !session.user.isdaa) {
-  //     throw new Error("Unauthorized");
-  //   }
+  // const supabase = await createClient();
+  // const { data: user } = await supabase.auth.getUser();
+
+  // if (!user?.user) {
+  //   throw new Error("Unauthorized");
+  // }
 
   try {
     // Query the VIEW, not the table

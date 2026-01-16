@@ -66,14 +66,18 @@ export default function Navbar() {
       : pathname?.startsWith(href + "/") || pathname === href;
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    const res = await supabase.auth.signOut();
+    if (res.error) {
+      console.error("Error signing out:", res.error.message);
+    }
+    window.location.href = "/";
   };
 
   const handleSignIn = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `/`,
+        redirectTo: `${window.location.origin}/`,
       },
     });
   };
@@ -204,7 +208,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={handleSignIn}
-            className="p-2 bg-accent rounded-lg hover:bg-primary/90 hover:text-white transition-all ease-in-out duration-150"
+            className="p-2 bg-accent rounded-lg hover:bg-primary/90 text-white transition-all ease-in-out duration-150"
           >
             Sign In
           </button>

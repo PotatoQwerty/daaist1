@@ -14,10 +14,10 @@ import Image from "next/image";
 async function ClubsPage() {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) notFound();
-  const { isSuperAdmin } = await getUserRoles(session.user.id);
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) notFound();
+  const { isSuperAdmin } = await getUserRoles(user.id);
   if (!isSuperAdmin) notFound();
 
   const clubs = await getClubs();

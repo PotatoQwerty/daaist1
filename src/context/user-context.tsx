@@ -62,12 +62,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      // Only update state if the session actually changed
-      const newToken = session?.access_token || null;
-      if (newToken !== currentSessionToken.current) {
-        currentSessionToken.current = newToken;
-        setSession(session);
-        if (!session) setLoading(false);
+      currentSessionToken.current = session?.access_token || null;
+      setSession(session);
+      if (!session) {
+        setUser(null);
+        setRoles([]);
+        setIsAdmin(false);
+        setIsSuperAdmin(false);
+        setLoading(false);
       }
     });
 

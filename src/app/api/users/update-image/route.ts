@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
 
-export async function PUT(request: Request) {
+export async function POST(request: Request) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -26,7 +26,8 @@ export async function PUT(request: Request) {
     .single();
 
   if (fetchError && fetchError.code !== "PGRST116") {
-    // Ignore "PGRST116" (User not found)
+    console.log("fetchError", fetchError);
+
     console.error("Error fetching user image:", fetchError);
     return NextResponse.json(
       { error: "Error fetching user data" },
@@ -51,10 +52,10 @@ export async function PUT(request: Request) {
 
   const fileExt = file.name.split(".").pop();
   const fileName = `${user.id}-${randomUUID()}.${fileExt}`;
-  const filePath = `${fileName}`;
+  const filePath = `/users/profile_pictures/${fileName}`;
 
   const { error: uploadError } = await supabase.storage
-    .from("avatars")
+    .from("daa")
     .upload(filePath, file);
 
   if (uploadError)
@@ -64,7 +65,7 @@ export async function PUT(request: Request) {
     );
 
   const { data: publicUrlData } = supabase.storage
-    .from("avatars")
+    .from("daa")
     .getPublicUrl(filePath);
 
   const { error: updateError } = await supabase

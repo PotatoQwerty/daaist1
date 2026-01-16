@@ -13,8 +13,8 @@ function Page() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setSession(user);
       setLoading(false);
     });
 

@@ -155,18 +155,23 @@ function ManageUsers({ initialUsers, currentUserId }: ManageUsersInterface) {
                   </td>
                   <td className="px-4 py-2 text-center">
                     <span
-                      className={`px-2 py-1 rounded-full font-bold text-xs ${
-                        user.user_roles?.[0]?.role === "student"
-                          ? "bg-blue-500 text-white"
-                          : user.user_roles?.[0]?.role === "admin"
-                          ? "bg-red-500 text-white"
-                          : "bg-yellow-500 text-black"
-                      }`}
+                      className={`py-1 rounded-full font-bold w-fit flex gap-1`}
                     >
                       {user.user_roles &&
-                        (user.user_roles.length > 1
-                          ? user.user_roles.map((role) => role.role).join(" & ")
-                          : user.user_roles[0]?.role)}
+                        user.user_roles.map((role) => (
+                          <span
+                            key={role.role}
+                            className={`${
+                              role.role === "student"
+                                ? "bg-blue-500 text-white"
+                                : role.role === "admin"
+                                ? "bg-red-500 text-white"
+                                : "bg-yellow-500 text-black"
+                            } px-2 py-1 rounded-full font-bold text-xs`}
+                          >
+                            {role.role}
+                          </span>
+                        ))}
                     </span>
                   </td>
                   <td className="px-4 py-2">
@@ -196,6 +201,7 @@ function ManageUsers({ initialUsers, currentUserId }: ManageUsersInterface) {
         {editingUser && (
           <EditUserModal
             roleOptions={[
+              { value: "super_admin", label: "Super Admin" },
               { value: "admin", label: "Admin" },
               { value: "club", label: "Club" },
               { value: "student", label: "Student" },

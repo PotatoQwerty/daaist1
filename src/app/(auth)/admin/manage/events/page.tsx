@@ -5,10 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 async function EventsPage() {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) notFound();
-  const { isAdmin, isSuperAdmin } = await getUserRoles(session.user.id);
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) notFound();
+  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
   if (!isAdmin && !isSuperAdmin) notFound();
   return (
     <div className="flex items-center justify-center h-screen">

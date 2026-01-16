@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
-import SessionWrapper from "@/components/SessionWrapper";
 import { Josefin_Sans } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "react-hot-toast";
@@ -52,14 +51,12 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem={true}
         >
-          {/* <SessionWrapper> */}
           <UserProvider>
             <Toaster position="top-right" />
             <Navbar />
             {children}
-            <ChatBubble />
+            {/* <ChatBubble /> */}
           </UserProvider>
-          {/* </SessionWrapper> */}
         </ThemeProvider>
         <Footer />
       </body>
