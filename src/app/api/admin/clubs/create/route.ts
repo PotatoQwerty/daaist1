@@ -26,8 +26,8 @@ export async function POST(request: Request) {
     const slug = formData.get("slug") as string;
     const description = formData.get("description") as string;
     const is_active = formData.get("is_active") === "true";
-    const logoFile = formData.get("logoFile") as File | null;
-    const bannerFile = formData.get("bannerFile") as File | null;
+    const logo_url = formData.get("logo_url") as string;
+    const banner_url = formData.get("banner_url") as string;
     const president_id = formData.get("president_id") as string;
     const socials = {
       facebook: formData.get("facebook") as string,
@@ -40,53 +40,28 @@ export async function POST(request: Request) {
       !name ||
       !slug ||
       !description ||
-      !logoFile ||
-      !bannerFile ||
+      !logo_url ||
+      !banner_url ||
       !president_id
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const logoFileName = `clubs/logo/${randomUUID()}-${logoFile.name}`;
-    const { error: logoErr } = await supabaseServer.storage
-      .from("daa")
-      .upload(logoFileName, logoFile, {
-        contentType: logoFile.type,
-        upsert: true,
-      });
-    if (logoErr)
-      return NextResponse.json({ message: logoErr.message }, { status: 500 });
-    const bannerFileName = `clubs/banner/${randomUUID()}-${bannerFile.name}`;
-    const { error: bannerErr } = await supabaseServer.storage
-      .from("daa")
-      .upload(bannerFileName, bannerFile, {
-        contentType: bannerFile.type,
-        upsert: true,
-      });
-    if (bannerErr)
-      return NextResponse.json({ message: bannerErr.message }, { status: 500 });
-    const { data: logoUrl } = supabaseServer.storage
-      .from("daa")
-      .getPublicUrl(logoFileName);
-    if (!logoUrl)
+    // Validate URL format (basic check)
+    const MAX_URL_LENGTH = 2048;
+    if (
+      logo_url.length > MAX_URL_LENGTH ||
+      banner_url.length > MAX_URL_LENGTH
+    ) {
       return NextResponse.json(
-        {
-          message: `Couldn't fetch Logo Url`,
-        },
-        { status: 500 }
+        { error: "Invalid URL format" },
+        { status: 400 },
       );
-    const { data: bannerUrl } = supabaseServer.storage
-      .from("daa")
-      .getPublicUrl(bannerFileName);
+    }
 
-    if (!bannerUrl)
-      return NextResponse.json(
-        { message: `Couldn't fetch banner Url` },
-        { status: 500 }
-      );
     // 4. Insert into database
     const { data, error } = await supabaseServer
       .schema("public")
@@ -97,8 +72,8 @@ export async function POST(request: Request) {
         slug,
         description,
         socials: socials,
-        logo_url: logoUrl.publicUrl,
-        banner_url: bannerUrl.publicUrl,
+        logo_url,
+        banner_url,
         is_active,
         created_by: user.id,
       })
@@ -130,7 +105,7 @@ export async function POST(request: Request) {
     console.error("API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

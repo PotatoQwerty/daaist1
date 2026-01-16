@@ -42,7 +42,7 @@ function CreateClubForm() {
             .map((u) => ({
               value: u.user_id,
               label: `${u.firstname} ${u.lastname} (@${u.username})`,
-            }))
+            })),
         );
       }
     };
@@ -94,7 +94,7 @@ function CreateClubForm() {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
@@ -113,12 +113,23 @@ function CreateClubForm() {
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "logo" | "banner"
+    type: "logo" | "banner",
   ) => {
     const file = e.target.files?.[0];
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+
     if (file) {
       if (!file.type.startsWith("image/")) {
-        setErrors({ ...errors, [type]: "Please select an image file" });
+        const errorMsg = "Please select an image file";
+        setErrors({ ...errors, [type]: errorMsg });
+        toast.error(errorMsg);
+        return;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        const errorMsg = "File size must be less than 15MB";
+        setErrors({ ...errors, [type]: errorMsg });
+        toast.error(errorMsg);
         return;
       }
 
@@ -177,6 +188,59 @@ function CreateClubForm() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const uploadFileToR2 = async (
+    file: File,
+    category: string,
+  ): Promise<string | null> => {
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+
+    try {
+      if (file.size > MAX_FILE_SIZE) {
+        const errorMsg = "File size must be less than 15MB";
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      // Get signed URL from the API
+      const formData = new FormData();
+      formData.append("title", file.name);
+      formData.append("category", category);
+      formData.append("type", file.type);
+
+      const uploadUrlRes = await fetch("/api/upload-url", {
+        method: "PUT",
+        body: formData,
+      });
+
+      if (!uploadUrlRes.ok) {
+        throw new Error("Failed to get signed upload URL");
+      }
+
+      const { uploadUrl, publicUrl } = await uploadUrlRes.json();
+
+      // Upload file to R2 using signed URL
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload file to R2");
+      }
+
+      return publicUrl;
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : "Failed to upload file";
+      console.error("Error uploading file:", error);
+      toast.error(errorMsg);
+      return null;
+    }
+  };
+
   const handleSubmit = async () => {
     if (validateForm()) {
       setIsSubmitting(true);
@@ -188,17 +252,32 @@ function CreateClubForm() {
         setIsSubmitting(false);
         return;
       }
-      try {
-        // 5 create club with api
 
+      try {
+        // Upload files to R2 directly
+        const [logoUrl, bannerUrl] = await Promise.all([
+          uploadFileToR2(logoFile, "clubs/logo"),
+          uploadFileToR2(bannerFile, "clubs/banner"),
+        ]);
+
+        if (!logoUrl || !bannerUrl) {
+          setErrors({
+            ...errors,
+            submit: "Failed to upload images. Please try again.",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Create club with URLs
         const formData = new FormData();
         formData.append("name", clubData.name);
         formData.append("slug", clubData.slug);
         formData.append("description", clubData.description);
-        formData.append("logoFile", logoFile);
-        formData.append("bannerFile", bannerFile);
         formData.append("is_active", JSON.stringify(clubData.is_active));
         formData.append("president_id", presidentId);
+        formData.append("logo_url", logoUrl);
+        formData.append("banner_url", bannerUrl);
         formData.append("facebook", clubData.socials.facebook);
         formData.append("instagram", clubData.socials.instagram);
         formData.append("tiktok", clubData.socials.tiktok);
@@ -336,7 +415,7 @@ function CreateClubForm() {
                     "flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
                     errors.description
                       ? "border-destructive focus-visible:ring-destructive/20"
-                      : ""
+                      : "",
                   )}
                   placeholder="Describe your club and what makes it special..."
                 />
