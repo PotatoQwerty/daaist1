@@ -45,6 +45,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   // Track the current session access token to prevent unnecessary updates
   const currentSessionToken = useRef<string | null>(null);
+  const userFetchedRef = useRef<boolean>(false);
 
   useEffect(() => {
     // Get initial session
@@ -54,7 +55,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         currentSessionToken.current = data.session.access_token;
       }
       setSession(data.session);
-      if (!data.session) setLoading(false);
+      if (!data.session) {
+        setLoading(false);
+      }
     };
     initSession();
 
@@ -70,6 +73,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setIsAdmin(false);
         setIsSuperAdmin(false);
         setLoading(false);
+        userFetchedRef.current = false;
+      } else {
+        // Reset the flag when session changes
+        userFetchedRef.current = false;
       }
     });
 
@@ -93,6 +100,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setIsAdmin(data.isAdmin);
       setIsSuperAdmin(data.isSuperAdmin);
       setLoading(false);
+      userFetchedRef.current = true;
     } catch (error) {
       console.error("Failed to fetch user data:", error);
       setLoading(false);
@@ -101,16 +109,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!session) {
-      setUser(null);
-      setRoles([]);
-      setIsAdmin(false);
-      setIsSuperAdmin(false);
-      setLoading(false);
       return;
     }
-    setLoading(true); // Start loading user data
-    refreshUser();
-  }, [session, refreshUser]);
+
+    // Only fetch user data if we haven't already for this session
+    if (!userFetchedRef.current && session?.user?.id) {
+      setLoading(true);
+      refreshUser();
+    }
+  }, [session?.user?.id, refreshUser]);
 
   return (
     <UserContext.Provider

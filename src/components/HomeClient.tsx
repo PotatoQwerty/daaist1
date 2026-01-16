@@ -2,7 +2,6 @@
 
 import Loading from "@/components/Loading";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import MessageCard from "@/components/MessageCard";
 import { createClient } from "@/lib/supabase/client";
@@ -11,7 +10,6 @@ import { User } from "@supabase/supabase-js";
 export default function HomeClient() {
   const [sessionLoading, setSessionLoading] = useState(true);
   const [session, setSession] = useState<User | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -23,7 +21,7 @@ export default function HomeClient() {
     };
 
     fetchSession();
-  }, [router]);
+  }, []);
 
   if (sessionLoading) return <Loading />;
 
