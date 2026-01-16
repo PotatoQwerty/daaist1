@@ -3,9 +3,10 @@ import Link from "next/link";
 
 function Footer() {
   const currentYear = new Date().getFullYear();
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
   const links = [
-    { href: `${window.location.origin}/privacy`, label: "Privacy" },
-    { href: `${window.location.origin}/terms`, label: "Terms" },
+    { href: `${origin}/privacy`, label: "Privacy" },
+    { href: `${origin}/terms`, label: "Terms" },
     // { href: "/contact", label: "Contact" },
   ];
 
