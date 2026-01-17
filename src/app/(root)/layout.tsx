@@ -64,7 +64,7 @@ export default async function RootLayout({
             <Toaster position="top-right" />
             <Navbar />
             {children}
-            <ChatBubble />/
+            <ChatBubble />
           </UserProvider>
         </ThemeProvider>
         <Footer />
