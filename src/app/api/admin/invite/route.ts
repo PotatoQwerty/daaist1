@@ -7,10 +7,11 @@ const ALLOWED_INVITE_ROLES = ["admin", "teacher"] as const;
 export async function POST(req: Request) {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (!session?.user?.id) {
+  if (error || !user?.id) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
   const { data: userRole } = await supabaseServer
     .from("user_roles")
     .select("role")
-    .eq("user_id", session.user.id)
+    .eq("user_id", user.id)
     .single();
 
   const roleName = userRole?.role;
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
     .insert({
       token_hash: hash,
       role_to_assign: role,
-      created_by: session.user.id,
+      created_by: user.id,
       expires_at: new Date(Date.now() + INVITE_EXPIRY_MS),
     });
 

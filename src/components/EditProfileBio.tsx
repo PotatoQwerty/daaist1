@@ -14,7 +14,7 @@ export default function ProfileBio({
 }) {
   const [bio, setBio] = useState(actualBio || "");
   const router = useRouter();
-  const { refreshUser } = useUser();
+  const { setUser } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const handleUpdate = async () => {
     try {
@@ -31,7 +31,7 @@ export default function ProfileBio({
       const data = await res.json();
       if (data.user) {
         setIsEditing(false);
-        await refreshUser();
+        setUser((prev: any) => (prev ? { ...prev, ...data.user } : data.user));
         router.refresh();
       }
     } catch (error) {
@@ -44,7 +44,9 @@ export default function ProfileBio({
   };
   return (
     <div>
-      <h4 className="font-bold text-accent text-start">Bio:</h4>
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Bio
+      </h4>
       {!isEditing ? (
         <>
           <p className="text-sm text-foreground text-start">
@@ -54,7 +56,7 @@ export default function ProfileBio({
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="text-xs text-blue-500 hover:underline mt-1 flex justify-center items-center gap-1.5 justify-self-end"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-accent transition mt-1"
             >
               <Edit2 className="size-4" />
               Edit Bio
@@ -63,31 +65,34 @@ export default function ProfileBio({
         </>
       ) : (
         <>
-          <label htmlFor="bio" className="block mb-1 text-sm text-white">
-            Edit Your Bio:
+          <label
+            htmlFor="bio"
+            className="block mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            Edit your bio
           </label>
           <textarea
             name="bio"
             value={bio}
             placeholder="Enter new bio"
             onChange={(e) => setBio(e.target.value)}
-            className="w-full rounded-md border border-gray-300 bg-transparent p-1 text-foreground text-sm outline-none"
+            className="w-full rounded-md border border-border bg-background/80 p-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
             maxLength={80}
           />
           <div className="flex justify-between items-center mt-2">
-            <p className="text-xs text-gray-400">{bio?.length}/80</p>
+            <p className="text-xs text-muted-foreground">{bio?.length}/80</p>
             <div className="space-x-2">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="text-xs p-2 rounded-md hover:bg-gray-600 bg-gray-200 hover:text-white "
+                className="text-xs px-3 py-1.5 rounded-md border border-border bg-muted/40 hover:bg-muted transition"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleUpdate}
-                className="text-xs bg-green-400 p-2 rounded-md hover:bg-green-600 hover:text-white "
+                className="text-xs px-3 py-1.5 rounded-md bg-accent text-accent-foreground hover:brightness-95 transition"
               >
                 Save
               </button>

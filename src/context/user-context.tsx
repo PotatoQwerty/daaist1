@@ -1,16 +1,15 @@
 "use client";
 
+import type { Dispatch, SetStateAction, ReactNode } from "react";
 import {
   createContext,
   useContext,
   useEffect,
-  useState,
-  useCallback,
+  useMemo,
   useRef,
-  ReactNode,
+  useState,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { getUserData } from "@/lib/supabase/actions";
 
 interface UserContextType {
   user: any | null; // Replace 'any' with your Profile type if available
@@ -18,8 +17,9 @@ interface UserContextType {
   isAdmin: boolean;
   isSuperAdmin: boolean;
   loading: boolean;
-  refreshUser: () => Promise<void>;
   session: any | null;
+  setUser: Dispatch<SetStateAction<any | null>>;
+  setSession: Dispatch<SetStateAction<any | null>>;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -27,97 +27,138 @@ const UserContext = createContext<UserContextType>({
   roles: [],
   isAdmin: false,
   isSuperAdmin: false,
-  loading: true,
-  refreshUser: async () => {},
+  loading: false,
   session: null,
+  setUser: () => {},
+  setSession: () => {},
 });
 
 export const useUser = () => useContext(UserContext);
 
-export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [session, setSession] = useState<any>(null);
-  const [user, setUser] = useState<any | null>(null);
-  const [roles, setRoles] = useState<string[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-
-  // Track the current session access token to prevent unnecessary updates
-  const currentSessionToken = useRef<string | null>(null);
-  const userFetchedRef = useRef<boolean>(false);
+export const UserProvider = ({
+  children,
+  initialSession = null,
+  initialUser = null,
+  initialRoles = [],
+  initialIsAdmin = false,
+  initialIsSuperAdmin = false,
+}: {
+  children: ReactNode;
+  initialSession?: any | null;
+  initialUser?: any | null;
+  initialRoles?: string[];
+  initialIsAdmin?: boolean;
+  initialIsSuperAdmin?: boolean;
+}) => {
+  const [session, setSession] = useState<any | null>(initialSession);
+  const [user, setUser] = useState<any | null>(initialUser);
+  const [roles, setRoles] = useState<string[]>(initialRoles);
+  const [isAdmin, setIsAdmin] = useState<boolean>(initialIsAdmin);
+  const [isSuperAdmin, setIsSuperAdmin] =
+    useState<boolean>(initialIsSuperAdmin);
+  const [loading, setLoading] = useState(!initialSession?.user?.id);
+  const supabase = useMemo(() => createClient(), []);
+  const sessionRef = useRef<any | null>(initialSession);
 
   useEffect(() => {
-    // Get initial session
-    const initSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.access_token) {
-        currentSessionToken.current = data.session.access_token;
-      }
-      setSession(data.session);
-      if (!data.session) {
-        setLoading(false);
-      }
-    };
-    initSession();
+    setSession(initialSession ?? null);
+    setUser(initialUser ?? null);
+    setRoles(initialRoles ?? []);
+    setIsAdmin(Boolean(initialIsAdmin));
+    setIsSuperAdmin(Boolean(initialIsSuperAdmin));
+    setLoading(!initialSession?.user?.id);
+  }, [
+    initialSession,
+    initialUser,
+    initialRoles,
+    initialIsAdmin,
+    initialIsSuperAdmin,
+  ]);
 
-    // Subscribe to auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      currentSessionToken.current = session?.access_token || null;
-      setSession(session);
-      if (!session) {
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const shouldSyncImmediately = !initialSession?.user?.id;
+
+    const syncUserContext = async (options?: { silent?: boolean }) => {
+      if (!isMounted) return;
+      if (!options?.silent) {
+        setLoading(true);
+      }
+
+      const {
+        data: { user: authUser },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (!isMounted) return;
+
+      if (authError || !authUser) {
+        setSession(null);
         setUser(null);
         setRoles([]);
         setIsAdmin(false);
         setIsSuperAdmin(false);
         setLoading(false);
-        userFetchedRef.current = false;
-      } else {
-        // Reset the flag when session changes
-        userFetchedRef.current = false;
+        return;
       }
-    });
 
-    return () => subscription?.unsubscribe();
-  }, []);
+      try {
+        const res = await fetch("/api/user-context", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (!isMounted) return;
+          setSession(data.session ?? { user: authUser });
+          setUser(data.user ?? null);
+          setRoles(data.roles ?? []);
+          setIsAdmin(Boolean(data.isAdmin));
+          setIsSuperAdmin(Boolean(data.isSuperAdmin));
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error("Failed to sync user context:", error);
+      }
 
-  const refreshUser = useCallback(async () => {
-    if (!session?.user?.id) {
+      if (!isMounted) return;
+      setSession({ user: authUser });
       setUser(null);
       setRoles([]);
       setIsAdmin(false);
       setIsSuperAdmin(false);
       setLoading(false);
-      return;
+    };
+
+    if (shouldSyncImmediately) {
+      syncUserContext();
     }
 
-    try {
-      const data = await getUserData(session.user.id);
-      setUser(data.user);
-      setRoles(data.roles);
-      setIsAdmin(data.isAdmin);
-      setIsSuperAdmin(data.isSuperAdmin);
-      setLoading(false);
-      userFetchedRef.current = true;
-    } catch (error) {
-      console.error("Failed to fetch user data:", error);
-      setLoading(false);
-    }
-  }, [session?.user?.id]);
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setSession(null);
+        setUser(null);
+        setRoles([]);
+        setIsAdmin(false);
+        setIsSuperAdmin(false);
+        setLoading(false);
+        return;
+      }
 
-  useEffect(() => {
-    if (!session) {
-      return;
-    }
+      const hasSession = Boolean(sessionRef.current?.user?.id);
+      if (event === "INITIAL_SESSION" && hasSession) {
+        return;
+      }
+      syncUserContext({ silent: hasSession });
+    });
 
-    // Only fetch user data if we haven't already for this session
-    if (!userFetchedRef.current && session?.user?.id) {
-      setLoading(true);
-      refreshUser();
-    }
-  }, [session?.user?.id, refreshUser]);
+    return () => {
+      isMounted = false;
+      data.subscription.unsubscribe();
+    };
+  }, [initialSession?.user?.id, supabase]);
 
   return (
     <UserContext.Provider
@@ -126,9 +167,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         roles,
         isAdmin,
         loading,
-        refreshUser,
         isSuperAdmin,
         session,
+        setUser,
+        setSession,
       }}
     >
       {children}

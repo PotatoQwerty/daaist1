@@ -10,15 +10,17 @@ function FileCard({
   handleLike,
   category,
   issum,
-  isOwnProfile,
+
   isLiked,
   subject,
   showLikeButton = true,
+  previewClassName,
 }: File & {
   isOwnProfile?: boolean;
   handleLike?: () => void;
   isLiked?: boolean;
   showLikeButton?: boolean;
+  previewClassName?: string;
 }) {
   const fileSizeMB = (size / (1024 * 1024)).toFixed(2);
 
@@ -49,15 +51,17 @@ function FileCard({
           className="absolute top-3 right-3 z-30 bg-white/50 dark:bg-black/20 backdrop-blur-md shadow-sm border border-white/30 dark:border-white/10 rounded-full p-2 hover:scale-110 active:scale-95 transition-all duration-300"
         >
           {isLiked ? (
-            <Heart className="size-5 fill-accent stroke-accent transition-all duration-300 transform scale-110" />
+            <Heart className="size-5 fill-accent stroke-2 stroke-accent hover:stroke-black hover:fill-none transition-all duration-300 transform scale-110" />
           ) : (
-            <Heart className="size-5 text-gray-600 dark:text-gray-300 hover:text-accent transition-colors duration-300" />
+            <Heart className="size-5 text-gray-600 stroke-2 dark:text-gray-300 hover:fill-accent hover:stroke-accent transition-colors duration-300" />
           )}
         </button>
       )}
 
       {/* File Preview Section */}
-      <div className="relative flex flex-col items-center justify-center pt-8 pb-4 px-4 overflow-hidden h-48">
+      <div
+        className={`relative flex flex-col items-center justify-center pt-8 pb-4 px-4 overflow-hidden h-48 ${previewClassName || ""}`}
+      >
         <div className="absolute inset-0 bg-radial-gradient from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
         <div className="relative w-full h-full flex items-center justify-center transform group-hover:scale-105 transition-transform duration-500 ease-out">
           {type.includes("image") ? (

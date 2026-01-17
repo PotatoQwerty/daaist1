@@ -6,10 +6,31 @@ import Message from "./Message";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/context/user-context";
 
+type ChatMessage = {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  user_image: string | null;
+  user_username: string;
+  isTemp?: boolean;
+  isFailed?: boolean;
+};
+
+const mergeMessages = (current: ChatMessage[], incoming: ChatMessage[]) => {
+  const byId = new Map<string, ChatMessage>();
+  current.forEach((msg) => byId.set(msg.id, msg));
+  incoming.forEach((msg) => byId.set(msg.id, msg));
+
+  return Array.from(byId.values()).sort(
+    (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at)
+  );
+};
+
 function ChatBubble() {
   const { session, user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,19 +40,14 @@ function ChatBubble() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      const fetchMessages = async () => {
-        setIsLoading(true);
-        const res = await getChatMessages();
-        setMessages(res || []);
-        setIsLoading(false);
-      };
-      fetchMessages();
+    if (!isOpen) {
+      setIsLoading(false);
+      return;
     }
-  }, [isOpen, messages.length]);
 
-  // Subscribe once for realtime inserts
-  useEffect(() => {
+    let isMounted = true;
+    setError(null);
+
     const supabase = createClient();
     const channel = supabase
       .channel("public-chat")
@@ -43,12 +59,10 @@ function ChatBubble() {
           table: "messages",
         },
         (payload) => {
-          const incoming = payload.new;
+          const incoming = payload.new as ChatMessage;
           setMessages((prev) => {
-            // If exact id already exists, skip
             if (prev.find((m) => m.id === incoming.id)) return prev;
 
-            // Remove optimistic/temp message with matching content + user_id
             const filtered = prev.filter(
               (m) =>
                 !(
@@ -58,16 +72,34 @@ function ChatBubble() {
                 )
             );
 
-            return [...filtered, incoming];
+            return mergeMessages(filtered, [incoming]);
           });
         }
       )
       .subscribe();
 
+    const fetchMessages = async () => {
+      setIsLoading(true);
+      const res = await getChatMessages();
+      if (!isMounted) return;
+
+      if (!res) {
+        setError("Failed to load messages. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      setMessages((prev) => mergeMessages(prev, res));
+      setIsLoading(false);
+    };
+
+    fetchMessages();
+
     return () => {
+      isMounted = false;
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [isOpen]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -110,14 +142,7 @@ function ChatBubble() {
     setNewMessage("");
 
     // Send payload to server
-    const payload = {
-      content: tempMsg.content,
-      user_id: tempMsg.user_id,
-      user_image: tempMsg.user_image,
-      user_username: tempMsg.user_username,
-    };
-
-    const res = await addChatMessage(payload);
+    const res = await addChatMessage({ content: tempMsg.content });
 
     setIsSending(false);
 
@@ -154,6 +179,7 @@ function ChatBubble() {
           messageContent={msg.content}
           myMsg={msg.user_id === session?.user?.id}
           showAvatar={isLastInSequence}
+          userId={msg.user_id}
           img={msg.user_image}
           username={msg.user_username}
           isFailed={msg.isFailed}

@@ -14,12 +14,21 @@ import EmptyState from "@/components/EmptyState";
 import { yearOptions } from "@/constants/uploadConstants";
 import { useCurrentRole } from "@/hooks/use-current-role";
 
+interface ClubMembership {
+  id: string;
+  name: string;
+  slug?: string | null;
+  logo_url?: string | null;
+  role?: string | null;
+}
+
 interface ProfileUser {
   id?: string;
   user_id: string;
   files?: any[];
   uploads: any[];
   likes: any[];
+  clubs?: ClubMembership[];
   studyyear?: string;
   bio?: string;
   isdaa?: boolean;
@@ -65,7 +74,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           loading: "Deleting file...",
           success: "File deleted successfully!",
           error: "Something went wrong!",
-        }
+        },
       );
 
       // Remove the deleted file from user.uploads
@@ -119,139 +128,213 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   };
 
   const displayYear = yearOptions.find(
-    (element) => element.value == user.studyyear
+    (element) => element.value == user.studyyear,
   );
+  const fullName = [user.firstname, user.lastname].filter(Boolean).join(" ");
+  const displayName = fullName || user.username || "Student";
+  const uploadsCount = user.uploads?.length ?? 0;
+  const likesCount = user.likes?.length ?? 0;
+  const clubs = user.clubs ?? [];
 
   return (
-    <div className="min-h-screen w-full bg-linear-to-br from-primary to-[#f3f3f3] text-gray-900 flex flex-col items-center px-6 py-10">
-      {/* Header */}
-      <div className="relative w-full max-w-5xl bg-background supports-backdrop-filter:bg-background/60 shadow-lg rounded-3xl p-10 mb-10 flex flex-col md:flex-row justify-between items-center gap-8 ">
-        {/* Profile Info */}
-        <div className="flex flex-col items-center justify-center gap-6 md:flex-row md:items-start md:gap-10">
-          {/* Profile Image */}
-          <div className="relative w-36 h-36 shrink-0">
-            <div className="absolute">
+    <div className="relative min-h-screen w-full bg-background text-foreground">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-background to-secondary/10" />
+        <div className="absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-secondary/20 blur-3xl" />
+        <div className="absolute top-24 right-0 h-64 w-64 rounded-full bg-accent/15 blur-3xl" />
+        <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-primary/15 blur-3xl" />
+      </div>
+
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-10">
+        <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70">
+          <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-accent/10" />
+          <div className="relative flex flex-col gap-8 p-6 md:p-10 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-6 md:flex-row md:items-start">
               <EditProfileButton
                 isOwnProfile={isOwnProfile}
                 currentImage={user.image || "/images/placeholder.png"}
               />
+
+              <div className="flex flex-col items-center md:items-start text-center md:text-left gap-4">
+                <div className="space-y-1">
+                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+                    {displayName}
+                  </h1>
+                  {user.username && (
+                    <p className="text-sm text-muted-foreground">
+                      @{user.username}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                  <span className="text-xs font-semibold bg-secondary text-secondary-foreground px-3 py-1 rounded-full shadow-sm">
+                    {displayYear?.label || "Unknown year"}
+                  </span>
+                  <span className="flex items-center gap-1 text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
+                    {isAdmin || isSuperAdmin ? (
+                      <ShieldUser
+                        className="size-4"
+                        fill="var(--secondary)"
+                        stroke="var(--primary)"
+                        strokeWidth="1px"
+                      />
+                    ) : user.isdaa ? (
+                      <Stars
+                        className="size-4"
+                        fill="var(--secondary)"
+                        stroke="none"
+                      />
+                    ) : (
+                      <UserIcon
+                        className="size-4"
+                        fill="var(--primary)"
+                        stroke="none"
+                      />
+                    )}
+                    <span>
+                      {isAdmin || isSuperAdmin
+                        ? "Admin"
+                        : user.isdaa
+                          ? "DAA'ist"
+                          : "Guest"}
+                    </span>
+                  </span>
+                </div>
+
+                <div className="grid w-full max-w-sm grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-center md:text-left">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Uploads
+                    </p>
+                    <p className="text-lg font-semibold">{uploadsCount}</p>
+                  </div>
+                  <div className="rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-center md:text-left">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Favorites
+                    </p>
+                    <p className="text-lg font-semibold">{likesCount}</p>
+                  </div>
+                </div>
+
+                <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-background/70 p-4">
+                  <ProfileBio
+                    actualBio={user.bio}
+                    isOwnProfile={isOwnProfile}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="hidden lg:flex items-center justify-center">
+              <div className="scale-90 opacity-90">
+                <DaaLogo />
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* User Info */}
-          <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-3 w-full">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground tracking-tight">
-                {user.firstname + " " + user.lastname}
-              </h1>
-              <p className="text-gray-600">@{user.username}</p>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-              <span className="text-sm font-medium bg-primary text-white px-3 py-1 rounded-full shadow-sm">
-                {displayYear?.label || "Unknown"}
-              </span>
-              <span className="flex items-center gap-1 text-sm text-slate-100 font-medium bg-accent/80 px-3 py-1 rounded-full shadow-sm">
-                {isAdmin || isSuperAdmin ? (
-                  <ShieldUser
-                    className="size-5"
-                    fill="var(--secondary)"
-                    stroke="var(--primary)"
-                    strokeWidth="1px"
-                  />
-                ) : user.isdaa ? (
-                  <Stars
-                    className="size-5"
-                    fill="var(--secondary)"
-                    stroke="none"
-                  />
-                ) : (
-                  <UserIcon
-                    className="size-5"
-                    fill="var(--primary)"
-                    stroke="none"
-                  />
-                )}
-                <span>
-                  {isAdmin || isSuperAdmin
-                    ? `Admin`
-                    : user.isdaa
-                    ? `DAA'ist`
-                    : "Guest"}
-                </span>
-              </span>
-            </div>
-
-            <div className="mt-3 w-full max-w-sm">
-              <ProfileBio actualBio={user.bio} isOwnProfile={isOwnProfile} />
-            </div>
+        <section className="w-full">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-semibold text-foreground">Clubs</h2>
           </div>
-        </div>
 
-        {/* Logo */}
-        <div className="hidden md:block">
-          <DaaLogo />
-        </div>
-      </div>
-
-      {/* Uploaded Projects */}
-      <section className="w-full max-w-5xl mb-10">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-primary uppercase tracking-wide">
-            Uploaded Projects
-          </h2>
-          {isOwnProfile && isAdmin && (
-            <Link
-              href="/upload"
-              className="text-sm min-w-fit bg-secondary hover:bg-secondary/85 hover:text-white text-black font-semibold px-4 py-2 rounded-full shadow transition duration-300"
-            >
-              + Upload New
-            </Link>
+          {clubs.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {clubs.map((club) => {
+                const roleLabel = club.role
+                  ? club.role.replace(/_/g, " ")
+                  : null;
+                return (
+                  <div
+                    key={club.id}
+                    className="rounded-2xl border border-border/60 bg-card/60 p-4 shadow-sm"
+                  >
+                    {club.slug ? (
+                      <Link
+                        href={`/club/${club.slug}`}
+                        className="inline-flex items-center text-lg font-semibold text-foreground hover:text-accent transition"
+                      >
+                        Member of {club.name}
+                      </Link>
+                    ) : (
+                      <p className="text-lg font-semibold text-foreground">
+                        Member of {club.name}
+                      </p>
+                    )}
+                    {roleLabel && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Role: {roleLabel}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border/60 bg-card/60 px-4 py-6 text-sm text-muted-foreground">
+              Not a member of any club yet.
+            </div>
           )}
-        </div>
+        </section>
 
-        {user.uploads && user.uploads.length > 0 ? (
-          <HorizontalUploads
-            isOwnProfile={isOwnProfile}
-            uploads={user.uploads}
-            handleDelete={handleDelete}
-          />
-        ) : (
-          <EmptyState
-            icon={FolderOpen}
-            title="No Uploads Yet"
-            description={
-              isOwnProfile
-                ? "You haven't uploaded any files yet. Share your work with the community!"
-                : "This user hasn't uploaded any documents yet."
-            }
-          />
-        )}
-      </section>
+        <section className="w-full">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 className="text-2xl font-semibold text-foreground">
+              Uploaded Projects
+            </h2>
+            {isOwnProfile && isAdmin && (
+              <Link
+                href="/upload"
+                className="inline-flex items-center gap-2 rounded-full bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold shadow-sm hover:bg-secondary transition"
+              >
+                + Upload New
+              </Link>
+            )}
+          </div>
 
-      {/* Favorites */}
-      <section className="w-full max-w-5xl mb-10">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-primary uppercase tracking-wide">
-            Favorites
-          </h2>
-        </div>
+          {user.uploads && user.uploads.length > 0 ? (
+            <HorizontalUploads
+              isOwnProfile={isOwnProfile}
+              uploads={user.uploads}
+              handleDelete={handleDelete}
+            />
+          ) : (
+            <EmptyState
+              icon={FolderOpen}
+              title="No Uploads Yet"
+              description={
+                isOwnProfile
+                  ? "You haven't uploaded any files yet. Share your work with the community!"
+                  : "This user hasn't uploaded any documents yet."
+              }
+            />
+          )}
+        </section>
 
-        {user.likes && user.likes.length > 0 ? (
-          <HorizontalLikes
-            isOwnProfile={isOwnProfile}
-            likes={user.likes}
-            liked={user.likes}
-            handleLike={handleLike}
-          />
-        ) : (
-          <EmptyState
-            icon={Heart}
-            title="No Favorites"
-            description="No favorite files yet. Heart some files to see them here!"
-          />
-        )}
-      </section>
+        <section className="w-full">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-semibold text-foreground">
+              Favorites
+            </h2>
+          </div>
+
+          {user.likes && user.likes.length > 0 ? (
+            <HorizontalLikes
+              isOwnProfile={isOwnProfile}
+              likes={user.likes}
+              liked={user.likes}
+              handleLike={handleLike}
+            />
+          ) : (
+            <EmptyState
+              icon={Heart}
+              title="No Favorites"
+              description="No favorite files yet. Heart some files to see them here!"
+            />
+          )}
+        </section>
+      </div>
     </div>
   );
 }

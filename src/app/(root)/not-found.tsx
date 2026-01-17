@@ -11,7 +11,7 @@ export default function NotFound() {
         href="/"
         className="px-4 py-2 rounded-md bg-primary text-white font-semibold hover:bg-secondary transition"
       >
-        Go home
+        Go to home
       </a>
     </div>
   );

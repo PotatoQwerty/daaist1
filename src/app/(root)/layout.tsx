@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import Footer from "@/components/Footer";
 import ChatBubble from "@/components/ChatBubble";
 import { UserProvider } from "@/context/user-context";
+import { getUserContext } from "@/lib/supabase/user-context";
 const josefin = Josefin_Sans({
   subsets: ["latin"],
   variable: "--font-josefin",
@@ -38,11 +39,13 @@ export const viewport = {
   userScalable: false,
   interactiveWidget: "resizes-content",
 };
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const userContext = await getUserContext();
+
   return (
     <html lang="en" suppressHydrationWarning className={`${josefin.variable}`}>
       <body className="kabel-reg">
@@ -51,11 +54,17 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem={true}
         >
-          <UserProvider>
+          <UserProvider
+            initialSession={userContext.session}
+            initialUser={userContext.user}
+            initialRoles={userContext.roles}
+            initialIsAdmin={userContext.isAdmin}
+            initialIsSuperAdmin={userContext.isSuperAdmin}
+          >
             <Toaster position="top-right" />
             <Navbar />
             {children}
-            {/* <ChatBubble /> */}
+            <ChatBubble />/
           </UserProvider>
         </ThemeProvider>
         <Footer />

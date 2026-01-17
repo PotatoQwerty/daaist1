@@ -5,9 +5,10 @@ import { sha256 } from "@/lib/admin";
 export async function POST(req: Request) {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.user?.id) {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
     .schema("public")
     .from("onboarding_status")
     .select("onboarded")
-    .eq("user_id", session.user.id)
+    .eq("user_id", user.id)
     .single();
 
   if (onboarding?.onboarded) {
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
     .from("invites")
     .update({
       used_at: new Date().toISOString(),
-      used_by: session.user.id,
+      used_by: user.id,
     })
     .eq("token_hash", tokenHash)
     .is("used_at", null);
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
     .schema("public")
     .from("profiles")
     .upsert({
-      user_id: session.user.id,
+      user_id: user.id,
       firstname: form.firstname,
       lastname: form.lastname,
       username: form.username,
@@ -89,7 +90,7 @@ export async function POST(req: Request) {
     .schema("public")
     .from("user_roles")
     .insert({
-      user_id: session.user.id,
+      user_id: user.id,
       role: invite.role_to_assign,
     });
 
@@ -105,7 +106,7 @@ export async function POST(req: Request) {
     .schema("public")
     .from("onboarding_status")
     .upsert({
-      user_id: session.user.id,
+      user_id: user.id,
       onboarded: true,
       onboarded_at: new Date().toISOString(),
     });

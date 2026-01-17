@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import FilesClient from "@/components/FilesClient";
 import Link from "next/link";
+import SignInButton from "@/components/SignInButton";
 
 export const revalidate = 3600; // Cache for 1 hour (ISR)
 
@@ -15,10 +16,11 @@ export const metadata = {
 export default async function Documents() {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (error || !user) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-md bg-card border border-accent/30 rounded-2xl p-8 text-center shadow-sm">
@@ -29,12 +31,11 @@ export default async function Documents() {
             You need to be signed in to view courses and resources.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <Link
-              href="/api/auth/signin"
+            <SignInButton
               className="inline-flex items-center px-4 py-2 bg-accent text-background rounded-md shadow-sm hover:brightness-95 transition"
             >
               Sign in
-            </Link>
+            </SignInButton>
             <Link
               href="/"
               className="inline-flex items-center px-4 py-2 border border-accent/20 rounded-md text-foreground hover:bg-accent/5 transition"

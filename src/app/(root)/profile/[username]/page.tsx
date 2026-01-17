@@ -1,6 +1,14 @@
-import { getUserByUsername, getFilesByUserId, getLikedFiles } from "@/lib/data";
+import {
+  getUserByUsername,
+  getUserByUserId,
+  getUserByChatUsername,
+  getFilesByUserId,
+  getLikedFiles,
+  getUserClubsByUserId,
+} from "@/lib/data";
 import ProfileClient from "@/components/ProfileClient";
 import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
 export async function generateMetadata({
   params,
 }: {
@@ -27,27 +35,31 @@ export default async function UserProfile({
   const { username } = await params;
 
   // 1. Fetch user first to get ID
-  const userData = await getUserByUsername(username);
+  const userData =
+    (await getUserByUsername(username)) ||
+    (await getUserByUserId(username)) ||
+    (await getUserByChatUsername(username));
 
   if (!userData) {
-    // Render not found state directly or use Next.js notFound()
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-600">
-        <p>User not found 😕</p>
-      </div>
-    );
+    notFound();
+  }
+
+  if (userData.username && userData.username !== username) {
+    redirect(`/profile/${userData.username}`);
   }
 
   // 2. Fetch files and likes in parallel
-  const [uploads, likes] = await Promise.all([
+  const [uploads, likes, clubs] = await Promise.all([
     getFilesByUserId(userData.user_id),
     getLikedFiles(userData.user_id),
+    getUserClubsByUserId(userData.user_id),
   ]);
 
   const initialUser = {
     ...userData,
     uploads,
     likes,
+    clubs,
   };
 
   return <ProfileClient initialUser={initialUser} />;

@@ -1,31 +1,15 @@
 "use client";
-import { createClient } from "@/lib/supabase/client";
+
 import { useEffect, useState } from "react";
+import { useUser } from "@/context/user-context";
+
 export function useIsOnBoarded() {
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<any>(undefined);
-  const supabase = createClient();
+  const { session, loading: sessionLoading } = useUser();
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log(session);
-      setSession(session);
-    });
-
-    // Subscribe to auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (session === undefined) return; // Wait for session load attempt
+    if (sessionLoading) return;
 
     if (!session) {
       setLoading(false);
@@ -48,7 +32,7 @@ export function useIsOnBoarded() {
     };
 
     fetchStatus();
-  }, [session]);
+  }, [session, sessionLoading]);
 
   return { onboarded, loading };
 }

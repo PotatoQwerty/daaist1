@@ -6,9 +6,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/app/(auth)/_components/AppSideBar";
 import { Toaster } from "react-hot-toast";
 import { notFound } from "next/navigation";
-import { getUserRoles } from "@/lib/supabase/actions";
 import { UserProvider } from "@/context/user-context";
-import { createClient } from "@/lib/supabase/server";
+import { getUserContext } from "@/lib/supabase/user-context";
 
 const josefin = Josefin_Sans({
   subsets: ["latin"],
@@ -24,14 +23,10 @@ export const metadata: Metadata = {
 export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user?.id) notFound();
-  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
+  const userContext = await getUserContext();
 
-  if (!isAdmin && !isSuperAdmin) notFound();
+  if (!userContext.session?.user?.id) notFound();
+  if (!userContext.isAdmin && !userContext.isSuperAdmin) notFound();
   return (
     <html lang="en" suppressHydrationWarning className={`${josefin.variable}`}>
       <body>
@@ -47,7 +42,15 @@ export default async function AdminLayout({
                 <SidebarTrigger />
               </div>
               <Toaster position="top-right" />
-              <UserProvider>{children}</UserProvider>
+              <UserProvider
+                initialSession={userContext.session}
+                initialUser={userContext.user}
+                initialRoles={userContext.roles}
+                initialIsAdmin={userContext.isAdmin}
+                initialIsSuperAdmin={userContext.isSuperAdmin}
+              >
+                {children}
+              </UserProvider>
             </main>
           </SidebarProvider>
         </ThemeProvider>

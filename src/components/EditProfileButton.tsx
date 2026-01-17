@@ -3,6 +3,7 @@
 import { Edit3, Loader2 } from "lucide-react";
 import Image, { StaticImageData } from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useUser } from "@/context/user-context";
 
@@ -14,7 +15,8 @@ export default function EditProfileButton({
   currentImage: string | StaticImageData;
 }) {
   const [image, setImage] = useState<string>();
-  const { refreshUser } = useUser();
+  const { setUser } = useUser();
+  const router = useRouter();
 
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +39,10 @@ export default function EditProfileButton({
       if (data.error) throw new Error(data.error);
       if (data.imageUrl) {
         setImage(data.imageUrl);
-        await refreshUser();
+        setUser((prev) =>
+          prev ? { ...prev, image: data.imageUrl } : prev
+        );
+        router.refresh();
       }
     } catch (error: any) {
       console.error("Upload failed:", error);

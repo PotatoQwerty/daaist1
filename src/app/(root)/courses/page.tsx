@@ -1,6 +1,7 @@
 import { yearOptions } from "@/constants/uploadConstants";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import SignInButton from "@/components/SignInButton";
 export const metadata = {
   title: "Daa'ist — Courses by Year",
   description:
@@ -26,12 +27,11 @@ export default async function Courses() {
             You need to be signed in to view courses and resources.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <Link
-              href="/api/auth/signin"
+            <SignInButton
               className="inline-flex items-center px-4 py-2 bg-accent text-background rounded-md shadow-sm hover:brightness-95 transition"
             >
               Sign in
-            </Link>
+            </SignInButton>
             <Link
               href="/"
               className="inline-flex items-center px-4 py-2 border border-accent/20 rounded-md text-foreground hover:bg-accent/5 transition"

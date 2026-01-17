@@ -4,12 +4,13 @@ import { createClient, supabaseServer } from "@/lib/supabase/server";
 export async function POST(req: Request) {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const userId = session?.user?.id;
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  const userId = user?.id;
   const { fileId } = await req.json();
 
-  if (!userId || !fileId)
+  if (error || !userId || !fileId)
     return NextResponse.json(
       { error: "You are not signed in || the file does not exist anymore" },
       { status: 401 }

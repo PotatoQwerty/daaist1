@@ -27,11 +27,11 @@ export default function HorizontalUploads({
   };
 
   return (
-    <div className="relative w-full border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50 min-h-[350px] flex items-center">
+    <div className="relative w-full rounded-2xl border border-border/60 bg-card/50 supports-backdrop-filter:bg-card/60 min-h-[350px] flex items-center">
       {/* Scrollable row */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto py-2 px-16 scrollbar-hide scroll-smooth snap-x snap-mandatory w-full"
+        className="flex gap-4 overflow-x-auto py-4 px-6 md:px-16 scrollbar-hide scroll-smooth snap-x snap-mandatory w-full"
       >
         {uploads.length > 0 ? (
           <>
@@ -39,7 +39,7 @@ export default function HorizontalUploads({
               type="button"
               title="left-scroll"
               onClick={() => scroll("left")}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white shadow-md hover:scale-110 transition-all"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-foreground/70 text-background shadow-md hover:bg-foreground/80 hover:scale-110 transition-all"
             >
               <ChevronLeftIcon className="size-5" />
             </button>
@@ -47,7 +47,7 @@ export default function HorizontalUploads({
               type="button"
               title="right-scroll"
               onClick={() => scroll("right")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 text-white shadow-md hover:scale-110 transition-all"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-foreground/70 text-background shadow-md hover:bg-foreground/80 hover:scale-110 transition-all"
             >
               <ChevronRightIcon className="w-5 h-5" />
             </button>
@@ -68,11 +68,12 @@ export default function HorizontalUploads({
             ))}
           </>
         ) : (
-          <p className="text-gray-300 font-medium w-full text-center">
-            Nothing posted yet 😔.
+          <p className="text-muted-foreground font-medium w-full text-center">
+            Nothing posted yet.
           </p>
         )}
       </div>
     </div>
   );
 }
+

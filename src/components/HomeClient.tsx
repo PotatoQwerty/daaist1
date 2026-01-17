@@ -2,28 +2,12 @@
 
 import Loading from "@/components/Loading";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useUser } from "@/context/user-context";
 import MessageCard from "@/components/MessageCard";
-import { createClient } from "@/lib/supabase/client";
-import { User } from "@supabase/supabase-js";
-
 export default function HomeClient() {
-  const [sessionLoading, setSessionLoading] = useState(true);
-  const [session, setSession] = useState<User | null>(null);
+  const { session, loading } = useUser();
 
-  useEffect(() => {
-    const fetchSession = async () => {
-      const { data } = await createClient().auth.getUser();
-      const user = data.user;
-
-      setSession(user);
-      setSessionLoading(false);
-    };
-
-    fetchSession();
-  }, []);
-
-  if (sessionLoading) return <Loading />;
+  if (loading) return <Loading />;
 
   return (
     <main className="min-h-screen bg-background text-foreground">

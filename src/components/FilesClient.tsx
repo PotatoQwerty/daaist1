@@ -29,7 +29,7 @@ export default function FilesClient({ initialFiles, level }: FilesClientProps) {
   const filesToDisplay = initialFiles.filter(
     (file) =>
       (selectedSubject === "all" || file.subject === selectedSubject) &&
-      (!onlySum || file.issum)
+      (!onlySum || file.issum),
   );
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function FilesClient({ initialFiles, level }: FilesClientProps) {
     };
 
     fetchLikedPosts();
-  }, [status, userId]);
+  }, [userId]);
 
   const handleLike = async (fileId: string) => {
     if (!userId) return;
@@ -58,7 +58,7 @@ export default function FilesClient({ initialFiles, level }: FilesClientProps) {
     setLiked((prev) =>
       isLiked
         ? prev.filter((item) => item.id !== fileId)
-        : [...prev, { id: fileId }]
+        : [...prev, { id: fileId }],
     );
 
     try {

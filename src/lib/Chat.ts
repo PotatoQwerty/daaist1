@@ -3,15 +3,34 @@ import { createClient } from "./supabase/auth/server";
 import { supabaseServer } from "./supabase/server";
 
 export async function getChatMessages() {
-  // const supabase = await createClient();
-  // const { data: user } = await supabase.auth.getUser();
-
-  // if (!user?.user) {
-  //   throw new Error("Unauthorized");
-  // }
-
   try {
-    // Query the VIEW, not the table
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      if (authError) {
+        console.error("Error fetching chat user:", authError);
+      }
+      return null;
+    }
+
+    const { data: enrollment, error: enrollmentError } = await supabaseServer
+      .schema("public")
+      .from("student_enrollments")
+      .select("isdaa")
+      .eq("user_id", user.id)
+      .single();
+
+    if (enrollmentError && enrollmentError.code !== "PGRST116") {
+      console.error("Error checking chat enrollment:", enrollmentError);
+      return null;
+    }
+
+    if (!enrollment?.isdaa) return null;
+
     const { data: messages, error } = await supabaseServer
       .schema("public")
       .from("messages")
@@ -20,34 +39,74 @@ export async function getChatMessages() {
 
     if (error) throw error;
 
-    return messages;
+    return messages ?? [];
   } catch (error) {
     console.error("Error fetching chat messages:", error);
-    return [];
+    return null;
   }
 }
 export async function addChatMessage(message: {
   content: string;
-  user_id: string;
-  user_image: string;
-  user_username: string;
 }) {
-  //   const session = await auth.api.getSession({
-  //     headers: await headers()
-  // })
-  // if (!session?.user || !session.user.isdaa) {
-  //   throw new Error("Unauthorized");
-  // }
+  const content = message.content.trim();
+  if (!content) return null;
 
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      if (authError) {
+        console.error("Error fetching chat user:", authError);
+      }
+      return null;
+    }
+
+    const { data: enrollment, error: enrollmentError } = await supabaseServer
+      .schema("public")
+      .from("student_enrollments")
+      .select("isdaa")
+      .eq("user_id", user.id)
+      .single();
+
+    if (enrollmentError && enrollmentError.code !== "PGRST116") {
+      console.error("Error checking chat enrollment:", enrollmentError);
+      return null;
+    }
+
+    if (!enrollment?.isdaa) return null;
+
+    const { data: profile, error: profileError } = await supabaseServer
+      .schema("public")
+      .from("profiles")
+      .select("username, image")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profileError && profileError.code !== "PGRST116") {
+      console.error("Error fetching chat profile:", profileError);
+      return null;
+    }
+
+    const userImage =
+      profile?.image || user.user_metadata?.avatar_url || "/assets/pdp.jpg";
+    const userUsername =
+      profile?.username ||
+      user.user_metadata?.username ||
+      user.email?.split("@")[0] ||
+      "student";
+
     const { data: messageSent, error } = await supabaseServer
       .schema("public")
       .from("messages")
       .insert({
-        content: message.content,
-        user_id: message.user_id,
-        user_image: message.user_image,
-        user_username: message.user_username,
+        content,
+        user_id: user.id,
+        user_image: userImage,
+        user_username: userUsername,
       })
       .select()
       .single();

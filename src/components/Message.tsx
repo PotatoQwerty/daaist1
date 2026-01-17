@@ -8,6 +8,7 @@ interface MessageProps {
   messageContent: string;
   myMsg?: boolean;
   showAvatar: boolean;
+  userId?: string;
   img: string | null;
   username: string;
   isFailed?: boolean;
@@ -17,13 +18,15 @@ const Message = memo(function Message({
   messageContent,
   myMsg,
   showAvatar,
+  userId,
   img,
   username,
   isFailed,
 }: MessageProps) {
+  const profileSlug = userId || username;
   const Avatar = () => (
     <Link
-      href={`/profile/${username}`}
+      href={`/profile/${profileSlug}`}
       className="shrink-0 relative"
       aria-label={`View ${username}'s profile`}
     >

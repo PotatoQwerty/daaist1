@@ -27,10 +27,11 @@ export const GET = async (request: Request) => {
 export const POST = async (request: Request) => {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (!session?.user) {
+  if (error || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const formData = await request.formData();
@@ -40,7 +41,7 @@ export const POST = async (request: Request) => {
     return NextResponse.json({ error: "Club ID is required" }, { status: 400 });
   }
 
-  const role = await getUserClubRole(session.user.id, club_id);
+  const role = await getUserClubRole(user.id, club_id);
   const isPresident = role === "president";
   const isVicePresident = role === "vice_president";
   const isEventManager = role === "event_manager";
@@ -101,7 +102,7 @@ export const POST = async (request: Request) => {
         end_date,
         cover_image: bannerData.publicUrl,
         is_public,
-        created_by: session.user.id,
+        created_by: user.id,
       })
       .select()
       .single();
@@ -122,9 +123,10 @@ export const POST = async (request: Request) => {
 export const DELETE = async (request: Request) => {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session?.user) {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (error || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

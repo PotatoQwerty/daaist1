@@ -4,10 +4,11 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (!session?.user?.id) {
+  if (error || !user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -16,7 +17,7 @@ export async function GET() {
     .schema("public")
     .from("user_roles")
     .select("role")
-    .eq("user_id", session.user.id);
+    .eq("user_id", user.id);
 
   if (
     roleError ||

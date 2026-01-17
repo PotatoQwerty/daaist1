@@ -11,9 +11,9 @@ import {
 } from "@/constants/uploadConstants";
 
 import toast from "react-hot-toast";
-import { CircleCheck, Loader2Icon } from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 import { useUser } from "@/context/user-context";
-//TODO: maybe create a docs table in the backend
+// TODO: maybe create a docs table in the backend
 export default function UploadForm() {
   const { session } = useUser();
   const userId = session?.user?.id || null;
@@ -29,6 +29,49 @@ export default function UploadForm() {
   }>({ title: "", level: null, subject: null, issum: false });
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const selectStyles = {
+    control: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: "var(--background)",
+      borderColor: state.isFocused ? "var(--ring)" : "var(--border)",
+      boxShadow: state.isFocused ? "0 0 0 1px var(--ring)" : "none",
+      borderRadius: "0.75rem",
+      minHeight: "44px",
+      padding: "2px 4px",
+      opacity: state.isDisabled ? 0.6 : 1,
+      ":hover": {
+        borderColor: "var(--ring)",
+      },
+    }),
+    menu: (base: any) => ({
+      ...base,
+      backgroundColor: "var(--background)",
+      border: "1px solid var(--border)",
+      borderRadius: "0.75rem",
+      zIndex: 20,
+    }),
+    option: (base: any, state: any) => {
+      const isActive = state.isFocused || state.isSelected;
+      return {
+        ...base,
+        backgroundColor: isActive ? "var(--accent)" : "transparent",
+        color: isActive ? "var(--accent-foreground)" : "var(--foreground)",
+        cursor: "pointer",
+      };
+    },
+    singleValue: (base: any) => ({
+      ...base,
+      color: "var(--foreground)",
+    }),
+    placeholder: (base: any) => ({
+      ...base,
+      color: "var(--muted-foreground)",
+    }),
+    input: (base: any) => ({
+      ...base,
+      color: "var(--foreground)",
+    }),
+  };
 
   // Update subject options dynamically & reset subject when year changes
   useEffect(() => {
@@ -102,154 +145,171 @@ export default function UploadForm() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-5 md:p-10 relative overflow-hidden">
-      {/* Background shapes */}
-      <div className="absolute top-10 left-10 w-32 h-32 bg-primary rounded-full opacity-20" />
-      <div className="absolute bottom-10 rotate-8 w-48 h-4 bg-accent" />
+    <div className="relative min-h-screen w-full bg-background text-foreground">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-background to-secondary/10" />
+        <div className="absolute -top-32 right-1/2 h-72 w-72 translate-x-1/2 rounded-full bg-secondary/20 blur-3xl" />
+        <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-primary/15 blur-3xl" />
+      </div>
 
-      <div className="relative z-10 bg-accent/30 rounded-2xl shadow-lg border-4 border-foreground p-5 md:p-10 w-full max-w-xl">
-        <h1 className="text-3xl font-bold uppercase text-center text-secondary mb-6">
-          Upload a File
-        </h1>
-        <p className="text-center mb-8">
-          Help our architecture database grow by sharing your documents 📐
-        </p>
-
-        <form
-          className="flex flex-col gap-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (file && file.size > 50 * 1024 * 1024) {
-              toast.error("Select a file less than 50 MB");
-              return;
-            }
-
-            toast.promise(handleSubmit(e), {
-              loading: "Uploading file...",
-              success: "File uploaded successfully! 🎊",
-              error: (err) => `${err.message} ❌`,
-            });
-          }}
-        >
-          {/* Category */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
-            {categoryOptions.map((opt) => (
-              <RadioCard
-                checked={opt.value == cat}
-                key={opt.id}
-                id={opt.id}
-                icon={opt.icon}
-                name="fileNature"
-                value={opt.value}
-                label={opt.label}
-                onChange={(e) => setCat(e.target.value)}
-                required
-              />
-            ))}
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-10">
+        <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 md:p-10">
+          <div className="text-center space-y-2">
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+              Upload
+            </p>
+            <h1 className="text-3xl md:text-4xl font-bold">Share a file</h1>
+            <p className="text-sm text-muted-foreground">
+              Help our architecture community grow by sharing your resources.
+            </p>
           </div>
 
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-semibold text-foreground mb-2">
-              File Title
-            </label>
-            <input
-              type="text"
-              name="title"
-              placeholder="Enter a title for your file"
-              required
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
+          <form
+            className="mt-8 space-y-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (file && file.size > 50 * 1024 * 1024) {
+                toast.error("Select a file less than 50 MB");
+                return;
               }
-              className="w-full border-2 border-accent rounded-md p-3 focus:outline-none focus:border-primary transition"
-            />
-          </div>
 
-          {/* Year + Subject */}
-          {(cat === "course" || cat === "td") && (
-            <div className="flex flex-col gap-4">
-              <Select<YearOption>
-                options={yearOptions}
-                value={formData.level}
-                onChange={(selectedValue) =>
-                  setFormData({ ...formData, level: selectedValue })
-                }
-                className="text-black"
-                placeholder="Select study year"
-              />
+              toast.promise(handleSubmit(e), {
+                loading: "Uploading file...",
+                success: "File uploaded successfully!",
+                error: (err) => `${err.message}`,
+              });
+            }}
+          >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-foreground">
+                  Category
+                </label>
+                <span className="text-xs text-muted-foreground">Required</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {categoryOptions.map((opt) => (
+                  <RadioCard
+                    checked={opt.value == cat}
+                    key={opt.id}
+                    id={opt.id}
+                    icon={opt.icon}
+                    name="fileNature"
+                    value={opt.value}
+                    label={opt.label}
+                    onChange={(e) => setCat(e.target.value)}
+                    required
+                  />
+                ))}
+              </div>
+            </div>
 
-              <Select<SubjectOption>
-                options={subjectOptionsForYear}
-                value={formData.subject}
-                onChange={(selectedValue) =>
-                  setFormData({ ...formData, subject: selectedValue })
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-foreground">
+                File Title
+              </label>
+              <input
+                type="text"
+                name="title"
+                placeholder="Enter a title for your file"
+                required
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
                 }
-                className="text-black"
-                placeholder={
-                  formData.level
-                    ? `Select a subject for ${formData.level.value}`
-                    : "Select a level first"
-                }
-                isDisabled={!formData.level}
+                className="w-full rounded-xl border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition"
               />
-              {cat === "course" && (
-                <>
-                  <label
-                    htmlFor="issum"
-                    className="flex gap-1 justify-center items-center text-xl"
-                  >
+            </div>
+
+            {(cat === "course" || cat === "td") && (
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">
+                      Study Year
+                    </label>
+                    <Select<YearOption>
+                      options={yearOptions}
+                      value={formData.level}
+                      onChange={(selectedValue) =>
+                        setFormData({ ...formData, level: selectedValue })
+                      }
+                      styles={selectStyles}
+                      placeholder="Select study year"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-foreground">
+                      Subject
+                    </label>
+                    <Select<SubjectOption>
+                      options={subjectOptionsForYear}
+                      value={formData.subject}
+                      onChange={(selectedValue) =>
+                        setFormData({ ...formData, subject: selectedValue })
+                      }
+                      styles={selectStyles}
+                      placeholder={
+                        formData.level
+                          ? `Select a subject for ${formData.level.value}`
+                          : "Select a level first"
+                      }
+                      isDisabled={!formData.level}
+                    />
+                  </div>
+                </div>
+                {cat === "course" && (
+                  <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
                     <input
                       type="checkbox"
                       title="issum"
                       name="issum"
                       id="issum"
-                      className="peer hidden"
+                      className="h-4 w-4 rounded border-border accent-accent focus:ring-ring"
                       checked={formData.issum}
                       onChange={() =>
                         setFormData({ ...formData, issum: !formData.issum })
                       }
                     />
-
-                    <CircleCheck className="size-5 peer-checked:fill-accent" />
-
                     <span>This is a summary</span>
                   </label>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* File Input */}
-          <div>
-            <label className="block text-sm font-semibold text-foreground mb-2">
-              Upload File
-            </label>
-            <input
-              title="file input"
-              type="file"
-              name="file"
-              className="w-full border-2 border-dashed border-accent rounded-md p-3 bg-primary/50 hover:bg-primary/80 cursor-pointer file:cursor-pointer file:border-none file:mr-3 file:py-2 file:px-4 file:rounded-md file:bg-primary file:text-white"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-            />
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isUploading}
-            className="mt-4 bg-primary text-white flex w-full gap-2 justify-center items-center font-semibold py-3 rounded-md hover:bg-secondary transition disabled:opacity-50"
-          >
-            {isUploading ? (
-              <>
-                <span>Uploading...</span>
-                <Loader2Icon className="animate-spin size-5" />
-              </>
-            ) : (
-              "Submit File"
+                )}
+              </div>
             )}
-          </button>
-        </form>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-foreground">
+                Upload File
+              </label>
+              <input
+                title="file input"
+                type="file"
+                name="file"
+                className="w-full cursor-pointer rounded-xl border border-dashed border-border bg-background/70 p-3 text-sm file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:font-semibold file:text-accent-foreground hover:border-accent/60"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Max file size: 50 MB.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isUploading}
+              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent text-accent-foreground py-3 text-sm font-semibold shadow-sm hover:brightness-95 transition disabled:opacity-60"
+            >
+              {isUploading ? (
+                <>
+                  <span>Uploading...</span>
+                  <Loader2Icon className="animate-spin size-5" />
+                </>
+              ) : (
+                "Submit File"
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

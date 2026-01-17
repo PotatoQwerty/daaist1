@@ -7,13 +7,14 @@ export async function PATCH(
 ) {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const userId = session?.user.id;
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  const userId = user?.id;
 
   const { fileId } = await params;
 
-  if (!userId) {
+  if (error || !userId) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 

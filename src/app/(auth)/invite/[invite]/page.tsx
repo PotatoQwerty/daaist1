@@ -3,29 +3,13 @@ import { createClient } from "@/lib/supabase/client";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import AdminOnboarding from "../../_components/AdminOnboarding";
+import { useUser } from "@/context/user-context";
 
 function Page() {
-  const [session, setSession] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [isValid, setIsValid] = useState<boolean>(false);
+  const { session, loading } = useUser();
   const params = useParams();
   const rawTokenFromUrl = params.invite;
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setSession(user);
-      setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   useEffect(() => {
     const handleValidate = async () => {
@@ -43,7 +27,7 @@ function Page() {
       }
     };
     handleValidate();
-  }, [session, rawTokenFromUrl]);
+  }, [rawTokenFromUrl]);
 
   if (loading) return <div>Loading...</div>;
 

@@ -9,7 +9,7 @@ function Footer() {
   ];
 
   return (
-    <footer className="border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <footer className="border-t border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="mx-auto max-w-7xl px-6 py-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           {/* Copyright */}
