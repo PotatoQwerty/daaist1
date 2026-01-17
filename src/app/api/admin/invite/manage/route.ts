@@ -28,17 +28,17 @@ export async function GET() {
   }
 
   // 2️⃣ Fetch active invites
-  const { data: invites, error } = await supabaseServer
+  const { data: invites, error: fetchInvitesError } = await supabaseServer
     .schema("public")
     .from("invites")
     .select("id, role_to_assign, created_at, expires_at, used_at")
     .is("used_at", null)
     .order("created_at", { ascending: false });
 
-  if (error) {
+  if (fetchInvitesError) {
     return NextResponse.json(
       { error: "Failed to fetch invites" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 

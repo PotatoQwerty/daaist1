@@ -13,16 +13,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const {
-      bio,
-      firstname,
-      lastname,
-      phone,
-      image,
-      username,
-      studyyear,
-      isdaa,
-    } = await req.json();
+    const { bio, firstname, lastname, phone, image, username } =
+      await req.json();
 
     const updateData: any = {};
     if (bio !== undefined) updateData.bio = bio;
@@ -32,7 +24,7 @@ export async function POST(req: Request) {
     if (image !== undefined) updateData.image = image;
     if (username !== undefined) updateData.username = username;
 
-    const { data, error } = await supabase
+    const { data, error: updateError } = await supabase
       .schema("public")
       .from("profiles")
       .update(updateData)
@@ -40,17 +32,17 @@ export async function POST(req: Request) {
       .select()
       .single();
 
-    if (error) {
-      console.error("Profile update error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (updateError) {
+      console.error("Profile update error:", updateError);
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
     return NextResponse.json({ user: data });
-  } catch (error) {
-    console.error("Profile update internal error:", error);
+  } catch (updateError) {
+    console.error("Profile update internal error:", updateError);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

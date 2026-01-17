@@ -31,9 +31,7 @@ export default async function Documents() {
             You need to be signed in to view courses and resources.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <SignInButton
-              className="inline-flex items-center px-4 py-2 bg-accent text-background rounded-md shadow-sm hover:brightness-95 transition"
-            >
+            <SignInButton className="inline-flex items-center px-4 py-2 bg-accent text-background rounded-md shadow-sm hover:brightness-95 transition">
               Sign in
             </SignInButton>
             <Link
@@ -48,13 +46,13 @@ export default async function Documents() {
     );
   }
 
-  const { data: files, error } = await supabase
+  const { data: files, error: fetchDocError } = await supabase
     .schema("public")
     .from("files")
     .select("*")
     .eq("category", "doc");
 
-  if (error) {
+  if (fetchDocError) {
     console.error("Error fetching docs:", error);
   }
 

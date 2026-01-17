@@ -12,15 +12,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabase
+  const { data, error: fetchError } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", user.id);
 
-  if (error) {
+  if (fetchError) {
     return NextResponse.json(
       { error: "Failed to fetch role" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
