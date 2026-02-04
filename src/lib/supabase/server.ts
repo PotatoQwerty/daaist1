@@ -10,12 +10,7 @@ if (!supabaseUrl || !supabaseServiceRK) {
 }
 
 // Export specific admin client as requested by user
-export const supabaseServer = createJsClient(supabaseUrl, supabaseServiceRK, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-});
+export const supabaseServer = createJsClient(supabaseUrl, supabaseServiceRK);
 
 // Export async SSR client for Auth/Session handling
 export async function createClient() {
@@ -29,7 +24,7 @@ export async function createClient() {
       setAll(cookiesToSet) {
         try {
           cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
+            cookieStore.set(name, value, options),
           );
         } catch {
           // The `setAll` method was called from a Server Component.

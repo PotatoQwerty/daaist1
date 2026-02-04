@@ -26,11 +26,12 @@ export const metadata = {
 
 export default async function HomePage() {
   const supabase = await createClient();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return <HomeClient />;
+  if (!user?.id) return <HomeClient />;
 
   const onboarded = await isOnboarded(user.id);
   if (!onboarded) redirect("/onboarding");
