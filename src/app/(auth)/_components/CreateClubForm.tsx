@@ -321,21 +321,10 @@ function CreateClubForm() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6 md:p-10 flex justify-center">
-      <div className="w-full max-w-4xl space-y-8">
-        {/* Header */}
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground kabel-bold">
-            Create New Club
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Establish a new community space for students.
-          </p>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-[2fr,1fr]">
-          <div className="space-y-8">
-            <div className="bg-card rounded-xl border shadow-sm p-6 space-y-6">
+    <div className="w-full">
+      <div className="grid gap-8 lg:grid-cols-[2fr,1fr]">
+        <div className="space-y-8">
+            <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 space-y-6">
               <h2 className="text-xl font-semibold kabel-bold flex items-center gap-2">
                 Basic Info
               </h2>
@@ -428,7 +417,7 @@ function CreateClubForm() {
             </div>
 
             {/* Club Leadership */}
-            <div className="bg-card rounded-xl border shadow-sm p-6 space-y-6">
+            <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 space-y-6">
               <h2 className="text-xl font-semibold kabel-bold flex items-center gap-2">
                 Club Leadership
               </h2>
@@ -455,7 +444,7 @@ function CreateClubForm() {
             </div>
 
             {/* Social Media Links */}
-            <div className="bg-card rounded-xl border shadow-sm p-6 space-y-6">
+            <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 space-y-6">
               <h2 className="text-xl font-semibold kabel-bold flex items-center gap-2">
                 Social Media
               </h2>
@@ -537,7 +526,7 @@ function CreateClubForm() {
             </div>
 
             {/* Media Uploads */}
-            <div className="bg-card rounded-xl border shadow-sm p-6 space-y-6">
+            <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 space-y-6">
               <h2 className="text-xl font-semibold kabel-bold flex items-center gap-2">
                 Branding
               </h2>
@@ -636,8 +625,8 @@ function CreateClubForm() {
             </div>
           </div>
 
-          <div className="space-y-8">
-            <div className="bg-card rounded-xl border shadow-sm p-6 space-y-6">
+        <div className="space-y-8">
+            <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 space-y-6">
               <h3 className="font-semibold text-lg kabel-bold">Settings</h3>
 
               {/* Is Active */}
@@ -689,7 +678,6 @@ function CreateClubForm() {
               </Button>
             </div>
           </div>
-        </div>
       </div>
     </div>
   );

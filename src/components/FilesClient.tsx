@@ -1,23 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@/context/user-context";
 import FileList from "@/components/FileList";
-import MessageCard from "@/components/MessageCard";
-import { File } from "@/types/next-auth";
-
-interface FilesClientProps {
-  initialFiles: File[];
-}
-
-import { subjectOptions, LevelKey } from "@/constants/uploadConstants";
+import EmptyState from "@/components/EmptyState";
+import type { File } from "@/types/next-auth";
+import { subjectOptions, type LevelKey } from "@/constants/uploadConstants";
 import { Button } from "@/components/ui/button";
-import { CircleCheck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { FileX2 } from "lucide-react";
 
-interface FilesClientProps {
+type FilesClientProps = {
   initialFiles: File[];
   level?: string;
-}
+};
 
 export default function FilesClient({ initialFiles, level }: FilesClientProps) {
   const [liked, setLiked] = useState<{ id: string }[]>([]);
@@ -26,20 +23,18 @@ export default function FilesClient({ initialFiles, level }: FilesClientProps) {
   const { session, loading } = useUser();
   const userId = session?.user?.id;
 
-  const filesToDisplay = initialFiles.filter(
-    (file) =>
-      (selectedSubject === "all" || file.subject === selectedSubject) &&
-      (!onlySum || file.issum),
-  );
+  const subjects = level ? subjectOptions[level as LevelKey] : [];
 
   useEffect(() => {
     if (loading || !session || !userId) return;
+    let isMounted = true;
 
     const fetchLikedPosts = async () => {
       try {
         const res = await fetch(`/api/files/like/user/${userId}`);
         if (!res.ok) return;
         const data = await res.json();
+        if (!isMounted) return;
         setLiked(Array.isArray(data.likedFiles) ? data.likedFiles : []);
       } catch (err) {
         console.error("Failed to fetch liked posts", err);
@@ -47,18 +42,20 @@ export default function FilesClient({ initialFiles, level }: FilesClientProps) {
     };
 
     fetchLikedPosts();
-  }, [userId]);
+    return () => {
+      isMounted = false;
+    };
+  }, [loading, session, userId]);
 
   const handleLike = async (fileId: string) => {
     if (!userId) return;
 
     const isLiked = liked.some((item) => item.id === fileId);
 
-    // Optimistic update
     setLiked((prev) =>
       isLiked
         ? prev.filter((item) => item.id !== fileId)
-        : [...prev, { id: fileId }],
+        : [...prev, { id: fileId }]
     );
 
     try {
@@ -68,98 +65,106 @@ export default function FilesClient({ initialFiles, level }: FilesClientProps) {
         headers: { "Content-Type": "application/json" },
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.likedposts) {
-          setLiked(Array.isArray(data.likedposts) ? data.likedposts : []);
-        }
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (data.likedposts) {
+        setLiked(Array.isArray(data.likedposts) ? data.likedposts : []);
       }
     } catch (err) {
       console.error("Like/unlike failed:", err);
     }
   };
 
-  const getSubjectLabel = (value: string) => {
-    if (!level) return value;
-    const subjects = subjectOptions[level as LevelKey];
-    return subjects?.find((s) => s.value === value)?.label || value;
-  };
+  const filesToDisplay = useMemo(
+    () =>
+      initialFiles.filter(
+        (file) =>
+          (selectedSubject === "all" || file.subject === selectedSubject) &&
+          (!onlySum || file.issum)
+      ),
+    [initialFiles, onlySum, selectedSubject]
+  );
 
-  // Map files to include props needed for FileCard (via FileList)
-  const filesWithProps = filesToDisplay.map((file) => ({
-    ...file,
-    title: file.file_name, // Map file_name to title
-    handleLike: () => handleLike(file.id),
-    isLiked: liked.some((l) => l.id === file.id),
-  }));
-
-  const subjects = level ? subjectOptions[level as LevelKey] : [];
+  const filesWithProps = useMemo(
+    () =>
+      filesToDisplay.map((file) => ({
+        ...file,
+        title: file.file_name,
+        handleLike: () => handleLike(file.id),
+        isLiked: liked.some((l) => l.id === file.id),
+      })),
+    [filesToDisplay, liked]
+  );
 
   return (
-    <div className="flex flex-col gap-6 w-full h-full">
-      {level && subjects && subjects.length > 0 && (
-        <div className="flex flex-wrap gap-2 pb-4 overflow-x-auto no-scrollbar mask-linear">
-          <div className="flex gap-1">
-            <Button
-              variant={selectedSubject === "all" ? "default" : "outline"}
-              onClick={() => setSelectedSubject("all")}
-              size="sm"
-              className="rounded-full"
-            >
-              All
-            </Button>
-            {subjects.map((subject) => (
+    <div className="flex w-full flex-col gap-6">
+      {level && subjects.length > 0 && (
+        <div className="rounded-3xl border border-border/60 bg-background/60 p-4 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
-                key={subject.value}
-                variant={
-                  selectedSubject === subject.value ? "default" : "outline"
-                }
-                onClick={() => setSelectedSubject(subject.value)}
+                variant={selectedSubject === "all" ? "default" : "outline"}
+                onClick={() => setSelectedSubject("all")}
                 size="sm"
                 className="rounded-full"
               >
-                {subject.label}
+                All
               </Button>
-            ))}
+              {subjects.map((subject) => (
+                <Button
+                  key={subject.value}
+                  variant={
+                    selectedSubject === subject.value ? "default" : "outline"
+                  }
+                  onClick={() => setSelectedSubject(subject.value)}
+                  size="sm"
+                  className="rounded-full"
+                >
+                  {subject.label}
+                </Button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="only-summaries"
+                  checked={onlySum}
+                  onCheckedChange={(checked) => setOnlySum(Boolean(checked))}
+                />
+                <Label
+                  htmlFor="only-summaries"
+                  className="text-sm text-muted-foreground"
+                >
+                  Summaries only
+                </Label>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                {filesToDisplay.length} result{filesToDisplay.length === 1 ? "" : "s"}
+              </p>
+            </div>
           </div>
-          <label
-            htmlFor="issum"
-            className="flex gap-1 justify-center items-center text-xl "
-          >
-            <input
-              type="checkbox"
-              title="issum"
-              name="issum"
-              id="issum"
-              className="peer hidden"
-              checked={onlySum}
-              onChange={() => setOnlySum(!onlySum)}
-            />
-
-            <CircleCheck className="size-5 peer-checked:fill-accent" />
-
-            <span>Show only summaries</span>
-          </label>
         </div>
       )}
 
       {!initialFiles || initialFiles.length === 0 ? (
-        <div className="flex justify-center items-center h-full">
-          <MessageCard
-            type="error"
-            message="There is nothing uploaded here"
-            key="err-msg"
-          />
-        </div>
+        <EmptyState
+          icon={FileX2}
+          title="No files yet"
+          description="There are no uploads here yet. Check back later or be the first to share resources."
+        />
       ) : filesToDisplay.length === 0 ? (
-        <div className="flex justify-center items-center h-full min-h-[200px]">
-          <p className="text-muted-foreground">
-            No files found for {getSubjectLabel(selectedSubject)}
-          </p>
-        </div>
+        <EmptyState
+          icon={FileX2}
+          title="No matches"
+          description="Try a different subject filter, or disable summaries-only."
+        />
       ) : (
         <FileList files={filesWithProps} />
       )}
     </div>
   );
 }
+

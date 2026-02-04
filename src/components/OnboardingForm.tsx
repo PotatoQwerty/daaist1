@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
-import IsDaaSelector from "./IsDaaSelector";
 import swal from "sweetalert2";
 import { useUser } from "@/context/user-context";
+import IsDaaSelector from "./IsDaaSelector";
 
 function OnboardingForm() {
   const router = useRouter();
@@ -15,6 +15,7 @@ function OnboardingForm() {
   const [hidden, setHidden] = useState<boolean>(true);
   const [foundDaa, setFoundDaa] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [usernameConflict, setUsernameConflict] = useState<boolean>(false);
 
   const [form, setForm] = useState<{
     firstname: string;
@@ -39,12 +40,10 @@ function OnboardingForm() {
     formRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [router]);
 
-  // Debounced validation effect
   useEffect(() => {
     const timer = setTimeout(() => {
       const username = form.username;
 
-      // Empty check - clear error if empty
       if (!username) {
         setError("");
         return;
@@ -66,9 +65,13 @@ function OnboardingForm() {
       } else {
         setError("");
       }
-    }, 500); // 500ms debounce
+    }, 500);
 
     return () => clearTimeout(timer);
+  }, [form.username]);
+
+  useEffect(() => {
+    setUsernameConflict(false);
   }, [form.username]);
 
   const handleChange = (
@@ -80,7 +83,7 @@ function OnboardingForm() {
 
   const handleIsDaaChange = (val: boolean) => {
     setForm((prev) => ({ ...prev, isdaa: val }));
-    // Optional: Reset found state if they switch back and forth
+
     if (!val) {
       setFoundDaa(false);
       setHidden(true);
@@ -99,7 +102,7 @@ function OnboardingForm() {
       inputLabel: "Your matricule",
       inputValue: form.registration_number.trim(),
       inputValidator: (value) => {
-        if (!value) return "Matricule Is required!";
+        if (!value) return "Matricule is required!";
         if (value.length > 15) return "Matricule must be at most 15 characters";
         return null;
       },
@@ -107,11 +110,13 @@ function OnboardingForm() {
     });
 
     if (!result.isConfirmed) return;
+
     const updatedMatricule = result.value;
     setForm((prevState) => ({
       ...prevState,
       registration_number: updatedMatricule.trim(),
     }));
+
     try {
       const res = await fetch(
         `/api/registration/check/${updatedMatricule.trim()}`,
@@ -122,9 +127,7 @@ function OnboardingForm() {
       );
 
       if (res.status === 404) {
-        toast.error(
-          "Not a DAA student! Please check your registration number."
-        );
+        toast.error("Not a DAA student! Please check your registration number.");
         return;
       }
 
@@ -145,8 +148,8 @@ function OnboardingForm() {
 
       setFoundDaa(true);
       setHidden(false);
-    } catch (error) {
-      console.error("Error checking DAA student:", error);
+    } catch (fetchError) {
+      console.error("Error checking DAA student:", fetchError);
       toast.error("Server error while checking student.");
     }
   };
@@ -160,6 +163,13 @@ function OnboardingForm() {
       setSubmitting(false);
       return;
     }
+
+    if (usernameConflict) {
+      toast.error("Username is already taken! Please choose another one.");
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/registration/onboarding", {
         method: "POST",
@@ -168,9 +178,9 @@ function OnboardingForm() {
       });
 
       if (res.status === 409) {
+        setUsernameConflict(true);
         toast.error("Username is already taken! Please choose another one.");
         usernameRef.current?.focus();
-        usernameRef.current?.classList.add("bg-red-100");
         return;
       }
 
@@ -187,95 +197,116 @@ function OnboardingForm() {
     }
   };
 
+  const inputClassName =
+    "w-full rounded-xl border border-border bg-background/80 p-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground";
+  const readonlyInputClassName =
+    "w-full rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground cursor-not-allowed";
+  const buttonClassName =
+    "w-full rounded-xl bg-primary p-4 text-base font-semibold text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90 transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background";
+
+  const usernameMessage = usernameConflict
+    ? "Username is already taken. Please choose another one."
+    : error;
+
   return (
-    <div
-      className="w-full flex flex-col justify-center items-center px-6 md:px-12 py-10"
-      ref={formRef}
-    >
-      <div className="w-full max-w-lg space-y-10">
-        <div className="text-center space-y-3">
-          <h2 className="text-4xl font-extrabold text-primary uppercase tracking-tight">
-            Student Sign Up
+    <div ref={formRef} className="mx-auto w-full max-w-lg">
+      <div className="space-y-8">
+        <div className="text-center space-y-2">
+          <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+            Student Setup
+          </p>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+            Complete your profile
           </h2>
-          <p className="text-accent text-lg">
-            Complete your profile to start using DAA’ist
+          <p className="text-sm text-muted-foreground">
+            Finish onboarding to start using Daa&apos;ist.
           </p>
         </div>
 
         <form
           aria-label="Sign up Form"
-          className="flex flex-col gap-6" // Increased gap
+          className="space-y-6"
           method="POST"
           onSubmit={handleSubmit}
         >
-          {/* Question Section */}
-          <div className="flex flex-col gap-4 justify-center items-center py-2">
-            <span className="text-primary font-medium text-lg">
-              Do you study in DAA?
-            </span>
-            <IsDaaSelector
-              currentValue={form.isdaa}
-              handleFormChanges={handleIsDaaChange}
-            />
+          <div className="rounded-2xl border border-border bg-background/60 p-4">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <span className="text-sm font-semibold text-foreground">
+                Do you study in DAA?
+              </span>
+              <IsDaaSelector
+                currentValue={form.isdaa}
+                handleFormChanges={handleIsDaaChange}
+              />
+            </div>
           </div>
 
-          {/* ----- OPTION A: YES (DAA Student) ----- */}
           {form.isdaa === true && (
-            <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <input
-                onChange={handleChange}
-                type="text"
-                required
-                disabled={foundDaa}
-                value={form.registration_number}
-                maxLength={15}
-                name="registration_number"
-                title="matricule"
-                placeholder="Registration number (e.g., 2121001234)"
-                className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none text-primary focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all disabled:bg-gray-200 disabled:cursor-not-allowed placeholder:text-gray-400"
-              />
+            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="space-y-3">
+                <input
+                  onChange={handleChange}
+                  type="text"
+                  required
+                  disabled={foundDaa}
+                  value={form.registration_number}
+                  maxLength={15}
+                  name="registration_number"
+                  title="matricule"
+                  placeholder="Registration number (e.g., 2121001234)"
+                  className={inputClassName}
+                />
 
-              <button
-                onClick={handleCheckDaa}
-                disabled={foundDaa}
-                type="button"
-                className={`bg-primary text-white rounded-xl p-4 font-bold text-lg hover:bg-blue-800 transition shadow-lg cursor-pointer shadow-blue-500/20 active:scale-[0.98] w-full ${
-                  foundDaa ? "hidden" : "block"
-                }`}
-              >
-                Look me up!
-              </button>
+                <button
+                  onClick={handleCheckDaa}
+                  disabled={foundDaa}
+                  type="button"
+                  className={`${buttonClassName} ${
+                    foundDaa ? "hidden" : "block"
+                  }`}
+                >
+                  Look me up!
+                </button>
+              </div>
 
-              {/* Show the rest only if found */}
               {!hidden && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <input
                       title="readOnlylastname"
                       readOnly
                       value={form.lastname}
-                      className="border border-gray-200 bg-gray-200 p-4 rounded-xl text-primary font-medium cursor-not-allowed "
+                      className={readonlyInputClassName}
                     />
                     <input
                       readOnly
                       title="readOnlyfirstname"
                       value={form.firstname}
-                      className="border border-gray-200 bg-gray-200 p-4 rounded-xl text-primary font-medium cursor-not-allowed"
+                      className={readonlyInputClassName}
                     />
                   </div>
 
-                  <input
-                    onChange={handleChange}
-                    type="text"
-                    name="username"
-                    value={form.username}
-                    required
-                    ref={usernameRef}
-                    placeholder="Choose a Username"
-                    className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50  placeholder:text-gray-400"
-                  />
-
-                  {error && <span className="text-red-500">{error}</span>}
+                  <div className="space-y-2">
+                    <input
+                      onChange={handleChange}
+                      type="text"
+                      name="username"
+                      value={form.username}
+                      required
+                      ref={usernameRef}
+                      placeholder="Choose a username"
+                      className={`${inputClassName} ${
+                        usernameMessage
+                          ? "border-destructive focus:ring-destructive"
+                          : ""
+                      }`}
+                    />
+                    {usernameMessage && (
+                      <p className="text-sm text-destructive font-medium">
+                        {usernameMessage}
+                      </p>
+                    )}
+                  </div>
 
                   <select
                     title="study year select"
@@ -284,7 +315,7 @@ function OnboardingForm() {
                     id="studyyearDaa"
                     value={form.studyyear}
                     onChange={handleChange}
-                    className="w-full border border-border bg-background text-foreground p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className={inputClassName}
                   >
                     <option value="" disabled>
                       Select Study Year
@@ -299,7 +330,7 @@ function OnboardingForm() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="bg-primary mt-2 flex gap-2 justify-center items-center text-white p-4 rounded-xl font-bold text-lg hover:bg-blue-800 transition shadow-lg shadow-blue-500/20 active:scale-[0.98] cursor-pointer"
+                    className={buttonClassName}
                   >
                     {submitting ? (
                       <Loader2 className="animate-spin" />
@@ -307,15 +338,14 @@ function OnboardingForm() {
                       "Complete Setup"
                     )}
                   </button>
-                </>
+                </div>
               )}
             </div>
           )}
 
-          {/* ----- OPTION B: NO (Non-DAA Student) ----- */}
           {form.isdaa === false && (
-            <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
                   onChange={handleChange}
                   type="text"
@@ -323,7 +353,7 @@ function OnboardingForm() {
                   value={form.lastname}
                   required
                   placeholder="Last name"
-                  className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50  placeholder:text-gray-400"
+                  className={inputClassName}
                 />
                 <input
                   onChange={handleChange}
@@ -332,20 +362,31 @@ function OnboardingForm() {
                   value={form.firstname}
                   required
                   placeholder="First name"
-                  className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50  placeholder:text-gray-400"
+                  className={inputClassName}
                 />
               </div>
 
-              <input
-                onChange={handleChange}
-                type="text"
-                name="username"
-                value={form.username}
-                required
-                placeholder="Username"
-                className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50  placeholder:text-gray-400"
-              />
-              {error && <span className="text-red-500">{error}</span>}
+              <div className="space-y-2">
+                <input
+                  onChange={handleChange}
+                  type="text"
+                  name="username"
+                  value={form.username}
+                  required
+                  ref={usernameRef}
+                  placeholder="Username"
+                  className={`${inputClassName} ${
+                    usernameMessage
+                      ? "border-destructive focus:ring-destructive"
+                      : ""
+                  }`}
+                />
+                {usernameMessage && (
+                  <p className="text-sm text-destructive font-medium">
+                    {usernameMessage}
+                  </p>
+                )}
+              </div>
 
               <input
                 onChange={handleChange}
@@ -355,7 +396,7 @@ function OnboardingForm() {
                 maxLength={15}
                 name="registration_number"
                 placeholder="Registration number (e.g., 2121001234)"
-                className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50  placeholder:text-gray-400"
+                className={inputClassName}
               />
 
               <select
@@ -365,7 +406,7 @@ function OnboardingForm() {
                 required
                 value={form.studyyear}
                 onChange={handleChange}
-                className="w-full border border-border bg-background text-foreground p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                className={inputClassName}
               >
                 <option value="" disabled>
                   Select Study Year
@@ -380,7 +421,7 @@ function OnboardingForm() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-primary mt-4 flex gap-2 justify-center items-center text-white p-4 rounded-xl font-bold text-lg hover:bg-blue-800 transition shadow-lg shadow-blue-500/20 active:scale-[0.98] cursor-pointer"
+                className={buttonClassName}
               >
                 {submitting ? <Loader2 className="animate-spin" /> : "Sign Up"}
               </button>
@@ -393,3 +434,4 @@ function OnboardingForm() {
 }
 
 export default OnboardingForm;
+

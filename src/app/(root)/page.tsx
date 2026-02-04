@@ -1,4 +1,5 @@
 import HomeClient from "@/components/HomeClient";
+import HomeLoggedOut from "@/components/HomeLoggedOut";
 import { isOnboarded } from "@/lib/supabase/actions";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -31,7 +32,7 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user?.id) return <HomeClient />;
+  if (!user?.id) return <HomeLoggedOut />;
 
   const onboarded = await isOnboarded(user.id);
   if (!onboarded) redirect("/onboarding");

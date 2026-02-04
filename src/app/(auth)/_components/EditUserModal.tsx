@@ -68,6 +68,62 @@ export default function EditUserModal({
     getRoleValue()
   );
   const [isSaving, setIsSaving] = useState(false);
+  const selectStyles = {
+    control: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: "var(--background)",
+      borderColor: state.isFocused ? "var(--ring)" : "var(--border)",
+      boxShadow: state.isFocused ? "0 0 0 1px var(--ring)" : "none",
+      borderRadius: "0.75rem",
+      minHeight: "44px",
+      padding: "2px 4px",
+      opacity: state.isDisabled ? 0.6 : 1,
+      ":hover": {
+        borderColor: "var(--ring)",
+      },
+    }),
+    menu: (base: any) => ({
+      ...base,
+      backgroundColor: "var(--background)",
+      border: "1px solid var(--border)",
+      borderRadius: "0.75rem",
+      zIndex: 20,
+    }),
+    option: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: state.isFocused ? "var(--accent)" : "transparent",
+      color: state.isFocused ? "var(--accent-foreground)" : "var(--foreground)",
+      cursor: "pointer",
+    }),
+    multiValue: (base: any) => ({
+      ...base,
+      backgroundColor: "var(--muted)",
+    }),
+    multiValueLabel: (base: any) => ({
+      ...base,
+      color: "var(--foreground)",
+    }),
+    multiValueRemove: (base: any) => ({
+      ...base,
+      color: "var(--muted-foreground)",
+      ":hover": {
+        backgroundColor: "var(--destructive)",
+        color: "white",
+      },
+    }),
+    singleValue: (base: any) => ({
+      ...base,
+      color: "var(--foreground)",
+    }),
+    placeholder: (base: any) => ({
+      ...base,
+      color: "var(--muted-foreground)",
+    }),
+    input: (base: any) => ({
+      ...base,
+      color: "var(--foreground)",
+    }),
+  };
 
   const handleFormChanges = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -194,6 +250,7 @@ export default function EditUserModal({
                   options={roleOptions}
                   value={getRoleValue()}
                   classNamePrefix="react-select"
+                  styles={selectStyles}
                 />
               </div>
             ) : (
@@ -204,6 +261,7 @@ export default function EditUserModal({
                 onChange={handleRoleChange}
                 placeholder="Select roles..."
                 classNamePrefix="react-select"
+                styles={selectStyles}
               />
             )}
           </div>

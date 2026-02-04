@@ -44,7 +44,7 @@ export interface File {
   id: string;
   file_name: string;
   username?: string;
-  uploaded_by: string;
+  uploaded_by?: string;
   size: number;
   url: string;
   create_at?: Date;

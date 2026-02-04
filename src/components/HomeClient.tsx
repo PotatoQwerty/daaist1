@@ -3,24 +3,12 @@
 import Loading from "@/components/Loading";
 import Link from "next/link";
 import { useUser } from "@/context/user-context";
-import MessageCard from "@/components/MessageCard";
-import { createClient } from "@/lib/supabase/client";
 
 export default function HomeClient() {
   const { session, loading } = useUser();
 
-  const handleSignIn = async () => {
-    const supabase = createClient();
-    const origin = window.location.origin;
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${origin}/auth/callback?redirect_to=/`,
-      },
-    });
-  };
-
   if (loading) return <Loading />;
+  if (!session) return null;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -43,40 +31,19 @@ export default function HomeClient() {
                 projects, clubs, and shared academic resources.
               </p>
               <div className="flex flex-wrap items-center gap-3">
-                {!session ? (
-                  <>
-                    <button
-                      title="Start using daaist"
-                      className="px-6 py-3 bg-white text-primary font-semibold rounded-xl shadow-lg shadow-black/20 hover:-translate-y-0.5 transition"
-                      type="button"
-                      onClick={handleSignIn}
-                    >
-                      Start using Daa&apos;ist
-                    </button>
-                    <Link
-                      href="/privacy"
-                      className="px-6 py-3 border border-white/60 font-semibold rounded-xl hover:bg-white/10 transition"
-                    >
-                      Privacy policies
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href="/courses"
-                      className="px-6 py-3 bg-white text-primary font-semibold rounded-xl shadow hover:bg-gray-100 transition"
-                    >
-                      Explore Courses
-                    </Link>
-                    <Link
-                      prefetch={false}
-                      href="/club"
-                      className="px-6 py-3 border border-white/60 font-semibold rounded-xl hover:bg-white/10 transition"
-                    >
-                      Join a Club
-                    </Link>
-                  </>
-                )}
+                <Link
+                  href="/courses"
+                  className="px-6 py-3 bg-white text-primary font-semibold rounded-xl shadow hover:bg-gray-100 transition"
+                >
+                  Explore Courses
+                </Link>
+                <Link
+                  prefetch={false}
+                  href="/club"
+                  className="px-6 py-3 border border-white/60 font-semibold rounded-xl hover:bg-white/10 transition"
+                >
+                  Join a Club
+                </Link>
               </div>
             </div>
 
@@ -120,12 +87,6 @@ export default function HomeClient() {
             centralizing educational materials and fostering collaboration
             within the architecture community.
           </p>
-          {!session && (
-            <MessageCard
-              type="info"
-              message="Please note that this website is developed and maintained by the club Archibenevoles. You might encounter some errors and bugs since you're using one of the earliest versions of this website."
-            />
-          )}
         </div>
       </section>
 
@@ -182,16 +143,6 @@ export default function HomeClient() {
             Built and maintained by the Archibenevoles club. Early access means
             you may see occasional issues.
           </p>
-          {!session && (
-            <button
-              title="Start using daaist"
-              className="px-5 py-2 bg-accent text-white font-semibold rounded-lg hover:bg-primary/90 transition"
-              type="button"
-              onClick={handleSignIn}
-            >
-              Start using Daa&apos;ist
-            </button>
-          )}
         </div>
       </section>
     </main>

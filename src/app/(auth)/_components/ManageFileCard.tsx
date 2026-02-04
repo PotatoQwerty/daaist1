@@ -1,13 +1,57 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
-import { FileX, MoreVertical, Edit, FileIcon } from "lucide-react";
-import { File } from "@/types/next-auth";
-interface manageFileProps extends File {
+import { ExternalLink, FileIcon, MoreVertical, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+type ManageFileCardProps = {
+  file_name: string;
+  type: string;
+  url: string;
+  uploaded_by: string;
+  level?: string | null;
+  subject?: string | null;
+  category?: string | null;
+  size: number;
   onDelete: () => void;
+};
+
+function categoryBadgeClassName(category?: string | null) {
+  switch (category) {
+    case "td":
+      return "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20";
+    case "doc":
+      return "bg-primary/10 text-primary border-primary/20";
+    case "course":
+      return "bg-accent/10 text-accent border-accent/20";
+    default:
+      return "bg-muted/30 text-muted-foreground border-border";
+  }
 }
-function ManageFileCard({
+
+function categoryLabel(category?: string | null) {
+  switch (category) {
+    case "td":
+      return "TD/Exam";
+    case "doc":
+      return "Document";
+    case "course":
+      return "Course";
+    default:
+      return "File";
+  }
+}
+
+export default function ManageFileCard({
   file_name,
   type,
   url,
@@ -17,108 +61,123 @@ function ManageFileCard({
   category,
   size,
   onDelete,
-}: manageFileProps) {
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [isOpen]);
+}: ManageFileCardProps) {
+  const fileSizeMB = (size / (1024 * 1024)).toFixed(2);
+  const ext = type?.split("/")[1]?.toUpperCase() || "FILE";
+  const isImage = type?.includes("image");
+
   return (
-    <div className="bg-background rounded-2xl shadow-md p-4 w-[320px] h-[280px] flex relative flex-col items-center justify-between hover:shadow-xl hover:-translate-y-1 transition-all duration-200 border border-foreground/10">
-      {/* Top-right menu */}
-      <div className="absolute top-3 right-3 z-50 " ref={menuRef}>
-        <button
-          type="button"
-          title="manage file button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsOpen((prev) => !prev);
-          }}
-          className="flex justify-center items-center p-1 rounded-lg bg-white opacity-100 hover:opacity-70 cursor-pointer"
+    <div className="group relative w-full overflow-hidden rounded-3xl border border-border/60 bg-card/80 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 transition hover:-translate-y-1 hover:shadow-md">
+      <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-accent/10" />
+      </div>
+
+      <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-2">
+        <span
+          className={cn(
+            "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+            categoryBadgeClassName(category)
+          )}
         >
-          <MoreVertical />
-        </button>
-        {isOpen && (
-          <div className="absolute top-7 right-0 bg-white dark:bg-zinc-800 rounded-lg shadow-md p-2 w-[120px] animate-in fade-in slide-in-from-top-2 z-50">
-            <button
-              type="button"
-              onClick={() => onDelete()}
-              className="flex w-full items-center gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 px-2 py-1 rounded-md transition"
-            >
-              <FileX className="size-4" />
-              <span className="text-sm font-medium">Delete</span>
-            </button>
-            <button
-              type="button"
-              disabled
-              className="flex w-full items-center gap-2 text-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 px-2 py-1 rounded-md transition disabled:cursor-not-allowed"
-            >
-              <Edit className="size-4" />
-              <span className="text-sm font-medium">Edit</span>
-            </button>
-          </div>
-        )}
+          {categoryLabel(category)}
+        </span>
+        <span className="inline-flex items-center rounded-full border border-border bg-background/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          {ext}
+        </span>
       </div>
 
-      {/* File Preview */}
-      <div className="w-full h-40 flex items-center justify-center bg-muted rounded-xl overflow-hidden">
-        {type.includes("image") ? (
-          <Link
-            prefetch={false}
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-[300px] h-40 block"
+      <div className="absolute right-3 top-3 z-20">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full bg-background/60 hover:bg-background/80"
+              title="Actions"
+            >
+              <MoreVertical className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem asChild>
+              <Link
+                href={url}
+                prefetch={false}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open file
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="relative p-4 pt-12">
+        <Link
+          href={url}
+          prefetch={false}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+          aria-label={`Open ${file_name}`}
+        >
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-border bg-muted/30">
+            {isImage ? (
+              <Image
+                src={url}
+                alt={file_name}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+              />
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
+                <FileIcon className="size-10" />
+                <span className="text-xs">No preview</span>
+              </div>
+            )}
+          </div>
+        </Link>
+
+        <div className="mt-4 space-y-2">
+          <h3
+            className="line-clamp-2 text-base font-semibold leading-snug text-foreground"
+            title={file_name}
           >
-            <Image
-              src={url}
-              alt={file_name}
-              width={300}
-              height={160}
-              className="object-cover w-full h-full transition-transform duration-200 hover:scale-105"
-            />
-          </Link>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-muted-foreground">
-            <FileIcon className="w-12 h-12 mb-2" />
-            <span className="text-sm">No preview</span>
-            <Link
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline text-xs hover:text-foreground"
-            >
-              Open file
-            </Link>
-          </div>
-        )}
-      </div>
-
-      {/* File Info */}
-      <div className="w-full mt-3 text-center space-y-1">
-        <h1 className="truncate font-semibold text-lg">{file_name}</h1>
-        <p className="text-sm text-muted-foreground">
-          Uploaded by <span className="font-medium">{uploaded_by}</span>
-        </p>
-        {category === "doc" ? (
-          <span className="text-sm italic text-foreground/80">Document</span>
-        ) : (
-          <span className="text-sm text-foreground/80">
-            Year: {level} • Subject: {subject}
-          </span>
-        )}
-        <p className="text-xs text-muted-foreground">
-          {(size / (1024 * 1024)).toFixed(2)} MB
-        </p>
+            {file_name}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Uploaded by{" "}
+            <span className="font-medium text-foreground">{uploaded_by}</span>
+          </p>
+          {category !== "doc" && (level || subject) && (
+            <p className="text-xs text-muted-foreground">
+              {level ? (
+                <>
+                  <span className="font-medium text-foreground">{level}</span>
+                  {subject ? <span className="mx-2">•</span> : null}
+                </>
+              ) : null}
+              {subject ? (
+                <span className="font-medium text-foreground">{subject}</span>
+              ) : null}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">{fileSizeMB} MB</p>
+        </div>
       </div>
     </div>
   );
 }
 
-export default ManageFileCard;
