@@ -1,8 +1,11 @@
 import HomeClient from "@/components/HomeClient";
 import HomeLoggedOut from "@/components/HomeLoggedOut";
 import { isOnboarded } from "@/lib/supabase/actions";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/auth/server";
 import { redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const metadata = {
   title: "Daa'ist — Home",

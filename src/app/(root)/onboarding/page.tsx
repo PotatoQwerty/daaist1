@@ -1,7 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/auth/server";
 import OnboardingForm from "@/components/OnboardingForm";
 import { isOnboarded } from "@/lib/supabase/actions";
 import { redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const metadata = {
   title: "Daa'ist - Onboarding",
