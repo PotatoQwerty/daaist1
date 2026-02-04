@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { usePathname, useRouter } from "next/navigation";
 
 interface UserContextType {
   user: any | null; // Replace 'any' with your Profile type if available
@@ -18,8 +19,10 @@ interface UserContextType {
   isSuperAdmin: boolean;
   loading: boolean;
   session: any | null;
+  onboarded: boolean | null;
   setUser: Dispatch<SetStateAction<any | null>>;
   setSession: Dispatch<SetStateAction<any | null>>;
+  setOnboarded: Dispatch<SetStateAction<boolean | null>>;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -29,8 +32,10 @@ const UserContext = createContext<UserContextType>({
   isSuperAdmin: false,
   loading: false,
   session: null,
+  onboarded: null,
   setUser: () => {},
   setSession: () => {},
+  setOnboarded: () => {},
 });
 
 export const useUser = () => useContext(UserContext);
@@ -50,6 +55,9 @@ export const UserProvider = ({
   initialIsAdmin?: boolean;
   initialIsSuperAdmin?: boolean;
 }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [session, setSession] = useState<any | null>(initialSession);
   const [user, setUser] = useState<any | null>(initialUser);
   const [roles, setRoles] = useState<string[]>(initialRoles);
@@ -57,6 +65,7 @@ export const UserProvider = ({
   const [isSuperAdmin, setIsSuperAdmin] =
     useState<boolean>(initialIsSuperAdmin);
   const [loading, setLoading] = useState(!initialSession?.user?.id);
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const supabase = useMemo(() => createClient(), []);
   const sessionRef = useRef<any | null>(initialSession);
 
@@ -67,6 +76,7 @@ export const UserProvider = ({
     setIsAdmin(Boolean(initialIsAdmin));
     setIsSuperAdmin(Boolean(initialIsSuperAdmin));
     setLoading(!initialSession?.user?.id);
+    setOnboarded(null);
   }, [
     initialSession,
     initialUser,
@@ -102,8 +112,31 @@ export const UserProvider = ({
         setRoles([]);
         setIsAdmin(false);
         setIsSuperAdmin(false);
+        setOnboarded(null);
         setLoading(false);
         return;
+      }
+
+      // Keep onboarding in sync using the server (cookie-based) source of truth.
+      // If cookies aren't ready yet right after OAuth, this may briefly fail; we retry
+      // automatically because `syncUserContext` is called again on auth state changes.
+      try {
+        const onboardedRes = await fetch("/api/users/onboarded", {
+          cache: "no-store",
+        });
+        if (onboardedRes.ok) {
+          const onboardedData = await onboardedRes.json();
+          if (!isMounted) return;
+          setOnboarded(
+            typeof onboardedData?.onboarded === "boolean"
+              ? onboardedData.onboarded
+              : null
+          );
+        } else {
+          setOnboarded(null);
+        }
+      } catch {
+        setOnboarded(null);
       }
 
       try {
@@ -129,6 +162,8 @@ export const UserProvider = ({
       setRoles([]);
       setIsAdmin(false);
       setIsSuperAdmin(false);
+      
+      setOnboarded(null);
       setLoading(false);
     };
 
@@ -160,6 +195,15 @@ export const UserProvider = ({
     };
   }, [initialSession?.user?.id, supabase]);
 
+  useEffect(() => {
+    // Client-side safety net: if the user is authenticated but not onboarded, keep the
+    // home route from "feeling stuck" after OAuth redirects.
+    if (pathname !== "/") return;
+    if (!session?.user?.id) return;
+    if (onboarded !== false) return;
+    router.replace("/onboarding");
+  }, [onboarded, pathname, router, session?.user?.id]);
+
   return (
     <UserContext.Provider
       value={{
@@ -169,8 +213,10 @@ export const UserProvider = ({
         loading,
         isSuperAdmin,
         session,
+        onboarded,
         setUser,
         setSession,
+        setOnboarded,
       }}
     >
       {children}
