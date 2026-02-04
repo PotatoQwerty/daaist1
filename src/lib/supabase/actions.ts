@@ -2,7 +2,7 @@
 import { supabaseServer } from "./server";
 
 export async function isOnboarded(userId: string) {
-  const { data: isOnboarded, error } = await supabaseServer
+  const { data, error } = await supabaseServer
     .schema("public")
     .from("onboarding_status")
     .select("onboarded")
@@ -12,7 +12,8 @@ export async function isOnboarded(userId: string) {
     console.error("Error checking onboarding status:", error);
     return false;
   }
-  return isOnboarded?.[0]?.onboarded ?? false;
+
+  return data?.[0]?.onboarded ?? false;
 }
 
 // Keep existing getUserRoles for backward compatibility or refactor it to use getUserData if it's cleaner.
