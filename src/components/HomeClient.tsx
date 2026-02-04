@@ -11,10 +11,11 @@ export default function HomeClient() {
 
   const handleSignIn = async () => {
     const supabase = createClient();
+    const origin = window.location.origin;
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: `${origin}/auth/callback?redirect_to=/`,
       },
     });
   };

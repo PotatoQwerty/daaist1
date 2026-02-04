@@ -16,10 +16,11 @@ export default function SignInButton({
   const supabase = useMemo(() => createClient(), []);
 
   const handleSignIn = async () => {
+    const origin = window.location.origin;
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: `${origin}/auth/callback?redirect_to=/`,
       },
     });
   };
