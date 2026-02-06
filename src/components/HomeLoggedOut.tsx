@@ -1,10 +1,12 @@
 import Link from "next/link";
 import MessageCard from "@/components/MessageCard";
 import SignInButton from "@/components/SignInButton";
+import HomeAuthRedirectGuard from "@/components/HomeAuthRedirectGuard";
 
 export default function HomeLoggedOut() {
   return (
     <main className="min-h-screen bg-background text-foreground">
+      <HomeAuthRedirectGuard />
       {/* HERO + VALUE */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-linear-to-br from-primary via-primary/80 to-accent" />
@@ -142,4 +144,3 @@ export default function HomeLoggedOut() {
     </main>
   );
 }
-
