@@ -89,7 +89,7 @@ function FileCard({
         </h2>
 
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-[11px] font-medium text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-md border border-border/50 max-w-[80px] truncate">
+          <span className="text-[11px] font-medium text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-md border border-border/50 max-w-20 truncate">
             {type.split("/")[1]?.toUpperCase() || "DOC"}
           </span>
           {subject && (

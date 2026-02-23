@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import Image from "next/image";
 import {
   Calendar,
   MapPin,
@@ -289,7 +290,7 @@ function ManageClubEvents({ club }: { club: any }) {
               </div>
             ) : (
               <div className="mt-2 relative rounded-lg overflow-hidden border aspect-video group">
-                <img
+                <Image
                   src={bannerPreview}
                   alt="Banner Preview"
                   className="object-cover w-full h-full"
@@ -345,7 +346,7 @@ function ManageClubEvents({ club }: { club: any }) {
             >
               <div className="h-16 w-16 bg-muted rounded-md overflow-hidden shrink-0 relative">
                 {event.cover_image ? (
-                  <img
+                  <Image
                     src={event.cover_image}
                     alt={event.title}
                     className="w-full h-full object-cover"

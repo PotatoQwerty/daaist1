@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Upload, Image, X, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { Upload, ImageIcon, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -539,7 +540,7 @@ function CreateClubForm() {
 
                 {logoPreview ? (
                   <div className="relative inline-block group">
-                    <img
+                    <Image
                       src={logoPreview}
                       alt="Logo preview"
                       className="w-32 h-32 rounded-xl object-cover border-2 border-border shadow-sm transition-transform group-hover:scale-[1.02]"
@@ -582,7 +583,7 @@ function CreateClubForm() {
 
                 {bannerPreview ? (
                   <div className="relative group rounded-xl overflow-hidden border border-border ">
-                    <img
+                    <Image
                       src={bannerPreview}
                       alt="Banner preview"
                       className="w-full h-48 object-cover"
@@ -600,7 +601,7 @@ function CreateClubForm() {
                 ) : (
                   <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-muted-foreground/25 rounded-xl cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-all group">
                     <div className="p-4 bg-background rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                      <Image className="w-6 h-6 text-muted-foreground group-hover:text-primary" />
+                      <ImageIcon className="w-6 h-6 text-muted-foreground group-hover:text-primary" />
                     </div>
                     <span className="text-sm font-medium text-foreground">
                       Click to upload banner

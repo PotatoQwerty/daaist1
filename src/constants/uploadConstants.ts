@@ -1,5 +1,3 @@
-import { icons } from "lucide-react";
-
 export interface CategoryOption {
   id: string;
   value: string;

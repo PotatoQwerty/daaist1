@@ -11,7 +11,6 @@ export default function UploadedCard({
   type,
   size,
   onDelete,
-  style,
   isOwnProfile,
 }: {
   title: string;
@@ -21,7 +20,6 @@ export default function UploadedCard({
   link: string;
   type: string;
   size: number;
-  style?: string;
   onDelete: () => void;
   isOwnProfile: boolean;
 }) {
