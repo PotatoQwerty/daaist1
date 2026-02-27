@@ -6,7 +6,6 @@ export default function UploadedCard({
   title,
   category,
   subject,
-  level,
   link,
   type,
   size,
@@ -54,6 +53,7 @@ export default function UploadedCard({
       <div className="absolute top-3 right-3 z-30" ref={menuRef}>
         {isOwnProfile && (
           <button
+            title="delete"
             type="button"
             className="bg-white/50 dark:bg-black/20 backdrop-blur-md shadow-sm border border-white/30 dark:border-white/10 rounded-full p-2 hover:bg-red-50 hover:text-red-500 transition-all duration-300"
             onClick={() => setOpen((p) => !p)}

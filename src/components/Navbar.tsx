@@ -17,6 +17,7 @@ import {
   Library,
   School,
   PlusCircle,
+  PenTool,
 } from "lucide-react";
 import DaaistLogoHor from "../../public/images/DAAIST-LOGO-HOR.svg";
 import DaaistLogoHorDark from "../../public/images/daalogodarkhor.svg";
@@ -186,6 +187,11 @@ export default function Navbar() {
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem>
+                <PenTool className="w-5 h-5" />
+                <Link href="/tools">Useful Tools</Link>
               </DropdownMenuItem>
               {(isAdmin || isSuperAdmin) && (
                 <DropdownMenuItem asChild>

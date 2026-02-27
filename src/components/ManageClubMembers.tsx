@@ -26,7 +26,6 @@ const ManageClubMembers = ({ club }: { club: any }) => {
     const fetchClubMembers = async () => {
       const response = await fetch(`/api/club/members?club_id=${club.id}`);
       const data = await response.json();
-      console.log(data.data);
       if (data.data) setClubMembers(data.data);
     };
 
@@ -44,7 +43,7 @@ const ManageClubMembers = ({ club }: { club: any }) => {
           .filter((u: any) => {
             const isComplete = u.firstname && u.lastname && u.username;
             const isAlreadyMember = clubMembers.some(
-              (m: any) => m.profiles.user_id === u.user_id
+              (m: any) => m.profiles.user_id === u.user_id,
             );
 
             return isComplete && !isAlreadyMember;
@@ -52,7 +51,7 @@ const ManageClubMembers = ({ club }: { club: any }) => {
           .map((u: any) => ({
             value: u.user_id,
             label: `${u.firstname} ${u.lastname} (@${u.username})`,
-          }))
+          })),
       );
     };
 

@@ -18,21 +18,21 @@ declare module "next-auth" {
       likes: string[];
     };
   }
-  export interface User {
-    user_id?: string;
-    id: string;
-    firstname?: string;
-    lastname: string;
-    role?: string;
-    studyyear?: string;
-    isdaa?: boolean;
-    username?: string;
-    registration_number?: string;
-    onboarded?: boolean;
-    bio?: string;
-    uploads: string[];
-    likes: string[];
-  }
+}
+export interface User {
+  user_id?: string;
+  id: string;
+  firstname?: string;
+  lastname: string;
+  role?: string;
+  studyyear?: string;
+  isdaa?: boolean;
+  username?: string;
+  registration_number?: string;
+  onboarded?: boolean;
+  bio?: string;
+  uploads: string[];
+  likes: string[];
 }
 type FileCategory = "td" | "course" | "exam" | "other" | "doc";
 

@@ -20,7 +20,7 @@ async function ClubPage() {
     <div className="min-h-screen flex flex-col items-center py-20 px-4 sm:px-8">
       <div className="w-full max-w-7xl space-y-4 text-center">
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-linear-to-r from-primary to-accent bg-clip-text text-transparent pb-2">
-          Explore DAA's Events
+          Explore DAA&#39;s Events
         </h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
           Discover, join, and find your passion at DAA.
@@ -28,7 +28,7 @@ async function ClubPage() {
         <Carossel data={events} />
         <div className="space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-linear-to-r from-primary to-accent bg-clip-text text-transparent pb-2">
-            Explore DAA's Clubs
+            Explore DAA&#39;s Clubs
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Discover communities, join events, and find your passion at DAA.
