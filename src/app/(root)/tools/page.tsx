@@ -1,4 +1,5 @@
 import WindRose from "@/components/WindRose";
+import SunPathTool from "@/components/SunPathTool";
 import {
   Accordion,
   AccordionContent,
@@ -28,21 +29,21 @@ function ToolsPage() {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="solar-path">
+            <AccordionItem value="sunpath-2d">
               <AccordionTrigger className="text-base font-semibold hover:no-underline">
-                Solar Path (Coming Soon)
+                Sun Path 2D Generator
               </AccordionTrigger>
-              <AccordionContent>
-                <p className="text-sm text-muted-foreground">Coming Soon.</p>
+              <AccordionContent className="pt-2">
+                <SunPathTool variant="2d" />
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="sun-hours">
+            <AccordionItem value="sunpath-3d">
               <AccordionTrigger className="text-base font-semibold hover:no-underline">
-                Sun Hours (Coming Soon)
+                Sun Path 3D Generator
               </AccordionTrigger>
-              <AccordionContent>
-                <p className="text-sm text-muted-foreground">Coming Soon.</p>
+              <AccordionContent className="pt-2">
+                <SunPathTool variant="3d" />
               </AccordionContent>
             </AccordionItem>
           </Accordion>

@@ -5,9 +5,12 @@ import toast from "react-hot-toast";
 
 const LONG_WAIT_MS = 30000;
 const COLD_START_SOUND = "/sounds/coldstart.mp3";
+const CURRENT_YEAR = new Date().getFullYear();
+const MIN_ALLOWED_YEAR = 1900;
+const MAX_ALLOWED_YEAR = CURRENT_YEAR - 1;
 
 function parseDMS(input: string): { lat: number | null; lon: number | null } {
-  const regex = /(\d+)°(\d+)'([\d.]+)"([NSEW])/g;
+  const regex = /(\d+)\u00B0(\d+)'([\d.]+)"([NSEW])/gi;
   const matches = [...input.matchAll(regex)];
 
   let lat: number | null = null;
@@ -17,7 +20,7 @@ function parseDMS(input: string): { lat: number | null; lon: number | null } {
     const degrees = Number(match[1]);
     const minutes = Number(match[2]);
     const seconds = Number(match[3]);
-    const direction = match[4];
+    const direction = match[4].toUpperCase();
 
     let decimal = degrees + minutes / 60 + seconds / 3600;
     if (direction === "S" || direction === "W") decimal *= -1;
@@ -34,11 +37,28 @@ function parseDMS(input: string): { lat: number | null; lon: number | null } {
 
 type FileType = "png" | "svg";
 
+async function getErrorMessage(response: Response): Promise<string> {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    const data = (await response.json()) as {
+      error?: string;
+      details?: string;
+      body?: string;
+    };
+    return data.error || data.details || data.body || "Request failed";
+  }
+
+  const text = await response.text();
+  return text || "Request failed";
+}
+
 function WindRose() {
   const [location, setLocation] = useState("");
-  const [fileType, setFileType] = useState<FileType>();
+  const [year, setYear] = useState<number>(MAX_ALLOWED_YEAR);
+  const [fileType, setFileType] = useState<FileType>("png");
   const [imgPreview, setImgPreview] = useState<string | null>(null);
-  const [generatedType, setGeneratedType] = useState<FileType | null>(null);
+  const [generatedType, setGeneratedType] = useState<FileType>("png");
   const [loading, setLoading] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isLongWait, setIsLongWait] = useState(false);
@@ -105,6 +125,17 @@ function WindRose() {
     setFileType(e.target.value as FileType);
   };
 
+  const handleYearChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const parsed = Number(event.target.value);
+    if (!Number.isFinite(parsed)) return;
+
+    const clamped = Math.min(
+      MAX_ALLOWED_YEAR,
+      Math.max(MIN_ALLOWED_YEAR, Math.trunc(parsed)),
+    );
+    setYear(clamped);
+  };
+
   const handleGenerate = async () => {
     setLoading(true);
     setIsLongWait(false);
@@ -112,25 +143,27 @@ function WindRose() {
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
-    setGeneratedType(null);
+    setGeneratedType(fileType);
 
     const { lat, lon } = parseDMS(location);
 
     try {
       if (lat == null || lon == null) throw new Error("Invalid coordinates");
-      if (!fileType) throw new Error("Pick png or svg");
-
+      if (year < MIN_ALLOWED_YEAR || year > MAX_ALLOWED_YEAR) {
+        throw new Error(
+          `Year must be between ${MIN_ALLOWED_YEAR} and ${MAX_ALLOWED_YEAR}. Current year (${CURRENT_YEAR}) is not allowed.`,
+        );
+      }
       startLoadingTimer();
 
       const res = await fetch("/api/tools/windrose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lat, lon, fileType }),
+        body: JSON.stringify({ lat, lon, year, fileType }),
       });
 
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Failed to generate windrose");
+        throw new Error(await getErrorMessage(res));
       }
 
       const blob = await res.blob();
@@ -139,9 +172,10 @@ function WindRose() {
       setImgPreview(url);
       setGeneratedType(fileType);
       toast.success("Windrose created successfully");
-    } catch (e) {
-      console.error(e);
-      toast.error("Something went wrong. Try again later.");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Something went wrong";
+      toast.error(message);
     } finally {
       clearLoadingTimer();
       setLoading(false);
@@ -167,11 +201,29 @@ function WindRose() {
                 type="text"
                 title="location"
                 id="location"
-                placeholder={`36°44'44.5"N 3°01'12.4"E`}
+                placeholder={`36\u00B044'44.5"N 3\u00B001'12.4"E`}
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className="w-full rounded-xl border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="year" className="text-sm font-semibold">
+                Year
+              </label>
+              <input
+                id="year"
+                type="number"
+                min={MIN_ALLOWED_YEAR}
+                max={MAX_ALLOWED_YEAR}
+                value={year}
+                onChange={handleYearChange}
+                className="w-full rounded-xl border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition"
+              />
+              <p className="text-xs text-muted-foreground">
+                Current year ({CURRENT_YEAR}) is blocked. Use {MAX_ALLOWED_YEAR} or earlier.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -244,7 +296,7 @@ function WindRose() {
             <h2 className="text-lg font-semibold">Preview</h2>
             <a
               href={imgPreview}
-              download={`windrose-${Date.now()}.${generatedType ?? "png"}`}
+              download={`windrose-${Date.now()}.${generatedType}`}
               className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
             >
               Download
