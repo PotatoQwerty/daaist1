@@ -47,6 +47,13 @@ async function ClubDetailsPage({
   } = await supabase.auth.getUser();
   const userId = user?.id;
   const role = userId ? await getUserClubRole(userId, club.id) : null;
+  const canManageEvents =
+    role === "president" ||
+    role === "vice_president" ||
+    role === "event_manager";
+  const visibleEvents = canManageEvents
+    ? events
+    : events?.filter((event) => event.is_public);
 
   return (
     <div className="min-h-screen py-20 px-4 sm:px-8 flex flex-col items-center gap-10">
@@ -173,7 +180,7 @@ async function ClubDetailsPage({
 
       <div className="w-full max-w-5xl space-y-4">
         <h2 className="text-2xl font-bold">Upcoming {club.name} Events</h2>
-        <Carossel data={events as any} />
+        <Carossel data={visibleEvents ?? []} />
       </div>
 
       <div className="w-full max-w-5xl">

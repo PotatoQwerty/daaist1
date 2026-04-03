@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,12 +14,29 @@ import {
   Loader2,
   X,
   Image as ImageIcon,
+  QrCode,
   Trash2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { formatEventDate } from "@/lib/event-date";
 
-function ManageClubEvents({ club }: { club: any }) {
-  const [events, setEvents] = useState<any[]>([]);
+type Club = {
+  id: string;
+};
+
+type EventItem = {
+  id: string;
+  title: string;
+  description?: string | null;
+  location?: string | null;
+  start_date: string;
+  end_date?: string | null;
+  cover_image?: string | null;
+  is_public?: boolean | null;
+};
+
+function ManageClubEvents({ club }: { club: Club }) {
+  const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
@@ -44,7 +62,7 @@ function ManageClubEvents({ club }: { club: any }) {
     file: null,
   });
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const res = await fetch(`/api/club/event?club_id=${club.id}`);
       const data = await res.json();
@@ -54,11 +72,11 @@ function ManageClubEvents({ club }: { club: any }) {
     } catch (error) {
       console.error("Failed to fetch events", error);
     }
-  };
+  }, [club.id]);
 
   useEffect(() => {
     fetchEvents();
-  }, [club.id]);
+  }, [fetchEvents]);
   const processFile = (file: File) => {
     if (file) {
       const reader = new FileReader();
@@ -67,7 +85,7 @@ function ManageClubEvents({ club }: { club: any }) {
         setBannerPreview(result);
       };
       reader.readAsDataURL(file);
-      setFormData({ ...formData, file: file });
+      setFormData((prev) => ({ ...prev, file }));
     }
   };
 
@@ -92,7 +110,7 @@ function ManageClubEvents({ club }: { club: any }) {
     if (droppedFile) processFile(droppedFile);
   };
   const handleRemoveFile = () => {
-    setFormData({ ...formData, cover_image: "", file: null });
+    setFormData((prev) => ({ ...prev, cover_image: "", file: null }));
     setBannerPreview(null);
   };
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,6 +156,7 @@ function ManageClubEvents({ club }: { club: any }) {
         cover_image: "",
         file: null,
       });
+      setBannerPreview(null);
       fetchEvents();
     } catch (err) {
       console.error(err);
@@ -228,25 +247,30 @@ function ManageClubEvents({ club }: { club: any }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="start_date">Start Date & Time</Label>
+              <Label htmlFor="start_date">Start Date</Label>
               <Input
                 id="start_date"
-                type="datetime-local"
+                type="date"
                 value={formData.start_date}
                 onChange={(e) =>
-                  setFormData({ ...formData, start_date: e.target.value })
+                  setFormData((prev) => ({
+                    ...prev,
+                    start_date: e.target.value,
+                    end_date: prev.end_date || e.target.value,
+                  }))
                 }
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="end_date">End Date & Time</Label>
+              <Label htmlFor="end_date">End Date</Label>
               <Input
                 id="end_date"
-                type="datetime-local"
+                type="date"
                 value={formData.end_date}
+                min={formData.start_date || undefined}
                 onChange={(e) =>
-                  setFormData({ ...formData, end_date: e.target.value })
+                  setFormData((prev) => ({ ...prev, end_date: e.target.value }))
                 }
                 required
               />
@@ -288,13 +312,16 @@ function ManageClubEvents({ club }: { club: any }) {
                   />
                 </label>
               </div>
-            ) : (
-              <div className="mt-2 relative rounded-lg overflow-hidden border aspect-video group">
-                <Image
-                  src={bannerPreview}
-                  alt="Banner Preview"
-                  className="object-cover w-full h-full"
-                />
+	            ) : (
+	              <div className="mt-2 relative rounded-lg overflow-hidden border aspect-video group">
+	                <Image
+	                  src={bannerPreview}
+	                  alt="Banner Preview"
+	                  width={1600}
+	                  height={900}
+	                  unoptimized
+	                  className="h-full w-full object-cover"
+	                />
                 <Button
                   type="button"
                   variant="destructive"
@@ -344,14 +371,16 @@ function ManageClubEvents({ club }: { club: any }) {
               key={event.id}
               className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/30 transition-colors"
             >
-              <div className="h-16 w-16 bg-muted rounded-md overflow-hidden shrink-0 relative">
-                {event.cover_image ? (
-                  <Image
-                    src={event.cover_image}
-                    alt={event.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
+	              <div className="h-16 w-16 bg-muted rounded-md overflow-hidden shrink-0 relative">
+	                {event.cover_image ? (
+	                  <Image
+	                    src={event.cover_image}
+	                    alt={event.title}
+	                    fill
+	                    sizes="64px"
+	                    className="object-cover"
+	                  />
+	                ) : (
                   <Calendar className="w-8 h-8 text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                 )}
               </div>
@@ -363,11 +392,7 @@ function ManageClubEvents({ club }: { club: any }) {
                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    {new Date(event.start_date).toLocaleDateString()}{" "}
-                    {new Date(event.start_date).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatEventDate(event.start_date)}
                   </span>
                   {event.location && (
                     <span className="flex items-center gap-1">
@@ -375,9 +400,20 @@ function ManageClubEvents({ club }: { club: any }) {
                       {event.location}
                     </span>
                   )}
+                  {event.is_public === false && (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.2em]">
+                      Private
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 justify-center">
+                <Button variant="outline" asChild>
+                  <Link href={`/events/${event.id}/check-in`}>
+                    <QrCode className="w-4 h-4 mr-2" />
+                    Check-ins
+                  </Link>
+                </Button>
                 <Button
                   variant="outline"
                   onClick={() => handleDelete(event.id)}

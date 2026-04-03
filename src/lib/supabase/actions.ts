@@ -97,6 +97,23 @@ export async function getClubBySlug(slug: string) {
   }
   return club;
 }
+
+export async function getClubById(id: string) {
+  const { data: club, error } = await supabaseServer
+    .schema("public")
+    .from("clubs")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error fetching club by id:", error);
+    return null;
+  }
+
+  return club;
+}
+
 export async function getEvents() {
   const { data, error } = await supabaseServer
     .schema("public")
@@ -109,6 +126,55 @@ export async function getEvents() {
     return [];
   }
   return data ?? [];
+}
+
+export async function getPublicEvents() {
+  const { data, error } = await supabaseServer
+    .schema("public")
+    .from("events")
+    .select("*")
+    .eq("is_public", true)
+    .order("start_date", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching public events:", error);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export async function getPublicEventById(id: string) {
+  const { data, error } = await supabaseServer
+    .schema("public")
+    .from("events")
+    .select("*")
+    .eq("id", id)
+    .eq("is_public", true)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error fetching public event by id:", error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function getEventByEventId(id: string) {
+  const { data, error } = await supabaseServer
+    .schema("public")
+    .from("events")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error fetching event by event id:", error);
+    return null;
+  }
+
+  return data;
 }
 
 export async function getEventById(id: string) {

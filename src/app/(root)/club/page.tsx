@@ -9,12 +9,12 @@ export async function generateMetadata() {
 
 import Carossel from "@/components/Carossel";
 import ClubCard from "@/components/ClubCard";
-import { getClubs, getEvents } from "@/lib/supabase/actions";
+import { getClubs, getPublicEvents } from "@/lib/supabase/actions";
 
 export const revalidate = 30;
 
 async function ClubPage() {
-  const [clubs, events] = await Promise.all([getClubs(), getEvents()]);
+  const [clubs, events] = await Promise.all([getClubs(), getPublicEvents()]);
 
   return (
     <div className="min-h-screen flex flex-col items-center py-20 px-4 sm:px-8">

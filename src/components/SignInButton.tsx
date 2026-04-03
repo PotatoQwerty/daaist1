@@ -7,11 +7,13 @@ import { createClient } from "@/lib/supabase/client";
 type SignInButtonProps = {
   className?: string;
   children?: ReactNode;
+  redirectTo?: string;
 };
 
 export default function SignInButton({
   className,
   children,
+  redirectTo = "/",
 }: SignInButtonProps) {
   const supabase = useMemo(() => createClient(), []);
 
@@ -20,7 +22,9 @@ export default function SignInButton({
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/auth/callback?redirect_to=/`,
+        redirectTo: `${origin}/auth/callback?redirect_to=${encodeURIComponent(
+          redirectTo,
+        )}`,
       },
     });
   };
