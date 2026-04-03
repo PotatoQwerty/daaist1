@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import {
   Calendar,
+  Info,
   MapPin,
   Plus,
   Loader2,
@@ -19,6 +20,11 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { formatEventDate } from "@/lib/event-date";
+import {
+  buildEventExtraData,
+  EVENT_STUDY_YEAR_OPTIONS,
+  parseEventExtraData,
+} from "@/lib/event-extra";
 import { getEventCheckInPath } from "@/lib/event-path";
 
 type Club = {
@@ -34,6 +40,7 @@ type EventItem = {
   end_date?: string | null;
   cover_image?: string | null;
   is_public?: boolean | null;
+  extra_data?: unknown;
 };
 
 function ManageClubEvents({ club }: { club: Club }) {
@@ -50,6 +57,9 @@ function ManageClubEvents({ club }: { club: Club }) {
     start_date: string;
     end_date: string;
     is_public: boolean;
+    experience_topics: string[];
+    experience_topic_input: string;
+    allowed_study_years: string[];
     cover_image: string;
     file: File | null;
   }>({
@@ -59,6 +69,9 @@ function ManageClubEvents({ club }: { club: Club }) {
     start_date: "",
     end_date: "",
     is_public: true,
+    experience_topics: [],
+    experience_topic_input: "",
+    allowed_study_years: [...EVENT_STUDY_YEAR_OPTIONS],
     cover_image: "",
     file: null,
   });
@@ -119,6 +132,11 @@ function ManageClubEvents({ club }: { club: Club }) {
     setLoading(true);
 
     try {
+      if (formData.allowed_study_years.length === 0) {
+        toast.error("Select at least one study year for this event.");
+        return;
+      }
+
       const fd = new FormData();
 
       fd.append("club_id", club.id);
@@ -128,6 +146,15 @@ function ManageClubEvents({ club }: { club: Club }) {
       fd.append("start_date", formData.start_date);
       fd.append("end_date", formData.end_date);
       fd.append("is_public", String(formData.is_public));
+      fd.append(
+        "extra_data",
+        JSON.stringify(
+          buildEventExtraData({
+            experienceTopics: formData.experience_topics,
+            allowedStudyYears: formData.allowed_study_years,
+          }),
+        ),
+      );
 
       if (formData.file) {
         fd.append("file", formData.file); // actual File
@@ -154,6 +181,9 @@ function ManageClubEvents({ club }: { club: Club }) {
         start_date: "",
         end_date: "",
         is_public: true,
+        experience_topics: [],
+        experience_topic_input: "",
+        allowed_study_years: [...EVENT_STUDY_YEAR_OPTIONS],
         cover_image: "",
         file: null,
       });
@@ -182,6 +212,47 @@ function ManageClubEvents({ club }: { club: Club }) {
       console.error(err);
       toast.error("An error occurred");
     }
+  };
+
+  const addExperienceTopic = () => {
+    const topic = formData.experience_topic_input.trim();
+    if (!topic) {
+      return;
+    }
+
+    setFormData((prev) => {
+      if (
+        prev.experience_topics.some(
+          (existingTopic) => existingTopic.toLowerCase() === topic.toLowerCase(),
+        )
+      ) {
+        return { ...prev, experience_topic_input: "" };
+      }
+
+      return {
+        ...prev,
+        experience_topics: [...prev.experience_topics, topic],
+        experience_topic_input: "",
+      };
+    });
+  };
+
+  const removeExperienceTopic = (topicToRemove: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      experience_topics: prev.experience_topics.filter(
+        (topic) => topic !== topicToRemove,
+      ),
+    }));
+  };
+
+  const toggleAllowedYear = (year: string, checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      allowed_study_years: checked
+        ? [...prev.allowed_study_years, year]
+        : prev.allowed_study_years.filter((item) => item !== year),
+    }));
   };
   return (
     <div className="space-y-6">
@@ -349,6 +420,99 @@ function ManageClubEvents({ club }: { club: Club }) {
             </Label>
           </div>
 
+          <div className="rounded-xl border border-border bg-muted/35 p-4">
+            <div className="mb-3 flex items-start gap-3">
+              <Info className="mt-0.5 h-4 w-4 text-primary" />
+              <div>
+                <p className="font-medium">Experience sliders</p>
+                <p className="text-sm text-muted-foreground">
+                  Add one or more topics and registrants will answer each one
+                  with a percentage slider.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <Input
+                id="experience_topic"
+                value={formData.experience_topic_input}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    experience_topic_input: e.target.value,
+                  }))
+                }
+                placeholder="e.g. AutoCAD, photography, public speaking"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addExperienceTopic();
+                  }
+                }}
+              />
+              <Button type="button" variant="outline" onClick={addExperienceTopic}>
+                Add
+              </Button>
+            </div>
+
+            {formData.experience_topics.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {formData.experience_topics.map((topic) => (
+                  <button
+                    key={topic}
+                    type="button"
+                    onClick={() => removeExperienceTopic(topic)}
+                    className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-sm transition hover:border-destructive hover:text-destructive"
+                  >
+                    {topic}
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted/35 p-4">
+            <div className="mb-3 flex items-start gap-3">
+              <Info className="mt-0.5 h-4 w-4 text-primary" />
+              <div>
+                <p className="font-medium">Allowed study years</p>
+                <p className="text-sm text-muted-foreground">
+                  Choose which years are allowed to register for this event.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {EVENT_STUDY_YEAR_OPTIONS.map((year) => (
+                <label
+                  key={year}
+                  htmlFor={`allowed-year-${year}`}
+                  className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm"
+                >
+                  <Checkbox
+                    id={`allowed-year-${year}`}
+                    checked={formData.allowed_study_years.includes(year)}
+                    onCheckedChange={(checked) =>
+                      toggleAllowedYear(year, checked === true)
+                    }
+                  />
+                  <span>{year}</span>
+                </label>
+              ))}
+            </div>
+
+            <p className="mt-3 text-sm text-muted-foreground">
+              If someone is already registered, they will still keep access to
+              their pass.
+            </p>
+            {formData.allowed_study_years.length === 0 && (
+              <p className="mt-2 text-sm font-medium text-destructive">
+                Choose at least one study year before creating the event.
+              </p>
+            )}
+          </div>
+
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? (
               <>
@@ -406,6 +570,12 @@ function ManageClubEvents({ club }: { club: Club }) {
                       Private
                     </span>
                   )}
+                  {parseEventExtraData(event.extra_data).experiencePrompts
+                    ?.length ? (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-[0.2em]">
+                      Experience asked
+                    </span>
+                  ) : null}
                 </div>
               </div>
               <div className="flex items-center gap-2 justify-center">

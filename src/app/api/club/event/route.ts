@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
+import { parseEventExtraData } from "@/lib/event-extra";
 import { getEventByEventId, getUserClubRole } from "@/lib/supabase/actions";
 
 const serializeSupabaseError = (error: unknown) => {
@@ -140,8 +141,12 @@ export const POST = async (request: Request) => {
     const start_date = formData.get("start_date") as string;
     const end_date = formData.get("end_date") as string;
     const is_public = formData.get("is_public") === "true";
+    const rawExtraData = formData.get("extra_data");
     const file = formData.get("file") as File | null;
     const id = randomUUID();
+    const extra_data = parseEventExtraData(
+      typeof rawExtraData === "string" ? JSON.parse(rawExtraData) : {},
+    );
 
     console.log("[api/club/event][POST] parsed form", {
       requestId,
@@ -154,6 +159,7 @@ export const POST = async (request: Request) => {
       start_date,
       end_date,
       is_public,
+      extra_data,
       hasFile: Boolean(file),
       fileMeta: file
         ? {
@@ -228,6 +234,7 @@ export const POST = async (request: Request) => {
       end_date,
       cover_image: bannerData.publicUrl,
       is_public,
+      extra_data,
       created_by: user.id,
     };
 

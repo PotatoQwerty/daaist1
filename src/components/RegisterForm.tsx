@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -14,8 +14,14 @@ import toast from "react-hot-toast";
 import bannerFallback from "../../public/images/banner.jpg";
 import { useUser } from "@/context/user-context";
 import { formatEventDateRange } from "@/lib/event-date";
+import {
+  EVENT_STUDY_YEAR_OPTIONS,
+  getAllowedStudyYears,
+  parseEventExtraData,
+} from "@/lib/event-extra";
 import { getRegisterEventPath } from "@/lib/event-path";
 import CheckInQRCode from "./CheckInQRCode";
+import EventExperienceField from "./EventExperienceField";
 import SignInButton from "./SignInButton";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -29,6 +35,7 @@ type RegisterFormEvent = {
   start_date?: string | null;
   end_date?: string | null;
   cover_image?: string | null;
+  extra_data?: unknown;
 };
 
 type RegisterFormProps = {
@@ -51,9 +58,25 @@ type FormState = {
   university: string;
   studyYear: string;
   registrationNumber: string;
+  experienceByTopic: Record<string, number>;
 };
 
-const YEAR_OPTIONS = ["L1", "L2", "L3", "M1", "M2", "Other"];
+function normalizeStudyYear(value?: string | null) {
+  switch (value?.trim().toUpperCase()) {
+    case "L1":
+      return "First Year";
+    case "L2":
+      return "Second Year";
+    case "L3":
+      return "Third Year";
+    case "M1":
+      return "Fourth Year";
+    case "M2":
+      return "Fifth Year";
+    default:
+      return value?.trim() || "";
+  }
+}
 
 function RegisterForm({ baseUrl, event }: RegisterFormProps) {
   const { session, user } = useUser();
@@ -63,6 +86,8 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
   const [submissionMessage, setSubmissionMessage] = useState(
     "Your details have been saved.",
   );
+  const [checkingExistingRegistration, setCheckingExistingRegistration] =
+    useState(false);
   const [form, setForm] = useState<FormState>({
     firstName: "",
     lastName: "",
@@ -71,18 +96,33 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
     university: "",
     studyYear: "",
     registrationNumber: "",
+    experienceByTopic: {},
   });
 
   const eventDate = useMemo(
     () => formatEventDateRange(event.start_date, event.end_date),
     [event.end_date, event.start_date],
   );
+  const eventExtraData = useMemo(
+    () => parseEventExtraData(event.extra_data),
+    [event.extra_data],
+  );
+  const experiencePrompts = useMemo(
+    () => eventExtraData.experiencePrompts ?? [],
+    [eventExtraData],
+  );
+  const allowedStudyYears = useMemo(
+    () => getAllowedStudyYears(eventExtraData),
+    [eventExtraData],
+  );
   const isSignedIn = Boolean(session?.user?.id);
+  const lastResolvedRegistrationKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     const metadata = session?.user?.user_metadata ?? {};
 
     setForm((prev) => ({
+      ...prev,
       firstName: prev.firstName || user?.firstname || metadata.first_name || "",
       lastName: prev.lastName || user?.lastname || metadata.last_name || "",
       email: prev.email || user?.email || session?.user?.email || "",
@@ -91,11 +131,51 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
         prev.university ||
         user?.university ||
         (user?.isdaa ? "Departement d'Architecture d'Alger" : ""),
-      studyYear: prev.studyYear || user?.studyyear || "",
+      studyYear: (() => {
+        const normalizedYear =
+          prev.studyYear || normalizeStudyYear(user?.studyyear) || "";
+        return allowedStudyYears.includes(
+          normalizedYear as (typeof EVENT_STUDY_YEAR_OPTIONS)[number],
+        )
+          ? normalizedYear
+          : "";
+      })(),
       registrationNumber:
         prev.registrationNumber || user?.registration_number || "",
     }));
-  }, [session?.user?.email, session?.user?.user_metadata, user]);
+  }, [
+    allowedStudyYears,
+    session?.user?.email,
+    session?.user?.user_metadata,
+    user,
+  ]);
+
+  useEffect(() => {
+    if (
+      !allowedStudyYears.includes(
+        form.studyYear as (typeof EVENT_STUDY_YEAR_OPTIONS)[number],
+      )
+    ) {
+      setForm((prev) => ({ ...prev, studyYear: "" }));
+    }
+  }, [allowedStudyYears, form.studyYear]);
+
+  useEffect(() => {
+    setForm((prev) => {
+      const currentExperienceByTopic = prev.experienceByTopic ?? {};
+      const nextExperienceByTopic: Record<string, number> = {};
+
+      experiencePrompts.forEach((prompt) => {
+        nextExperienceByTopic[prompt.topic] =
+          currentExperienceByTopic[prompt.topic] ?? 50;
+      });
+
+      return {
+        ...prev,
+        experienceByTopic: nextExperienceByTopic,
+      };
+    });
+  }, [experiencePrompts]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -103,6 +183,96 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
+
+  useEffect(() => {
+    if (submitted) {
+      return;
+    }
+
+    const email = form.email.trim().toLowerCase();
+    const registrationNumber = form.registrationNumber.trim();
+    const canCheck =
+      Boolean(session?.user?.id) ||
+      Boolean(email) ||
+      Boolean(registrationNumber);
+
+    if (!canCheck) {
+      setCheckingExistingRegistration(false);
+      lastResolvedRegistrationKeyRef.current = null;
+      return;
+    }
+
+    const queryKey = [
+      event.id,
+      session?.user?.id ?? "",
+      email,
+      registrationNumber,
+    ].join("|");
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        setCheckingExistingRegistration(true);
+        const params = new URLSearchParams({ eventId: event.id });
+        if (email) {
+          params.set("email", email);
+        }
+        if (registrationNumber) {
+          params.set("registrationNumber", registrationNumber);
+        }
+
+        const response = await fetch(
+          `/api/events/register?${params.toString()}`,
+          {
+            method: "GET",
+            cache: "no-store",
+            signal: controller.signal,
+          },
+        );
+
+        const result: RegistrationResponse = await response.json();
+        if (!response.ok) {
+          throw new Error(
+            result.error || "Unable to verify your registration right now.",
+          );
+        }
+
+        if (result.alreadyRegistered && result.checkInToken) {
+          lastResolvedRegistrationKeyRef.current = queryKey;
+          setCheckInToken(result.checkInToken);
+          setSubmissionMessage(
+            result.message || "You are already registered for this event.",
+          );
+          setSubmitted(true);
+        } else if (lastResolvedRegistrationKeyRef.current === queryKey) {
+          lastResolvedRegistrationKeyRef.current = null;
+        }
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          (error.name === "AbortError" || controller.signal.aborted)
+        ) {
+          return;
+        }
+        console.error(error);
+      } finally {
+        if (!controller.signal.aborted) {
+          setCheckingExistingRegistration(false);
+        }
+      }
+    }, 350);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [
+    event.id,
+    form.email,
+    form.registrationNumber,
+    session?.user?.id,
+    submitted,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -116,6 +286,10 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
         },
         body: JSON.stringify({
           eventId: event.id,
+          experienceAnswers: experiencePrompts.map((prompt) => ({
+            topic: prompt.topic,
+            percentage: form.experienceByTopic[prompt.topic] ?? 50,
+          })),
           ...form,
         }),
       });
@@ -253,15 +427,29 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
 
               <div className="mb-6 rounded-2xl border border-border bg-muted/50 p-4">
                 {isSignedIn ? (
-                  <p className="text-sm text-muted-foreground">
-                    Available profile details were auto-filled for you. You can
-                    still edit anything before submitting.
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Available profile details were auto-filled for you. You
+                      can still edit anything before submitting.
+                    </p>
+                    {checkingExistingRegistration && (
+                      <p className="text-sm font-medium text-primary">
+                        Checking whether you are already registered...
+                      </p>
+                    )}
+                  </div>
                 ) : (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      Sign in to auto-fill your saved student details.
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Sign in to auto-fill your saved student details.
+                      </p>
+                      {checkingExistingRegistration && (
+                        <p className="text-sm font-medium text-primary">
+                          Checking whether you are already registered...
+                        </p>
+                      )}
+                    </div>
                     <SignInButton
                       redirectTo={getRegisterEventPath(event)}
                       className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
@@ -279,9 +467,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                       <UserRoundCheck className="h-6 w-6" />
                     </div>
                     <div className="space-y-2">
-                      <h3 className="text-xl font-bold">
-                        Registration ready
-                      </h3>
+                      <h3 className="text-xl font-bold">Registration ready</h3>
                       <p className="text-sm leading-6 text-muted-foreground">
                         {submissionMessage} Keep this pass handy so organizers
                         can scan your QR code or look you up manually at
@@ -395,12 +581,18 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                         <option value="" disabled>
                           Select your year
                         </option>
-                        {YEAR_OPTIONS.map((year) => (
+                        {allowedStudyYears.map((year) => (
                           <option key={year} value={year}>
                             {year}
                           </option>
                         ))}
                       </select>
+                      {allowedStudyYears.length <
+                        EVENT_STUDY_YEAR_OPTIONS.length && (
+                        <p className="text-sm leading-6 text-muted-foreground">
+                          Only selected years can register for this event.
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -420,24 +612,34 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-border bg-muted/40 p-4">
-                    <p className="text-sm leading-6 text-muted-foreground">
-                      This form is reusable for any public event. The event
-                      banner, schedule, and submit target update automatically
-                      from the route, while signed-in members get autofill from
-                      their saved profile.
-                    </p>
-                  </div>
+                  {experiencePrompts.map((prompt) => (
+                    <EventExperienceField
+                      key={prompt.topic}
+                      topic={prompt.topic}
+                      value={form.experienceByTopic[prompt.topic] ?? 50}
+                      onChange={(percentage) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          experienceByTopic: {
+                            ...prev.experienceByTopic,
+                            [prompt.topic]: percentage,
+                          },
+                        }))
+                      }
+                    />
+                  ))}
 
                   <Button
                     type="submit"
-                    disabled={submitting}
+                    disabled={submitting || checkingExistingRegistration}
                     className="h-12 w-full rounded-xl bg-accent text-base font-semibold text-accent-foreground shadow-lg shadow-accent/20 transition hover:bg-accent/90"
                   >
-                    {submitting ? (
+                    {submitting || checkingExistingRegistration ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Submitting...
+                        {checkingExistingRegistration
+                          ? "Checking registration..."
+                          : "Submitting..."}
                       </>
                     ) : (
                       "Complete registration"
