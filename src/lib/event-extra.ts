@@ -13,8 +13,14 @@ export type EventExperiencePrompt = {
   required?: boolean;
 };
 
+export type EventYesNoQuestion = {
+  question: string;
+  required?: boolean;
+};
+
 export type EventExtraData = {
   experiencePrompts?: EventExperiencePrompt[];
+  yesNoQuestions?: EventYesNoQuestion[];
   allowedStudyYears?: EventStudyYear[];
 };
 
@@ -23,13 +29,17 @@ export type EventParticipantExtraData = {
     topic: string;
     percentage: number;
   }>;
+  yesNo?: Array<{
+    question: string;
+    answer: boolean;
+  }>;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function normalizeTopic(value: unknown) {
+function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
@@ -38,7 +48,7 @@ function normalizePrompt(value: unknown): EventExperiencePrompt | null {
     return null;
   }
 
-  const topic = normalizeTopic(value.topic);
+  const topic = normalizeText(value.topic);
   if (!topic) {
     return null;
   }
@@ -49,11 +59,40 @@ function normalizePrompt(value: unknown): EventExperiencePrompt | null {
   };
 }
 
-function dedupePrompts(prompts: EventExperiencePrompt[]) {
+function normalizeYesNoQuestion(value: unknown): EventYesNoQuestion | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const question = normalizeText(value.question);
+  if (!question) {
+    return null;
+  }
+
+  return {
+    question,
+    required: value.required !== false,
+  };
+}
+
+function dedupeExperiencePrompts(prompts: EventExperiencePrompt[]) {
   const seen = new Set<string>();
 
   return prompts.filter((prompt) => {
     const key = prompt.topic.toLowerCase();
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function dedupeYesNoQuestions(questions: EventYesNoQuestion[]) {
+  const seen = new Set<string>();
+
+  return questions.filter((question) => {
+    const key = question.question.toLowerCase();
     if (seen.has(key)) {
       return false;
     }
@@ -104,8 +143,16 @@ export function parseEventExtraData(value: unknown): EventExtraData {
         })
       : null;
 
-  const experiencePrompts = dedupePrompts(
+  const experiencePrompts = dedupeExperiencePrompts(
     legacyPrompt ? [legacyPrompt, ...promptsFromArray] : promptsFromArray,
+  );
+
+  const yesNoQuestions = dedupeYesNoQuestions(
+    Array.isArray(value.yesNoQuestions)
+      ? value.yesNoQuestions
+          .map(normalizeYesNoQuestion)
+          .filter((question): question is EventYesNoQuestion => Boolean(question))
+      : [],
   );
 
   const allowedStudyYears = normalizeAllowedStudyYears(value.allowedStudyYears);
@@ -113,6 +160,7 @@ export function parseEventExtraData(value: unknown): EventExtraData {
   return {
     experiencePrompts:
       experiencePrompts.length > 0 ? experiencePrompts : undefined,
+    yesNoQuestions: yesNoQuestions.length > 0 ? yesNoQuestions : undefined,
     allowedStudyYears:
       allowedStudyYears.length > 0 ? allowedStudyYears : undefined,
   };
@@ -120,9 +168,10 @@ export function parseEventExtraData(value: unknown): EventExtraData {
 
 export function buildEventExtraData(input: {
   experienceTopics: string[];
+  yesNoQuestions: string[];
   allowedStudyYears: string[];
 }): EventExtraData {
-  const experiencePrompts = dedupePrompts(
+  const experiencePrompts = dedupeExperiencePrompts(
     input.experienceTopics
       .map((topic) => topic.trim())
       .filter(Boolean)
@@ -132,11 +181,22 @@ export function buildEventExtraData(input: {
       })),
   );
 
+  const yesNoPrompts = dedupeYesNoQuestions(
+    input.yesNoQuestions
+      .map((question) => question.trim())
+      .filter(Boolean)
+      .map((question) => ({
+        question,
+        required: true,
+      })),
+  );
+
   const allowedStudyYears = normalizeAllowedStudyYears(input.allowedStudyYears);
 
   return {
     experiencePrompts:
       experiencePrompts.length > 0 ? experiencePrompts : undefined,
+    yesNoQuestions: yesNoPrompts.length > 0 ? yesNoPrompts : undefined,
     allowedStudyYears:
       allowedStudyYears.length > 0 ? allowedStudyYears : undefined,
   };

@@ -1,8 +1,8 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import {
-  getAllowedStudyYears,
   EventParticipantExtraData,
+  getAllowedStudyYears,
   parseEventExtraData,
 } from "@/lib/event-extra";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
@@ -19,6 +19,10 @@ type RegistrationPayload = {
   experienceAnswers?: Array<{
     topic?: string;
     percentage?: number;
+  }>;
+  yesNoAnswers?: Array<{
+    question?: string;
+    answer?: boolean;
   }>;
 };
 
@@ -135,10 +139,7 @@ export async function GET(request: Request) {
   } = await supabase.auth.getUser();
 
   if (!user?.id && !email && !registrationNumber) {
-    return NextResponse.json(
-      { alreadyRegistered: false },
-      { status: 200 },
-    );
+    return NextResponse.json({ alreadyRegistered: false }, { status: 200 });
   }
 
   const {
@@ -227,6 +228,9 @@ export async function POST(request: Request) {
   const experienceAnswers = Array.isArray(payload.experienceAnswers)
     ? payload.experienceAnswers
     : [];
+  const yesNoAnswers = Array.isArray(payload.yesNoAnswers)
+    ? payload.yesNoAnswers
+    : [];
 
   if (
     !eventId ||
@@ -252,9 +256,12 @@ export async function POST(request: Request) {
 
   const eventExtraData = parseEventExtraData(event.extra_data);
   const experiencePrompts = eventExtraData.experiencePrompts ?? [];
+  const yesNoPrompts = eventExtraData.yesNoQuestions ?? [];
   const allowedStudyYears = getAllowedStudyYears(eventExtraData);
 
-  if (!allowedStudyYears.includes(studyYear as (typeof allowedStudyYears)[number])) {
+  if (
+    !allowedStudyYears.includes(studyYear as (typeof allowedStudyYears)[number])
+  ) {
     return NextResponse.json(
       {
         error: "Your study year is not allowed to register for this event.",
@@ -286,12 +293,44 @@ export async function POST(request: Request) {
     };
   });
 
-  const participantExtraData: EventParticipantExtraData =
-    normalizedExperienceAnswers.length > 0
-      ? {
-          experience: normalizedExperienceAnswers,
-        }
-      : {};
+  const normalizedYesNoAnswers = yesNoPrompts.map((prompt) => {
+    const submittedAnswer = yesNoAnswers.find(
+      (answer) =>
+        normalizeText(answer.question).toLowerCase() ===
+        prompt.question.toLowerCase(),
+    );
+
+    if (typeof submittedAnswer?.answer !== "boolean") {
+      return null;
+    }
+
+    return {
+      question: prompt.question,
+      answer: submittedAnswer.answer,
+    };
+  });
+
+  if (normalizedYesNoAnswers.some((answer) => answer === null)) {
+    return NextResponse.json(
+      { error: "Please answer every yes or no question before submitting." },
+      { status: 400 },
+    );
+  }
+
+  const participantExtraData: EventParticipantExtraData = {};
+
+  if (normalizedExperienceAnswers.length > 0) {
+    participantExtraData.experience = normalizedExperienceAnswers;
+  }
+
+  if (normalizedYesNoAnswers.length > 0) {
+    participantExtraData.yesNo = normalizedYesNoAnswers.filter(
+      (
+        answer,
+      ): answer is NonNullable<(typeof normalizedYesNoAnswers)[number]> =>
+        Boolean(answer),
+    );
+  }
 
   const participantPayload = {
     event_id: eventId,

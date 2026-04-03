@@ -137,6 +137,17 @@ export default async function EventPage({ params }: EventPageProps) {
             <div className="absolute inset-0 bg-linear-to-br from-primary/95 via-primary/75 to-accent/60" />
             <div className="absolute -left-8 top-8 h-28 w-28 rounded-full border border-white/25 bg-secondary/70 blur-sm" />
             <div className="absolute bottom-6 right-6 h-32 w-32 rounded-[2rem] border border-white/20 bg-white/10 backdrop-blur-sm" />
+            {event.square_image && (
+              <div className="absolute right-6 top-6 h-28 w-28 overflow-hidden rounded-[1.75rem] border border-white/20 bg-white/10 shadow-xl backdrop-blur-sm">
+                <Image
+                  src={event.square_image}
+                  alt={`${event.title} square cover`}
+                  fill
+                  sizes="112px"
+                  className="object-cover"
+                />
+              </div>
+            )}
 
             <div className="relative flex h-full flex-col justify-end p-6 text-primary-foreground sm:p-10">
               <div className="max-w-4xl space-y-5">

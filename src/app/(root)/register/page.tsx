@@ -95,6 +95,17 @@ async function RegisterPage() {
                     className="object-cover transition duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-linear-to-t from-primary/85 via-primary/30 to-transparent" />
+                  {event.square_image && (
+                    <div className="absolute right-4 top-4 h-16 w-16 overflow-hidden rounded-2xl border border-white/20 bg-white/10 shadow-lg backdrop-blur-sm">
+                      <Image
+                        src={event.square_image}
+                        alt={`${event.title} square cover`}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="absolute bottom-4 left-4 right-4">
                     <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-primary-foreground backdrop-blur-sm">
                       Public Event

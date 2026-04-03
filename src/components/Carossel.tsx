@@ -17,6 +17,7 @@ type CarouselEvent = {
   title?: string | null;
   description?: string | null;
   cover_image?: string | null;
+  square_image?: string | null;
   start_date?: string | null;
   location?: string | null;
   is_public?: boolean | null;
@@ -68,6 +69,17 @@ export default function Carossel({ data }: { data: CarouselEvent[] }) {
                     className="object-cover transition-transform duration-500 group-hover/card:scale-105"
                   />
                   <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent opacity-60" />
+                  {event.square_image && (
+                    <div className="absolute right-3 top-3 h-14 w-14 overflow-hidden rounded-2xl border border-white/15 bg-white/10 shadow-lg backdrop-blur-sm">
+                      <Image
+                        src={event.square_image}
+                        alt={event.title || "event square image"}
+                        fill
+                        sizes="56px"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="absolute bottom-3 left-3 right-3">
                     <h3 className="line-clamp-1 text-lg font-bold text-white">
                       {event.title}
@@ -109,6 +121,17 @@ export default function Carossel({ data }: { data: CarouselEvent[] }) {
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent opacity-60" />
+                  {event.square_image && (
+                    <div className="absolute right-3 top-3 h-14 w-14 overflow-hidden rounded-2xl border border-white/15 bg-white/10 shadow-lg backdrop-blur-sm">
+                      <Image
+                        src={event.square_image}
+                        alt={event.title || "event square image"}
+                        fill
+                        sizes="56px"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
                     <h3 className="line-clamp-1 text-lg font-bold text-white">
                       {event.title}

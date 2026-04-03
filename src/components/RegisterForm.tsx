@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -22,6 +23,7 @@ import {
 import { getRegisterEventPath } from "@/lib/event-path";
 import CheckInQRCode from "./CheckInQRCode";
 import EventExperienceField from "./EventExperienceField";
+import EventYesNoQuestionField from "./EventYesNoQuestionField";
 import SignInButton from "./SignInButton";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -35,6 +37,7 @@ type RegisterFormEvent = {
   start_date?: string | null;
   end_date?: string | null;
   cover_image?: string | null;
+  square_image?: string | null;
   extra_data?: unknown;
 };
 
@@ -59,6 +62,7 @@ type FormState = {
   studyYear: string;
   registrationNumber: string;
   experienceByTopic: Record<string, number>;
+  yesNoByQuestion: Record<string, boolean | null>;
 };
 
 function normalizeStudyYear(value?: string | null) {
@@ -97,6 +101,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
     studyYear: "",
     registrationNumber: "",
     experienceByTopic: {},
+    yesNoByQuestion: {},
   });
 
   const eventDate = useMemo(
@@ -109,6 +114,10 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
   );
   const experiencePrompts = useMemo(
     () => eventExtraData.experiencePrompts ?? [],
+    [eventExtraData],
+  );
+  const yesNoQuestions = useMemo(
+    () => eventExtraData.yesNoQuestions ?? [],
     [eventExtraData],
   );
   const allowedStudyYears = useMemo(
@@ -163,24 +172,32 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
   useEffect(() => {
     setForm((prev) => {
       const currentExperienceByTopic = prev.experienceByTopic ?? {};
+      const currentYesNoByQuestion = prev.yesNoByQuestion ?? {};
       const nextExperienceByTopic: Record<string, number> = {};
+      const nextYesNoByQuestion: Record<string, boolean | null> = {};
 
       experiencePrompts.forEach((prompt) => {
         nextExperienceByTopic[prompt.topic] =
           currentExperienceByTopic[prompt.topic] ?? 50;
       });
 
+      yesNoQuestions.forEach((prompt) => {
+        nextYesNoByQuestion[prompt.question] =
+          currentYesNoByQuestion[prompt.question] ?? null;
+      });
+
       return {
         ...prev,
         experienceByTopic: nextExperienceByTopic,
+        yesNoByQuestion: nextYesNoByQuestion,
       };
     });
-  }, [experiencePrompts]);
+  }, [experiencePrompts, yesNoQuestions]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
-    const { name, value } = e.target;
+    const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -221,14 +238,11 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
           params.set("registrationNumber", registrationNumber);
         }
 
-        const response = await fetch(
-          `/api/events/register?${params.toString()}`,
-          {
-            method: "GET",
-            cache: "no-store",
-            signal: controller.signal,
-          },
-        );
+        const response = await fetch(`/api/events/register?${params.toString()}`, {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal,
+        });
 
         const result: RegistrationResponse = await response.json();
         if (!response.ok) {
@@ -274,8 +288,18 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
     submitted,
   ]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async (eventToSubmit: React.FormEvent<HTMLFormElement>) => {
+    eventToSubmit.preventDefault();
+
+    const unansweredYesNo = yesNoQuestions.find(
+      (prompt) => typeof form.yesNoByQuestion[prompt.question] !== "boolean",
+    );
+
+    if (unansweredYesNo) {
+      toast.error(`Answer "${unansweredYesNo.question}" before submitting.`);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -289,6 +313,10 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
           experienceAnswers: experiencePrompts.map((prompt) => ({
             topic: prompt.topic,
             percentage: form.experienceByTopic[prompt.topic] ?? 50,
+          })),
+          yesNoAnswers: yesNoQuestions.map((prompt) => ({
+            question: prompt.question,
+            answer: form.yesNoByQuestion[prompt.question],
           })),
           ...form,
         }),
@@ -356,6 +384,18 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
               <div className="absolute inset-0 bg-linear-to-br from-primary/95 via-primary/80 to-accent/70" />
               <div className="absolute -left-12 top-8 h-32 w-32 rounded-full border border-white/30 bg-secondary/70 blur-sm" />
               <div className="absolute bottom-6 right-6 h-28 w-28 rounded-3xl border border-white/20 bg-white/10 backdrop-blur-sm" />
+
+              {event.square_image && (
+                <div className="absolute right-6 top-6 h-28 w-28 overflow-hidden rounded-[1.75rem] border border-white/20 bg-white/10 shadow-xl backdrop-blur-sm">
+                  <Image
+                    src={event.square_image}
+                    alt={`${event.title} square cover`}
+                    fill
+                    sizes="112px"
+                    className="object-cover"
+                  />
+                </div>
+              )}
 
               <div className="relative flex h-full flex-col justify-between p-6 text-primary-foreground sm:p-8">
                 <div className="flex flex-wrap items-center gap-3">
@@ -474,14 +514,6 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                         check-in.
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-11 rounded-xl px-5"
-                      onClick={() => setSubmitted(false)}
-                    >
-                      Update my details
-                    </Button>
                   </div>
 
                   {checkInToken && (
@@ -623,6 +655,23 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                           experienceByTopic: {
                             ...prev.experienceByTopic,
                             [prompt.topic]: percentage,
+                          },
+                        }))
+                      }
+                    />
+                  ))}
+
+                  {yesNoQuestions.map((prompt) => (
+                    <EventYesNoQuestionField
+                      key={prompt.question}
+                      question={prompt.question}
+                      value={form.yesNoByQuestion[prompt.question] ?? null}
+                      onChange={(answer) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          yesNoByQuestion: {
+                            ...prev.yesNoByQuestion,
+                            [prompt.question]: answer,
                           },
                         }))
                       }
