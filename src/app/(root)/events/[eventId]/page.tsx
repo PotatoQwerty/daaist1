@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   CalendarDays,
   MapPin,
@@ -15,6 +16,12 @@ import {
   getUserClubRole,
 } from "@/lib/supabase/actions";
 import { formatEventDateRange } from "@/lib/event-date";
+import {
+  getEventCheckInPath,
+  getEventPath,
+  getEventSlug,
+  getRegisterEventPath,
+} from "@/lib/event-path";
 import { createClient } from "@/lib/supabase/server";
 
 type EventPageProps = {
@@ -66,6 +73,10 @@ export default async function EventPage({ params }: EventPageProps) {
     );
   }
 
+  if (decodeURIComponent(eventId) !== getEventSlug(event.title)) {
+    redirect(getEventPath(event));
+  }
+
   const club = event.club_id ? await getClubById(event.club_id) : null;
   const eventDate = formatEventDateRange(event.start_date, event.end_date);
   const supabase = await createClient();
@@ -96,7 +107,7 @@ export default async function EventPage({ params }: EventPageProps) {
           <div className="flex flex-wrap items-center gap-3">
             {canManageCheckIns && (
               <Link
-                href={`/events/${event.id}/check-in`}
+                href={getEventCheckInPath(event)}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background px-5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
               >
                 Organizer check-in
@@ -104,7 +115,7 @@ export default async function EventPage({ params }: EventPageProps) {
               </Link>
             )}
             <Link
-              href={`/register/${event.id}`}
+              href={getRegisterEventPath(event)}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-accent/90"
             >
               Register now
@@ -225,7 +236,7 @@ export default async function EventPage({ params }: EventPageProps) {
                   your details in one step.
                 </p>
                 <Link
-                  href={`/register/${event.id}`}
+                  href={getRegisterEventPath(event)}
                   className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-accent/90"
                 >
                   Go to registration
@@ -241,7 +252,7 @@ export default async function EventPage({ params }: EventPageProps) {
                     passes or search the registration list manually.
                   </p>
                   <Link
-                    href={`/events/${event.id}/check-in`}
+                    href={getEventCheckInPath(event)}
                     className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
                   >
                     Open check-in desk

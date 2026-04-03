@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import EventCheckInClient from "@/components/EventCheckInClient";
 import SignInButton from "@/components/SignInButton";
@@ -7,6 +8,7 @@ import {
   getEventByEventId,
   getUserClubRole,
 } from "@/lib/supabase/actions";
+import { getEventCheckInPath, getEventPath, getEventSlug } from "@/lib/event-path";
 import { createClient } from "@/lib/supabase/server";
 
 type EventCheckInPageProps = {
@@ -35,13 +37,19 @@ export default async function EventCheckInPage({
     );
   }
 
+  if (decodeURIComponent(eventId) !== getEventSlug(event.title)) {
+    redirect(getEventCheckInPath(event, token));
+  }
+
   const club = event.club_id ? await getClubById(event.club_id) : null;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const redirectTo = `/events/${eventId}/check-in${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+  const redirectTo = event
+    ? getEventCheckInPath(event, token)
+    : `/events/${eventId}/check-in${token ? `?token=${encodeURIComponent(token)}` : ""}`;
 
   if (!user) {
     return (
@@ -92,7 +100,7 @@ export default async function EventCheckInPage({
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
-            href={club?.slug ? `/club/${club.slug}` : `/events/${event.id}`}
+            href={club?.slug ? `/club/${club.slug}` : getEventPath(event)}
             className="inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-4 py-2 text-sm font-medium text-muted-foreground transition hover:border-accent hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />

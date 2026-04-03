@@ -22,9 +22,7 @@ export default function SignInButton({
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/auth/callback?redirect_to=${encodeURIComponent(
-          redirectTo,
-        )}`,
+        redirectTo: `${origin}/auth/callback?redirect_to=${encodeURIComponent(redirectTo)}`,
       },
     });
   };

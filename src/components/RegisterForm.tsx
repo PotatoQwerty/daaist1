@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import bannerFallback from "../../public/images/banner.jpg";
 import { useUser } from "@/context/user-context";
 import { formatEventDateRange } from "@/lib/event-date";
+import { getRegisterEventPath } from "@/lib/event-path";
 import CheckInQRCode from "./CheckInQRCode";
 import SignInButton from "./SignInButton";
 import { Button } from "./ui/button";
@@ -35,6 +36,13 @@ type RegisterFormProps = {
   event: RegisterFormEvent;
 };
 
+type RegistrationResponse = {
+  message?: string;
+  error?: string;
+  checkInToken?: string;
+  alreadyRegistered?: boolean;
+};
+
 type FormState = {
   firstName: string;
   lastName: string;
@@ -52,6 +60,9 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [checkInToken, setCheckInToken] = useState("");
+  const [submissionMessage, setSubmissionMessage] = useState(
+    "Your details have been saved.",
+  );
   const [form, setForm] = useState<FormState>({
     firstName: "",
     lastName: "",
@@ -109,13 +120,24 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
         }),
       });
 
-      const result = await response.json();
+      const result: RegistrationResponse = await response.json();
+
+      if (response.status === 409 && result.alreadyRegistered) {
+        setCheckInToken(result.checkInToken || "");
+        setSubmissionMessage(
+          result.message || "You are already registered for this event.",
+        );
+        setSubmitted(true);
+        toast.success(result.message || "You are already registered.");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(result.error || "Unable to submit registration");
       }
 
       setCheckInToken(result.checkInToken || "");
+      setSubmissionMessage(result.message || "Your details have been saved.");
       toast.success(result.message || "Your registration has been received.");
       setSubmitted(true);
     } catch (error) {
@@ -241,7 +263,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                       Sign in to auto-fill your saved student details.
                     </p>
                     <SignInButton
-                      redirectTo={`/register/${event.id}`}
+                      redirectTo={getRegisterEventPath(event)}
                       className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
                     >
                       Sign in
@@ -258,12 +280,12 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-xl font-bold">
-                        Registration received
+                        Registration ready
                       </h3>
                       <p className="text-sm leading-6 text-muted-foreground">
-                        Your details have been saved for {event.title}. Keep
-                        this pass handy so organizers can scan your QR code or
-                        look you up manually at check-in.
+                        {submissionMessage} Keep this pass handy so organizers
+                        can scan your QR code or look you up manually at
+                        check-in.
                       </p>
                     </div>
                     <Button

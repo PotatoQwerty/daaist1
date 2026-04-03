@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
 import bannerFallback from "../../../../public/images/banner.jpg";
 import { formatEventDate } from "@/lib/event-date";
+import { getRegisterEventPath } from "@/lib/event-path";
 import { getPublicEvents } from "@/lib/supabase/actions";
 
 export const revalidate = 30;
@@ -124,7 +125,7 @@ async function RegisterPage() {
                   </div>
 
                   <Link
-                    href={`/register/${event.id}`}
+                    href={getRegisterEventPath(event)}
                     className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-accent/90"
                   >
                     Open registration

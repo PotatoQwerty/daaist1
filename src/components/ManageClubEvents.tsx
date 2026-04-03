@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { formatEventDate } from "@/lib/event-date";
+import { getEventCheckInPath } from "@/lib/event-path";
 
 type Club = {
   id: string;
@@ -409,7 +410,7 @@ function ManageClubEvents({ club }: { club: Club }) {
               </div>
               <div className="flex items-center gap-2 justify-center">
                 <Button variant="outline" asChild>
-                  <Link href={`/events/${event.id}/check-in`}>
+                  <Link href={getEventCheckInPath(event)}>
                     <QrCode className="w-4 h-4 mr-2" />
                     Check-ins
                   </Link>

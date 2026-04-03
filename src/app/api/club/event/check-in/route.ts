@@ -6,7 +6,7 @@ type CheckInPayload = {
   eventId?: string;
   token?: string;
   participantId?: string;
-  method?: "qr" | "manual";
+  method?: "qr" | "manual" | "scanner";
 };
 
 export async function POST(request: Request) {
@@ -24,7 +24,12 @@ export async function POST(request: Request) {
   const eventId = payload.eventId?.trim();
   const token = payload.token?.trim();
   const participantId = payload.participantId?.trim();
-  const method = payload.method === "manual" ? "manual" : "qr";
+  const method =
+    payload.method === "manual"
+      ? "manual"
+      : payload.method === "scanner"
+        ? "scanner"
+        : "qr";
 
   if (!eventId || (!token && !participantId)) {
     return NextResponse.json(

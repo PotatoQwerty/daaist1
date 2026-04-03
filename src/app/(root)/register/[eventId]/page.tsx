@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import RegisterForm from "@/components/RegisterForm";
+import { getEventSlug, getRegisterEventPath } from "@/lib/event-path";
 import { getPublicEventById } from "@/lib/supabase/actions";
 
 type EventRegisterPageProps = {
@@ -43,6 +44,10 @@ export default async function EventRegisterPage({
 
   if (!event) {
     notFound();
+  }
+
+  if (decodeURIComponent(eventId) !== getEventSlug(event.title)) {
+    redirect(getRegisterEventPath(event));
   }
 
   return <RegisterForm event={event} baseUrl={baseUrl} />;

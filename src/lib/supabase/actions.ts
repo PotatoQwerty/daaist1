@@ -1,5 +1,6 @@
 "use server";
 import { supabaseServer } from "./server";
+import { getEventSlug, isEventUuid } from "../event-path";
 
 export async function isOnboarded(userId: string) {
   const { data, error } = await supabaseServer
@@ -145,36 +146,77 @@ export async function getPublicEvents() {
 }
 
 export async function getPublicEventById(id: string) {
-  const { data, error } = await supabaseServer
+  const identifier = decodeURIComponent(id).trim();
+  if (!identifier) return null;
+
+  if (isEventUuid(identifier)) {
+    const { data, error } = await supabaseServer
+      .schema("public")
+      .from("events")
+      .select("*")
+      .eq("id", identifier)
+      .eq("is_public", true)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching public event by id:", error);
+      return null;
+    }
+
+    if (data) {
+      return data;
+    }
+  }
+
+  const { data: events, error } = await supabaseServer
     .schema("public")
     .from("events")
     .select("*")
-    .eq("id", id)
     .eq("is_public", true)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
   if (error) {
-    console.error("Error fetching public event by id:", error);
+    console.error("Error fetching public event by slug:", error);
     return null;
   }
 
-  return data;
+  return events?.find((event) => getEventSlug(event.title) === identifier) ?? null;
 }
 
 export async function getEventByEventId(id: string) {
-  const { data, error } = await supabaseServer
+  const identifier = decodeURIComponent(id).trim();
+  if (!identifier) return null;
+
+  if (isEventUuid(identifier)) {
+    const { data, error } = await supabaseServer
+      .schema("public")
+      .from("events")
+      .select("*")
+      .eq("id", identifier)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching event by event id:", error);
+      return null;
+    }
+
+    if (data) {
+      return data;
+    }
+  }
+
+  const { data: events, error } = await supabaseServer
     .schema("public")
     .from("events")
     .select("*")
-    .eq("id", id)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
   if (error) {
-    console.error("Error fetching event by event id:", error);
+    console.error("Error fetching event by slug:", error);
     return null;
   }
 
-  return data;
+  return events?.find((event) => getEventSlug(event.title) === identifier) ?? null;
 }
 
 export async function getEventById(id: string) {

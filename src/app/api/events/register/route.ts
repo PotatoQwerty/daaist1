@@ -13,6 +13,11 @@ type RegistrationPayload = {
   registrationNumber?: string;
 };
 
+type ExistingParticipant = {
+  id: string;
+  check_in_token?: string | null;
+};
+
 function normalizeText(value?: string) {
   return value?.trim() || "";
 }
@@ -95,13 +100,17 @@ export async function POST(request: Request) {
     check_in_token: generatedCheckInToken,
   };
 
-  const findExistingParticipant = async () => {
+  const findExistingParticipant = async (): Promise<{
+    data: ExistingParticipant | null;
+    error: unknown;
+  }> => {
     const baseQuery = () =>
       supabaseServer
         .schema("public")
         .from("event_participants")
         .select("id, check_in_token")
         .eq("event_id", eventId)
+        .order("created_at", { ascending: true })
         .limit(1);
 
     if (user?.id) {
@@ -111,7 +120,18 @@ export async function POST(request: Request) {
       }
     }
 
-    return baseQuery().eq("registration_number", registrationNumber).maybeSingle();
+    const existingByRegistrationNumber = await baseQuery()
+      .eq("registration_number", registrationNumber)
+      .maybeSingle();
+
+    if (
+      existingByRegistrationNumber.error ||
+      existingByRegistrationNumber.data
+    ) {
+      return existingByRegistrationNumber;
+    }
+
+    return baseQuery().eq("email", email).maybeSingle();
   };
 
   const {
@@ -129,38 +149,44 @@ export async function POST(request: Request) {
 
   if (existingParticipant?.id) {
     const checkInToken = existingParticipant.check_in_token || randomUUID();
+    const updatePayload: {
+      check_in_token?: string;
+      user_id?: string;
+    } = {};
 
-    const { error: updateError } = await supabaseServer
-      .schema("public")
-      .from("event_participants")
-      .update({
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        phone,
-        university,
-        study_year: studyYear,
-        registration_number: registrationNumber,
-        user_id: user?.id ?? null,
-        check_in_token: checkInToken,
-      })
-      .eq("id", existingParticipant.id);
+    if (!existingParticipant.check_in_token) {
+      updatePayload.check_in_token = checkInToken;
+    }
 
-    if (updateError) {
-      console.error("Participant update error:", updateError);
-      return NextResponse.json(
-        { error: "Unable to update your registration right now." },
-        { status: 500 },
-      );
+    if (user?.id) {
+      updatePayload.user_id = user.id;
+    }
+
+    if (Object.keys(updatePayload).length > 0) {
+      const { error: updateError } = await supabaseServer
+        .schema("public")
+        .from("event_participants")
+        .update(updatePayload)
+        .eq("id", existingParticipant.id);
+
+      if (updateError) {
+        console.error("Participant token update error:", updateError);
+        return NextResponse.json(
+          { error: "Unable to load your existing registration right now." },
+          { status: 500 },
+        );
+      }
     }
 
     return NextResponse.json(
       {
-        message: "Registration updated.",
+        error: "You are already registered for this event.",
+        message: "You are already registered for this event.",
+        alreadyRegistered: true,
         registrationId: existingParticipant.id,
         checkInToken,
       },
-      { status: 200 },
+      { status: 409 },
     );
   }
 

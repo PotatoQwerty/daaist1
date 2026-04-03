@@ -10,6 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Calendar, MapPin } from "lucide-react";
 import { formatEventDate } from "@/lib/event-date";
+import { getEventPath } from "@/lib/event-path";
 
 type CarouselEvent = {
   id: string;
@@ -55,7 +56,7 @@ export default function Carossel({ data }: { data: CarouselEvent[] }) {
           <SwiperSlide key={event.id} className="h-full">
             {event.is_public ? (
               <Link
-                href={`/events/${event.id}`}
+                href={getEventPath(event)}
                 className="group/card flex h-full flex-col overflow-hidden rounded-xl border bg-card transition-all hover:border-primary/50 hover:shadow-lg"
               >
                 <div className="relative h-48 w-full overflow-hidden">
