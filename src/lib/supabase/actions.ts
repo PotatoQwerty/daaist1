@@ -1,4 +1,9 @@
 "use server";
+import { randomUUID } from "crypto";
+import {
+  getAttendanceRoleLabel,
+  normalizeAttendanceRole,
+} from "../event-extra";
 import { supabaseServer } from "./server";
 import { getEventSlug, isEventUuid } from "../event-path";
 
@@ -143,6 +148,160 @@ export async function getPublicEvents() {
   }
 
   return data ?? [];
+}
+
+type UserEventPassLookup = {
+  userId?: string | null;
+  email?: string | null;
+  registrationNumber?: string | null;
+};
+
+export async function getUserEventPasses({
+  userId,
+  email,
+  registrationNumber,
+}: UserEventPassLookup) {
+  const normalizedUserId = userId?.trim() || "";
+  const normalizedEmail = email?.trim().toLowerCase() || "";
+  const normalizedRegistrationNumber = registrationNumber?.trim() || "";
+
+  const filters = [
+    normalizedUserId ? `user_id.eq.${normalizedUserId}` : null,
+    normalizedEmail ? `email.eq.${normalizedEmail}` : null,
+    normalizedRegistrationNumber
+      ? `registration_number.eq.${normalizedRegistrationNumber}`
+      : null,
+  ].filter((value): value is string => Boolean(value));
+
+  if (filters.length === 0) {
+    return [];
+  }
+
+  const { data: participants, error: participantsError } = await supabaseServer
+    .schema("public")
+    .from("event_participants")
+    .select(
+      "id, event_id, user_id, registration_number, created_at, checked_in_at, check_in_method, check_in_token, extra_data",
+    )
+    .or(filters.join(","))
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (participantsError) {
+    console.error("Error fetching user event passes:", participantsError);
+    return [];
+  }
+
+  if (!participants?.length) {
+    return [];
+  }
+
+  const hydratedParticipants = await Promise.all(
+    participants.map(async (participant) => {
+      const updatePayload: {
+        user_id?: string;
+        check_in_token?: string;
+      } = {};
+
+      if (!participant.user_id && normalizedUserId) {
+        updatePayload.user_id = normalizedUserId;
+      }
+
+      if (!participant.check_in_token) {
+        updatePayload.check_in_token = randomUUID();
+      }
+
+      if (Object.keys(updatePayload).length === 0) {
+        return {
+          ...participant,
+          check_in_token: participant.check_in_token,
+        };
+      }
+
+      const { data: updatedParticipant, error: updateError } = await supabaseServer
+        .schema("public")
+        .from("event_participants")
+        .update(updatePayload)
+        .eq("id", participant.id)
+        .select(
+          "id, event_id, user_id, registration_number, created_at, checked_in_at, check_in_method, check_in_token, extra_data",
+        )
+        .single();
+
+      if (updateError || !updatedParticipant) {
+        console.error("Error hydrating user event pass:", updateError);
+        return {
+          ...participant,
+          check_in_token:
+            updatePayload.check_in_token ?? participant.check_in_token ?? null,
+          user_id: updatePayload.user_id ?? participant.user_id,
+        };
+      }
+
+      return updatedParticipant;
+    }),
+  );
+
+  const eventIds = Array.from(
+    new Set(
+      hydratedParticipants
+        .map((participant) => participant.event_id)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+
+  if (eventIds.length === 0) {
+    return [];
+  }
+
+  const { data: events, error: eventsError } = await supabaseServer
+    .schema("public")
+    .from("events")
+    .select(
+      "id, title, description, location, start_date, end_date, cover_image, square_image, is_public",
+    )
+    .in("id", eventIds);
+
+  if (eventsError) {
+    console.error("Error fetching events for user passes:", eventsError);
+    return [];
+  }
+
+  const eventMap = new Map((events ?? []).map((event) => [event.id, event]));
+
+  return hydratedParticipants
+    .map((participant) => {
+      const event = eventMap.get(participant.event_id);
+      if (!event) {
+        return null;
+      }
+
+      const extraData =
+        participant.extra_data &&
+        typeof participant.extra_data === "object" &&
+        !Array.isArray(participant.extra_data)
+          ? participant.extra_data
+          : {};
+      const attendanceRole = normalizeAttendanceRole(
+        (extraData as Record<string, unknown>).attendanceRole,
+      );
+
+      return {
+        id: participant.id,
+        event_id: participant.event_id,
+        registration_number: participant.registration_number,
+        created_at: participant.created_at,
+        checked_in_at: participant.checked_in_at,
+        check_in_method: participant.check_in_method,
+        check_in_token: participant.check_in_token,
+        attendance_role: attendanceRole,
+        attendance_role_label: attendanceRole
+          ? getAttendanceRoleLabel(attendanceRole)
+          : null,
+        event,
+      };
+    })
+    .filter((value): value is NonNullable<typeof value> => Boolean(value));
 }
 
 export async function getPublicEventById(id: string) {

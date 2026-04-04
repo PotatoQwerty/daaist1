@@ -57,7 +57,7 @@ export default async function EventPage({ params }: EventPageProps) {
   if (!event) {
     return (
       <section className="min-h-screen px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl rounded-[2rem] border border-dashed border-border bg-card px-6 py-16 text-center">
+        <div className="mx-auto max-w-4xl rounded-4xl border border-dashed border-border bg-card px-6 py-16 text-center">
           <h1 className="text-3xl font-bold">Event not found</h1>
           <p className="mt-4 text-sm leading-7 text-muted-foreground">
             This public event is no longer available or the link is invalid.
@@ -203,7 +203,7 @@ export default async function EventPage({ params }: EventPageProps) {
               )}
             </div>
 
-            <aside className="space-y-4 rounded-[1.5rem] border border-border bg-background p-5">
+            <aside className="space-y-4 rounded-3xl border border-border bg-background p-5">
               <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
                 Event Snapshot
               </p>
@@ -259,8 +259,8 @@ export default async function EventPage({ params }: EventPageProps) {
                 <div className="rounded-2xl border border-border bg-card p-5">
                   <h3 className="text-lg font-bold">Organizer access</h3>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    You can open the check-in desk for this event and scan attendee
-                    passes or search the registration list manually.
+                    You can open the check-in desk for this event and scan
+                    attendee passes or search the registration list manually.
                   </p>
                   <Link
                     href={getEventCheckInPath(event)}

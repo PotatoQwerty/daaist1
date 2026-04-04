@@ -16,7 +16,9 @@ import bannerFallback from "../../public/images/banner.jpg";
 import { useUser } from "@/context/user-context";
 import { formatEventDateRange } from "@/lib/event-date";
 import {
+  EVENT_ATTENDANCE_ROLE_OPTIONS,
   EVENT_STUDY_YEAR_OPTIONS,
+  getAttendanceRoleLabel,
   getAllowedStudyYears,
   parseEventExtraData,
 } from "@/lib/event-extra";
@@ -61,6 +63,7 @@ type FormState = {
   university: string;
   studyYear: string;
   registrationNumber: string;
+  attendanceRole: string;
   experienceByTopic: Record<string, number>;
   yesNoByQuestion: Record<string, boolean | null>;
 };
@@ -100,6 +103,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
     university: "",
     studyYear: "",
     registrationNumber: "",
+    attendanceRole: "",
     experienceByTopic: {},
     yesNoByQuestion: {},
   });
@@ -642,6 +646,34 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                         className={inputClassName}
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="attendanceRole">
+                      Are you participating or invited only?
+                    </Label>
+                    <select
+                      title="Attendance role"
+                      id="attendanceRole"
+                      name="attendanceRole"
+                      required
+                      value={form.attendanceRole}
+                      onChange={handleChange}
+                      className={selectClassName}
+                    >
+                      <option value="" disabled>
+                        Select one
+                      </option>
+                      {EVENT_ATTENDANCE_ROLE_OPTIONS.map((role) => (
+                        <option key={role} value={role}>
+                          {getAttendanceRoleLabel(role)}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      Let organizers know whether you are attending as a
+                      participant or by invitation only.
+                    </p>
                   </div>
 
                   {experiencePrompts.map((prompt) => (

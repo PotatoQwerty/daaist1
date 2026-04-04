@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  getAttendanceRoleLabel,
+  normalizeAttendanceRole,
+} from "@/lib/event-extra";
 import { getEventByEventId, getUserClubRole } from "@/lib/supabase/actions";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 
@@ -8,6 +12,41 @@ type CheckInPayload = {
   participantId?: string;
   method?: "qr" | "manual" | "scanner";
 };
+
+function normalizeParticipant(participant: {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  registration_number: string;
+  university?: string | null;
+  study_year?: string | null;
+  created_at?: string | null;
+  checked_in_at?: string | null;
+  check_in_method?: string | null;
+  extra_data?: unknown;
+}) {
+  const extraData =
+    participant.extra_data &&
+    typeof participant.extra_data === "object" &&
+    !Array.isArray(participant.extra_data)
+      ? participant.extra_data
+      : {};
+  const attendanceRole = normalizeAttendanceRole(
+    (extraData as Record<string, unknown>).attendanceRole,
+  );
+  const participantFields = { ...participant };
+  delete participantFields.extra_data;
+
+  return {
+    ...participantFields,
+    attendance_role: attendanceRole,
+    attendance_role_label: attendanceRole
+      ? getAttendanceRoleLabel(attendanceRole)
+      : null,
+  };
+}
 
 export async function POST(request: Request) {
   let payload: CheckInPayload;
@@ -68,7 +107,7 @@ export async function POST(request: Request) {
     .schema("public")
     .from("event_participants")
     .select(
-      "id, first_name, last_name, email, phone, registration_number, checked_in_at, check_in_method",
+      "id, first_name, last_name, email, phone, university, study_year, registration_number, created_at, checked_in_at, check_in_method, extra_data",
     )
     .eq("event_id", eventId);
 
@@ -96,7 +135,7 @@ export async function POST(request: Request) {
       {
         message: "Participant already checked in.",
         alreadyCheckedIn: true,
-        participant,
+        participant: normalizeParticipant(participant),
       },
       { status: 200 },
     );
@@ -112,7 +151,7 @@ export async function POST(request: Request) {
     })
     .eq("id", participant.id)
     .select(
-      "id, first_name, last_name, email, phone, registration_number, checked_in_at, check_in_method",
+      "id, first_name, last_name, email, phone, university, study_year, registration_number, created_at, checked_in_at, check_in_method, extra_data",
     )
     .single();
 
@@ -128,7 +167,7 @@ export async function POST(request: Request) {
     {
       message: "Participant checked in successfully.",
       alreadyCheckedIn: false,
-      participant: updatedParticipant,
+      participant: normalizeParticipant(updatedParticipant),
     },
     { status: 200 },
   );

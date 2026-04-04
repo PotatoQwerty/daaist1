@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import jsQR from "jsqr";
 import {
   Camera,
@@ -21,7 +21,12 @@ type Participant = {
   last_name: string;
   email: string;
   phone: string;
+  university?: string | null;
+  study_year?: string | null;
   registration_number: string;
+  created_at?: string | null;
+  attendance_role?: string | null;
+  attendance_role_label?: string | null;
   checked_in_at?: string | null;
   check_in_method?: string | null;
 };
@@ -67,6 +72,13 @@ export default function EventCheckInClient({
   initialToken,
 }: EventCheckInClientProps) {
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "checked_in">(
+    "all",
+  );
+  const [roleFilter, setRoleFilter] = useState<"all" | "participant" | "invited_only">(
+    "all",
+  );
+  const [studyYearFilter, setStudyYearFilter] = useState("all");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeParticipantId, setActiveParticipantId] = useState<string | null>(
@@ -97,6 +109,8 @@ export default function EventCheckInClient({
   const processingScanRef = useRef(false);
   const lastScannedTokenRef = useRef<string | null>(null);
   const lastScannedAtRef = useRef(0);
+  const selectClassName =
+    "h-12 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none transition focus:border-ring focus:ring-[3px] focus:ring-ring/50";
 
   const stopScanner = useCallback(() => {
     if (frameRef.current !== null) {
@@ -434,6 +448,72 @@ export default function EventCheckInClient({
     }
   };
 
+  const availableStudyYears = useMemo(() => {
+    return Array.from(
+      new Set(
+        participants
+          .map((participant) => participant.study_year?.trim())
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
+  }, [participants]);
+
+  const participantStats = useMemo(() => {
+    return participants.reduce(
+      (accumulator, participant) => {
+        accumulator.total += 1;
+
+        if (participant.checked_in_at) {
+          accumulator.checkedIn += 1;
+        } else {
+          accumulator.pending += 1;
+        }
+
+        if (participant.attendance_role === "invited_only") {
+          accumulator.invitedOnly += 1;
+        }
+
+        return accumulator;
+      },
+      { total: 0, checkedIn: 0, pending: 0, invitedOnly: 0 },
+    );
+  }, [participants]);
+
+  const filteredParticipants = useMemo(() => {
+    return participants.filter((participant) => {
+      if (statusFilter === "checked_in" && !participant.checked_in_at) {
+        return false;
+      }
+
+      if (statusFilter === "pending" && participant.checked_in_at) {
+        return false;
+      }
+
+      if (roleFilter !== "all" && participant.attendance_role !== roleFilter) {
+        return false;
+      }
+
+      if (
+        studyYearFilter !== "all" &&
+        (participant.study_year?.trim() || "") !== studyYearFilter
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [participants, roleFilter, statusFilter, studyYearFilter]);
+
+  const autoCheckInParticipantDetails = autoCheckInState.participant
+    ? [
+        autoCheckInState.participant.attendance_role_label,
+        autoCheckInState.participant.study_year,
+        autoCheckInState.participant.university,
+      ]
+        .filter(Boolean)
+        .join(" | ")
+    : "";
+
   return (
     <div className="space-y-6">
       {autoCheckInState.status !== "idle" && (
@@ -460,11 +540,18 @@ export default function EventCheckInClient({
               <h2 className="text-lg font-bold">{eventTitle}</h2>
               <p className="text-sm leading-6">{autoCheckInState.message}</p>
               {autoCheckInState.participant && (
-                <p className="text-sm font-medium">
-                  {autoCheckInState.participant.first_name}{" "}
-                  {autoCheckInState.participant.last_name} |{" "}
-                  {autoCheckInState.participant.registration_number}
-                </p>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">
+                    {autoCheckInState.participant.first_name}{" "}
+                    {autoCheckInState.participant.last_name} |{" "}
+                    {autoCheckInState.participant.registration_number}
+                  </p>
+                  {autoCheckInParticipantDetails ? (
+                    <p className="text-sm text-muted-foreground">
+                      {autoCheckInParticipantDetails}
+                    </p>
+                  ) : null}
+                </div>
               )}
             </div>
           </div>
@@ -574,19 +661,94 @@ export default function EventCheckInClient({
           </p>
           <h3 className="text-2xl font-bold">Search registrations</h3>
           <p className="text-sm leading-6 text-muted-foreground">
-            Search by name, email, phone, or registration number, then check the
-            attendee in manually.
+            Search by name, email, phone, university, study year, or
+            registration number, then narrow the list with quick filters.
           </p>
         </div>
 
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search attendees..."
-            className="h-12 rounded-xl pl-11"
-          />
+        <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-border bg-muted/30 p-4">
+            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+              Loaded
+            </p>
+            <p className="mt-2 text-2xl font-bold">{participantStats.total}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-muted/30 p-4">
+            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+              Pending
+            </p>
+            <p className="mt-2 text-2xl font-bold">{participantStats.pending}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-muted/30 p-4">
+            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+              Checked In
+            </p>
+            <p className="mt-2 text-2xl font-bold">{participantStats.checkedIn}</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-muted/30 p-4">
+            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+              Invited Only
+            </p>
+            <p className="mt-2 text-2xl font-bold">
+              {participantStats.invitedOnly}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr),180px,180px,180px]">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search name, email, phone, university, year, or registration number..."
+              className="h-12 rounded-xl pl-11"
+            />
+          </div>
+
+          <select
+            title="Filter by status"
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(
+                event.target.value as "all" | "pending" | "checked_in",
+              )
+            }
+            className={selectClassName}
+          >
+            <option value="all">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="checked_in">Checked in</option>
+          </select>
+
+          <select
+            title="Filter by attendance role"
+            value={roleFilter}
+            onChange={(event) =>
+              setRoleFilter(
+                event.target.value as "all" | "participant" | "invited_only",
+              )
+            }
+            className={selectClassName}
+          >
+            <option value="all">All roles</option>
+            <option value="participant">Participants</option>
+            <option value="invited_only">Invited only</option>
+          </select>
+
+          <select
+            title="Filter by study year"
+            value={studyYearFilter}
+            onChange={(event) => setStudyYearFilter(event.target.value)}
+            className={selectClassName}
+          >
+            <option value="all">All years</option>
+            {availableStudyYears.map((studyYear) => (
+              <option key={studyYear} value={studyYear}>
+                {studyYear}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="mt-5 space-y-3">
@@ -599,8 +761,12 @@ export default function EventCheckInClient({
             <div className="rounded-2xl border border-dashed border-border bg-muted/25 p-6 text-center text-sm text-muted-foreground">
               No participants match your search yet.
             </div>
+          ) : filteredParticipants.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-muted/25 p-6 text-center text-sm text-muted-foreground">
+              No loaded participants match the current filters.
+            </div>
           ) : (
-            participants.map((participant) => (
+            filteredParticipants.map((participant) => (
               <div
                 key={participant.id}
                 className="flex flex-col gap-4 rounded-2xl border border-border bg-background p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -615,6 +781,33 @@ export default function EventCheckInClient({
                   <p className="text-sm text-muted-foreground">
                     {participant.email} | {participant.phone}
                   </p>
+                  <div className="flex flex-wrap gap-2 pt-1 text-xs">
+                    {participant.attendance_role_label ? (
+                      <span className="rounded-full border border-border bg-muted/45 px-3 py-1 text-muted-foreground">
+                        {participant.attendance_role_label}
+                      </span>
+                    ) : null}
+                    {participant.study_year ? (
+                      <span className="rounded-full border border-border bg-muted/45 px-3 py-1 text-muted-foreground">
+                        {participant.study_year}
+                      </span>
+                    ) : null}
+                    {!participant.checked_in_at ? (
+                      <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
+                        Pending
+                      </span>
+                    ) : null}
+                  </div>
+                  {participant.university && (
+                    <p className="text-sm text-muted-foreground">
+                      {participant.university}
+                    </p>
+                  )}
+                  {participant.created_at && (
+                    <p className="text-sm text-muted-foreground">
+                      Registered {new Date(participant.created_at).toLocaleString()}
+                    </p>
+                  )}
                   {participant.checked_in_at && (
                     <p className="text-sm font-medium text-green-700 dark:text-green-400">
                       Checked in{" "}

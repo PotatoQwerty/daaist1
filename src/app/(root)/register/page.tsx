@@ -1,10 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
 import bannerFallback from "../../../../public/images/banner.jpg";
+import MyEventPasses from "@/components/MyEventPasses";
 import { formatEventDate } from "@/lib/event-date";
 import { getRegisterEventPath } from "@/lib/event-path";
-import { getPublicEvents } from "@/lib/supabase/actions";
+import { getPublicEvents, getUserEventPasses } from "@/lib/supabase/actions";
+import { getUserContext } from "@/lib/supabase/user-context";
 
 export const revalidate = 30;
 
@@ -17,7 +20,20 @@ export async function generateMetadata() {
 }
 
 async function RegisterPage() {
+  const userContext = await getUserContext();
   const events = await getPublicEvents();
+  const headerList = await headers();
+  const protocol = headerList.get("x-forwarded-proto") || "http";
+  const host =
+    headerList.get("x-forwarded-host") || headerList.get("host") || "";
+  const baseUrl = host ? `${protocol}://${host}` : "";
+  const passes = userContext.session?.user?.id
+    ? await getUserEventPasses({
+        userId: userContext.session.user.id,
+        email: userContext.session.user.email,
+        registrationNumber: userContext.user?.registration_number,
+      })
+    : [];
 
   return (
     <section className="min-h-screen bg-background px-4 py-12 sm:px-6 lg:px-8">
@@ -53,6 +69,10 @@ async function RegisterPage() {
             </div>
           </div>
         </div>
+
+        {userContext.session?.user?.id ? (
+          <MyEventPasses baseUrl={baseUrl} passes={passes} />
+        ) : null}
 
         <div className="flex items-end justify-between gap-4">
           <div>

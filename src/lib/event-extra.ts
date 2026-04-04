@@ -8,6 +8,14 @@ export const EVENT_STUDY_YEAR_OPTIONS = [
 
 export type EventStudyYear = (typeof EVENT_STUDY_YEAR_OPTIONS)[number];
 
+export const EVENT_ATTENDANCE_ROLE_OPTIONS = [
+  "participant",
+  "invited_only",
+] as const;
+
+export type EventAttendanceRole =
+  (typeof EVENT_ATTENDANCE_ROLE_OPTIONS)[number];
+
 export type EventExperiencePrompt = {
   topic: string;
   required?: boolean;
@@ -25,6 +33,7 @@ export type EventExtraData = {
 };
 
 export type EventParticipantExtraData = {
+  attendanceRole?: EventAttendanceRole;
   experience?: Array<{
     topic: string;
     percentage: number;
@@ -41,6 +50,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+export function normalizeAttendanceRole(
+  value: unknown,
+): EventAttendanceRole | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalizedValue = value.trim().toLowerCase();
+  return EVENT_ATTENDANCE_ROLE_OPTIONS.find((item) => item === normalizedValue)
+    ? (normalizedValue as EventAttendanceRole)
+    : null;
+}
+
+export function getAttendanceRoleLabel(value: EventAttendanceRole) {
+  return value === "participant" ? "Participant" : "Invited only";
 }
 
 function normalizePrompt(value: unknown): EventExperiencePrompt | null {

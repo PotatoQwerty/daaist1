@@ -18,6 +18,7 @@ import {
   School,
   PlusCircle,
   PenTool,
+  QrCode,
 } from "lucide-react";
 import DaaistLogoHor from "../../public/images/DAAIST-LOGO-HOR.svg";
 import DaaistLogoHorDark from "../../public/images/daalogodarkhor.svg";
@@ -186,6 +187,12 @@ export default function Navbar() {
                 <Link href="/profile" className="cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/register" className="cursor-pointer">
+                  <QrCode className="mr-2 h-4 w-4" />
+                  <span>My Event Passes</span>
                 </Link>
               </DropdownMenuItem>
 

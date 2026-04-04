@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import {
+  normalizeAttendanceRole,
   EventParticipantExtraData,
   getAllowedStudyYears,
   parseEventExtraData,
@@ -16,6 +17,7 @@ type RegistrationPayload = {
   university?: string;
   studyYear?: string;
   registrationNumber?: string;
+  attendanceRole?: string;
   experienceAnswers?: Array<{
     topic?: string;
     percentage?: number;
@@ -225,6 +227,7 @@ export async function POST(request: Request) {
   const university = normalizeText(payload.university);
   const studyYear = normalizeText(payload.studyYear);
   const registrationNumber = normalizeText(payload.registrationNumber);
+  const attendanceRole = normalizeAttendanceRole(payload.attendanceRole);
   const experienceAnswers = Array.isArray(payload.experienceAnswers)
     ? payload.experienceAnswers
     : [];
@@ -240,7 +243,8 @@ export async function POST(request: Request) {
     !phone ||
     !university ||
     !studyYear ||
-    !registrationNumber
+    !registrationNumber ||
+    !attendanceRole
   ) {
     return NextResponse.json(
       { error: "Please complete every required field." },
@@ -318,6 +322,8 @@ export async function POST(request: Request) {
   }
 
   const participantExtraData: EventParticipantExtraData = {};
+
+  participantExtraData.attendanceRole = attendanceRole;
 
   if (normalizedExperienceAnswers.length > 0) {
     participantExtraData.experience = normalizedExperienceAnswers;

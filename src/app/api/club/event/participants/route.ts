@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  getAttendanceRoleLabel,
+  normalizeAttendanceRole,
+} from "@/lib/event-extra";
 import { getEventByEventId, getUserClubRole } from "@/lib/supabase/actions";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 
@@ -45,11 +49,11 @@ export async function GET(request: Request) {
     .schema("public")
     .from("event_participants")
     .select(
-      "id, first_name, last_name, email, phone, university, study_year, registration_number, created_at, checked_in_at, check_in_method",
+      "id, first_name, last_name, email, phone, university, study_year, registration_number, created_at, checked_in_at, check_in_method, extra_data",
     )
     .eq("event_id", eventId)
     .order("created_at", { ascending: false })
-    .limit(query ? 50 : 25);
+    .limit(query ? 100 : 200);
 
   if (query) {
     participantsQuery = participantsQuery.or(
@@ -58,6 +62,8 @@ export async function GET(request: Request) {
         `last_name.ilike.%${query}%`,
         `email.ilike.%${query}%`,
         `phone.ilike.%${query}%`,
+        `university.ilike.%${query}%`,
+        `study_year.ilike.%${query}%`,
         `registration_number.ilike.%${query}%`,
       ].join(","),
     );
@@ -73,5 +79,27 @@ export async function GET(request: Request) {
     );
   }
 
-  return NextResponse.json({ data: data ?? [] }, { status: 200 });
+  const normalizedParticipants = (data ?? []).map((participant) => {
+    const extraData =
+      participant.extra_data &&
+      typeof participant.extra_data === "object" &&
+      !Array.isArray(participant.extra_data)
+        ? participant.extra_data
+        : {};
+    const attendanceRole = normalizeAttendanceRole(
+      (extraData as Record<string, unknown>).attendanceRole,
+    );
+    const participantFields = { ...participant };
+    delete participantFields.extra_data;
+
+    return {
+      ...participantFields,
+      attendance_role: attendanceRole,
+      attendance_role_label: attendanceRole
+        ? getAttendanceRoleLabel(attendanceRole)
+        : null,
+    };
+  });
+
+  return NextResponse.json({ data: normalizedParticipants }, { status: 200 });
 }
