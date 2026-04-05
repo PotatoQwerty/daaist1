@@ -1,6 +1,10 @@
 "use server";
 import { randomUUID } from "crypto";
 import {
+  canAttachParticipantToUser,
+  canRevealParticipantCheckInToken,
+} from "../event-pass-access";
+import {
   getAttendanceRoleLabel,
   normalizeAttendanceRole,
 } from "../event-extra";
@@ -165,34 +169,110 @@ export async function getUserEventPasses({
   const normalizedEmail = email?.trim().toLowerCase() || "";
   const normalizedRegistrationNumber = registrationNumber?.trim() || "";
 
-  const filters = [
-    normalizedUserId ? `user_id.eq.${normalizedUserId}` : null,
-    normalizedEmail ? `email.eq.${normalizedEmail}` : null,
-    normalizedRegistrationNumber
-      ? `registration_number.eq.${normalizedRegistrationNumber}`
-      : null,
-  ].filter((value): value is string => Boolean(value));
+  if (!normalizedUserId) {
+    return [];
+  }
+  const participantSelect =
+    "id, event_id, user_id, email, registration_number, created_at, checked_in_at, check_in_method, check_in_token, extra_data";
+  const participantIdentity = {
+    userId: normalizedUserId,
+    email: normalizedEmail,
+    registrationNumber: normalizedRegistrationNumber,
+  };
 
-  if (filters.length === 0) {
+  const { data: ownedParticipants, error: ownedParticipantsError } =
+    await supabaseServer
+      .schema("public")
+      .from("event_participants")
+      .select(participantSelect)
+      .eq("user_id", normalizedUserId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+  if (ownedParticipantsError) {
+    console.error("Error fetching user-owned event passes:", ownedParticipantsError);
     return [];
   }
 
-  const { data: participants, error: participantsError } = await supabaseServer
-    .schema("public")
-    .from("event_participants")
-    .select(
-      "id, event_id, user_id, registration_number, created_at, checked_in_at, check_in_method, check_in_token, extra_data",
+  let unclaimedParticipants:
+    | Array<{
+        id: string;
+        event_id: string;
+        user_id?: string | null;
+        email?: string | null;
+        registration_number: string;
+        created_at?: string | null;
+        checked_in_at?: string | null;
+        check_in_method?: string | null;
+        check_in_token?: string | null;
+        extra_data?: unknown;
+      }>
+    | null = [];
+
+  if (normalizedEmail || normalizedRegistrationNumber) {
+    let unclaimedQuery = supabaseServer
+      .schema("public")
+      .from("event_participants")
+      .select(participantSelect)
+      .is("user_id", null)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (normalizedEmail && normalizedRegistrationNumber) {
+      unclaimedQuery = unclaimedQuery
+        .eq("email", normalizedEmail)
+        .eq("registration_number", normalizedRegistrationNumber);
+    } else if (normalizedEmail) {
+      unclaimedQuery = unclaimedQuery.eq("email", normalizedEmail);
+    } else {
+      unclaimedQuery = unclaimedQuery.eq(
+        "registration_number",
+        normalizedRegistrationNumber,
+      );
+    }
+
+    const { data, error: unclaimedParticipantsError } = await unclaimedQuery;
+
+    if (unclaimedParticipantsError) {
+      console.error(
+        "Error fetching unclaimed event passes for user:",
+        unclaimedParticipantsError,
+      );
+      return [];
+    }
+
+    unclaimedParticipants = data ?? [];
+  }
+
+  const accessibleParticipantsMap = new Map<
+    string,
+    {
+      id: string;
+      event_id: string;
+      user_id?: string | null;
+      email?: string | null;
+      registration_number: string;
+      created_at?: string | null;
+      checked_in_at?: string | null;
+      check_in_method?: string | null;
+      check_in_token?: string | null;
+      extra_data?: unknown;
+    }
+  >();
+
+  [...(ownedParticipants ?? []), ...(unclaimedParticipants ?? [])]
+    .filter((participant) =>
+      canRevealParticipantCheckInToken(participant, participantIdentity),
     )
-    .or(filters.join(","))
-    .order("created_at", { ascending: false })
-    .limit(50);
+    .forEach((participant) => {
+      if (!accessibleParticipantsMap.has(participant.id)) {
+        accessibleParticipantsMap.set(participant.id, participant);
+      }
+    });
 
-  if (participantsError) {
-    console.error("Error fetching user event passes:", participantsError);
-    return [];
-  }
+  const participants = Array.from(accessibleParticipantsMap.values());
 
-  if (!participants?.length) {
+  if (participants.length === 0) {
     return [];
   }
 
@@ -203,7 +283,7 @@ export async function getUserEventPasses({
         check_in_token?: string;
       } = {};
 
-      if (!participant.user_id && normalizedUserId) {
+      if (canAttachParticipantToUser(participant, participantIdentity)) {
         updatePayload.user_id = normalizedUserId;
       }
 

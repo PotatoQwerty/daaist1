@@ -93,6 +93,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
   const [submissionMessage, setSubmissionMessage] = useState(
     "Your details have been saved.",
   );
+  const [existingRegistrationNotice, setExistingRegistrationNotice] = useState("");
   const [checkingExistingRegistration, setCheckingExistingRegistration] =
     useState(false);
   const [form, setForm] = useState<FormState>({
@@ -214,11 +215,11 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
     const registrationNumber = form.registrationNumber.trim();
     const canCheck =
       Boolean(session?.user?.id) ||
-      Boolean(email) ||
-      Boolean(registrationNumber);
+      Boolean(email && registrationNumber);
 
     if (!canCheck) {
       setCheckingExistingRegistration(false);
+      setExistingRegistrationNotice("");
       lastResolvedRegistrationKeyRef.current = null;
       return;
     }
@@ -261,9 +262,21 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
           setSubmissionMessage(
             result.message || "You are already registered for this event.",
           );
+          setExistingRegistrationNotice("");
           setSubmitted(true);
-        } else if (lastResolvedRegistrationKeyRef.current === queryKey) {
-          lastResolvedRegistrationKeyRef.current = null;
+        } else if (result.alreadyRegistered) {
+          setExistingRegistrationNotice(
+            result.message ||
+              "A registration already exists for this event. Sign in to reopen the saved pass.",
+          );
+          if (lastResolvedRegistrationKeyRef.current === queryKey) {
+            lastResolvedRegistrationKeyRef.current = null;
+          }
+        } else {
+          setExistingRegistrationNotice("");
+          if (lastResolvedRegistrationKeyRef.current === queryKey) {
+            lastResolvedRegistrationKeyRef.current = null;
+          }
         }
       } catch (error) {
         if (
@@ -329,12 +342,25 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
       const result: RegistrationResponse = await response.json();
 
       if (response.status === 409 && result.alreadyRegistered) {
-        setCheckInToken(result.checkInToken || "");
-        setSubmissionMessage(
-          result.message || "You are already registered for this event.",
+        if (result.checkInToken) {
+          setCheckInToken(result.checkInToken);
+          setSubmissionMessage(
+            result.message || "You are already registered for this event.",
+          );
+          setExistingRegistrationNotice("");
+          setSubmitted(true);
+          toast.success(result.message || "You are already registered.");
+          return;
+        }
+
+        setExistingRegistrationNotice(
+          result.message ||
+            "A registration already exists for this event. Sign in to reopen the saved pass.",
         );
-        setSubmitted(true);
-        toast.success(result.message || "You are already registered.");
+        toast.error(
+          result.message ||
+            "A registration already exists for this event.",
+        );
         return;
       }
 
@@ -344,6 +370,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
 
       setCheckInToken(result.checkInToken || "");
       setSubmissionMessage(result.message || "Your details have been saved.");
+      setExistingRegistrationNotice("");
       toast.success(result.message || "Your registration has been received.");
       setSubmitted(true);
     } catch (error) {
@@ -481,6 +508,11 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                         Checking whether you are already registered...
                       </p>
                     )}
+                    {existingRegistrationNotice && !submitted && (
+                      <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                        {existingRegistrationNotice}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -491,6 +523,11 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                       {checkingExistingRegistration && (
                         <p className="text-sm font-medium text-primary">
                           Checking whether you are already registered...
+                        </p>
+                      )}
+                      {existingRegistrationNotice && !submitted && (
+                        <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                          {existingRegistrationNotice}
                         </p>
                       )}
                     </div>

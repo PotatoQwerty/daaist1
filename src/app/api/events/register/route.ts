@@ -1,6 +1,11 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import {
+  canAttachParticipantToUser,
+  canRevealParticipantCheckInToken,
+  getExistingRegistrationMessage,
+} from "@/lib/event-pass-access";
+import {
   normalizeAttendanceRole,
   EventParticipantExtraData,
   getAllowedStudyYears,
@@ -30,6 +35,9 @@ type RegistrationPayload = {
 
 type ExistingParticipant = {
   id: string;
+  user_id?: string | null;
+  email?: string | null;
+  registration_number?: string | null;
   check_in_token?: string | null;
 };
 
@@ -86,7 +94,7 @@ async function findExistingParticipantForEvent({
     supabaseServer
       .schema("public")
       .from("event_participants")
-      .select("id, check_in_token")
+      .select("id, user_id, email, registration_number, check_in_token")
       .eq("event_id", eventId)
       .order("created_at", { ascending: true })
       .limit(1);
@@ -140,7 +148,7 @@ export async function GET(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user?.id && !email && !registrationNumber) {
+  if (!user?.id && !(email && registrationNumber)) {
     return NextResponse.json({ alreadyRegistered: false }, { status: 200 });
   }
 
@@ -166,17 +174,36 @@ export async function GET(request: Request) {
     return NextResponse.json({ alreadyRegistered: false }, { status: 200 });
   }
 
-  const checkInToken = existingParticipant.check_in_token || randomUUID();
+  const participantIdentity = {
+    userId: user?.id ?? null,
+    email: user?.email ?? email,
+    registrationNumber,
+  };
+  const canRevealToken = canRevealParticipantCheckInToken(
+    existingParticipant,
+    participantIdentity,
+  );
+  const canAttachUser = canAttachParticipantToUser(
+    existingParticipant,
+    participantIdentity,
+  );
+  const message = getExistingRegistrationMessage({
+    canRevealToken,
+    isSignedIn: Boolean(user?.id),
+  });
+  const checkInToken = canRevealToken
+    ? existingParticipant.check_in_token || randomUUID()
+    : null;
   const updatePayload: {
     check_in_token?: string;
     user_id?: string;
   } = {};
 
-  if (!existingParticipant.check_in_token) {
+  if (canRevealToken && !existingParticipant.check_in_token && checkInToken) {
     updatePayload.check_in_token = checkInToken;
   }
 
-  if (user?.id) {
+  if (canAttachUser && user?.id) {
     updatePayload.user_id = user.id;
   }
 
@@ -199,9 +226,9 @@ export async function GET(request: Request) {
   return NextResponse.json(
     {
       alreadyRegistered: true,
-      message: "You are already registered for this event.",
+      message,
       registrationId: existingParticipant.id,
-      checkInToken,
+      ...(checkInToken ? { checkInToken } : {}),
     },
     { status: 200 },
   );
@@ -371,17 +398,36 @@ export async function POST(request: Request) {
   }
 
   if (existingParticipant?.id) {
-    const checkInToken = existingParticipant.check_in_token || randomUUID();
+    const participantIdentity = {
+      userId: user?.id ?? null,
+      email: user?.email ?? email,
+      registrationNumber,
+    };
+    const canRevealToken = canRevealParticipantCheckInToken(
+      existingParticipant,
+      participantIdentity,
+    );
+    const canAttachUser = canAttachParticipantToUser(
+      existingParticipant,
+      participantIdentity,
+    );
+    const message = getExistingRegistrationMessage({
+      canRevealToken,
+      isSignedIn: Boolean(user?.id),
+    });
+    const checkInToken = canRevealToken
+      ? existingParticipant.check_in_token || randomUUID()
+      : null;
     const updatePayload: {
       check_in_token?: string;
       user_id?: string;
     } = {};
 
-    if (!existingParticipant.check_in_token) {
+    if (canRevealToken && !existingParticipant.check_in_token && checkInToken) {
       updatePayload.check_in_token = checkInToken;
     }
 
-    if (user?.id) {
+    if (canAttachUser && user?.id) {
       updatePayload.user_id = user.id;
     }
 
@@ -403,11 +449,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: "You are already registered for this event.",
-        message: "You are already registered for this event.",
+        error: message,
+        message,
         alreadyRegistered: true,
         registrationId: existingParticipant.id,
-        checkInToken,
+        ...(checkInToken ? { checkInToken } : {}),
       },
       { status: 409 },
     );
