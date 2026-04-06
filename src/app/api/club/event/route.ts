@@ -116,7 +116,9 @@ async function removeStoragePaths(paths: string[]) {
     return null;
   }
 
-  const { error } = await supabaseServer.storage.from("daa").remove(uniquePaths);
+  const { error } = await supabaseServer.storage
+    .from("daa")
+    .remove(uniquePaths);
   return error;
 }
 
@@ -185,18 +187,16 @@ export const POST = async (request: Request) => {
     const squareImageFile = getOptionalFile(formData.get("square_image_file"));
 
     if (!clubId) {
-      return NextResponse.json({ error: "Club ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Club ID is required" },
+        { status: 400 },
+      );
     }
 
-    const { role, canManageEvents } = await ensureManagerAccess(user.id, clubId);
-
-    console.log("[api/club/event][POST] role check", {
-      requestId,
-      userId: user.id,
+    const { role, canManageEvents } = await ensureManagerAccess(
+      user.id,
       clubId,
-      role,
-      canManageEvents,
-    });
+    );
 
     if (!canManageEvents) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -254,7 +254,8 @@ export const POST = async (request: Request) => {
         await removeStoragePaths(uploadedPaths);
         return NextResponse.json(
           {
-            error: squareUpload.error?.message || "Failed to upload square image.",
+            error:
+              squareUpload.error?.message || "Failed to upload square image.",
           },
           { status: 500 },
         );
@@ -411,7 +412,8 @@ export const PATCH = async (request: Request) => {
         });
         return NextResponse.json(
           {
-            error: squareUpload.error?.message || "Failed to upload square image.",
+            error:
+              squareUpload.error?.message || "Failed to upload square image.",
           },
           { status: 500 },
         );
@@ -419,7 +421,9 @@ export const PATCH = async (request: Request) => {
 
       nextSquareImage = squareUpload.publicUrl;
     } else if (removeSquareImage) {
-      const oldSquarePath = getStoragePathFromPublicUrl(existingEvent.square_image);
+      const oldSquarePath = getStoragePathFromPublicUrl(
+        existingEvent.square_image,
+      );
       if (oldSquarePath) {
         pathsToRemove.push(oldSquarePath);
       }
@@ -503,7 +507,10 @@ export const DELETE = async (request: Request) => {
       return NextResponse.json({ error: "Event not found" }, { status: 404 });
     }
 
-    const { canManageEvents } = await ensureManagerAccess(user.id, event.club_id);
+    const { canManageEvents } = await ensureManagerAccess(
+      user.id,
+      event.club_id,
+    );
 
     if (!canManageEvents) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -519,7 +526,8 @@ export const DELETE = async (request: Request) => {
     }
 
     const pathsToRemove = [
-      getStoragePathFromPublicUrl(event.cover_image) || `clubs/events/${eventId}`,
+      getStoragePathFromPublicUrl(event.cover_image) ||
+        `clubs/events/${eventId}`,
       getStoragePathFromPublicUrl(event.square_image),
     ]
       .filter((value): value is string => Boolean(value))
@@ -528,7 +536,11 @@ export const DELETE = async (request: Request) => {
     const storageError = await removeStoragePaths(pathsToRemove);
 
     if (storageError) {
-      console.error("Failed to cleanup storage for event:", eventId, storageError);
+      console.error(
+        "Failed to cleanup storage for event:",
+        eventId,
+        storageError,
+      );
     }
 
     return NextResponse.json(

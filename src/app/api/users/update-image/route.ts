@@ -26,12 +26,10 @@ export async function POST(request: Request) {
     .single();
 
   if (fetchError && fetchError.code !== "PGRST116") {
-    console.log("fetchError", fetchError);
-
     console.error("Error fetching user image:", fetchError);
     return NextResponse.json(
       { error: "Error fetching user data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -61,7 +59,7 @@ export async function POST(request: Request) {
   if (uploadError)
     return NextResponse.json(
       { error: "Error uploading file" },
-      { status: 500 }
+      { status: 500 },
     );
 
   const { data: publicUrlData } = supabase.storage
@@ -77,7 +75,7 @@ export async function POST(request: Request) {
   if (updateError)
     return NextResponse.json(
       { error: "Error updating profile" },
-      { status: 500 }
+      { status: 500 },
     );
 
   return NextResponse.json({ imageUrl: publicUrlData.publicUrl });

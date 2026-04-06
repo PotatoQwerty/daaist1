@@ -6,7 +6,7 @@ import { getUserRoles } from "@/lib/supabase/actions";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ filekey: string[] }> }
+  { params }: { params: Promise<{ filekey: string[] }> },
 ) {
   const supabase = await createClient();
   const {
@@ -19,7 +19,6 @@ export async function DELETE(
   const { isAdmin } = await getUserRoles(user.id);
   const fileKeyArray = (await params).filekey;
   const fileKey = fileKeyArray.join("/");
-  console.log(fileKey);
 
   // Check if user owns the file OR is admin
   // We need to fetch the file metadata first to check owner.
@@ -56,18 +55,18 @@ export async function DELETE(
       console.error("Supabase delete error:", error);
       return NextResponse.json(
         { message: "Failed to delete from database" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     return NextResponse.json(
       { message: "File deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
     return NextResponse.json(
       { message: "Internal Server Error", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

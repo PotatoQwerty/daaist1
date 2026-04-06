@@ -10,15 +10,7 @@ function sanitizeSearchTerm(value: string) {
   return value.replace(/[%_,]/g, " ").trim();
 }
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const eventId = searchParams.get("event_id")?.trim();
-  const query = sanitizeSearchTerm(searchParams.get("q") || "");
-
-  if (!eventId) {
-    return NextResponse.json({ error: "Event ID is required." }, { status: 400 });
-  }
-
+async function ensureEventManagerAccess(eventId: string) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -43,6 +35,23 @@ export async function GET(request: Request) {
 
   if (!canManageEvents) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  return null;
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const eventId = searchParams.get("event_id")?.trim();
+  const query = sanitizeSearchTerm(searchParams.get("q") || "");
+
+  if (!eventId) {
+    return NextResponse.json({ error: "Event ID is required." }, { status: 400 });
+  }
+
+  const accessError = await ensureEventManagerAccess(eventId);
+  if (accessError) {
+    return accessError;
   }
 
   let participantsQuery = supabaseServer
@@ -102,4 +111,78 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({ data: normalizedParticipants }, { status: 200 });
+}
+
+export async function DELETE(request: Request) {
+  let payload: { eventId?: string; participantId?: string };
+
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 },
+    );
+  }
+
+  const eventId = payload.eventId?.trim();
+  const participantId = payload.participantId?.trim();
+
+  if (!eventId || !participantId) {
+    return NextResponse.json(
+      { error: "Event ID and participant ID are required." },
+      { status: 400 },
+    );
+  }
+
+  const accessError = await ensureEventManagerAccess(eventId);
+  if (accessError) {
+    return accessError;
+  }
+
+  const { data: participant, error: participantError } = await supabaseServer
+    .schema("public")
+    .from("event_participants")
+    .select("id, first_name, last_name")
+    .eq("event_id", eventId)
+    .eq("id", participantId)
+    .maybeSingle();
+
+  if (participantError) {
+    console.error("Participant delete lookup error:", participantError);
+    return NextResponse.json(
+      { error: "Unable to verify this registration." },
+      { status: 500 },
+    );
+  }
+
+  if (!participant) {
+    return NextResponse.json(
+      { error: "Participant not found for this event." },
+      { status: 404 },
+    );
+  }
+
+  const { error: deleteError } = await supabaseServer
+    .schema("public")
+    .from("event_participants")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("id", participantId);
+
+  if (deleteError) {
+    console.error("Participant delete error:", deleteError);
+    return NextResponse.json(
+      { error: "Unable to delete this registration." },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json(
+    {
+      message: `Registration removed for ${participant.first_name} ${participant.last_name}.`,
+      participantId: participant.id,
+    },
+    { status: 200 },
+  );
 }

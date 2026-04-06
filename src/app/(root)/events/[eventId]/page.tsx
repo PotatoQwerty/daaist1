@@ -124,7 +124,7 @@ export default async function EventPage({ params }: EventPageProps) {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[2rem] border border-border bg-card shadow-[0_24px_90px_-45px_rgba(10,25,47,0.55)]">
+        <div className="overflow-hidden rounded-4xl border border-border bg-card shadow-[0_24px_90px_-45px_rgba(10,25,47,0.55)]">
           <div className="relative min-h-[360px] overflow-hidden sm:min-h-[420px]">
             <Image
               src={event.cover_image || bannerFallback}
@@ -136,7 +136,7 @@ export default async function EventPage({ params }: EventPageProps) {
             />
             <div className="absolute inset-0 bg-linear-to-br from-primary/95 via-primary/75 to-accent/60" />
             <div className="absolute -left-8 top-8 h-28 w-28 rounded-full border border-white/25 bg-secondary/70 blur-sm" />
-            <div className="absolute bottom-6 right-6 h-32 w-32 rounded-[2rem] border border-white/20 bg-white/10 backdrop-blur-sm" />
+            <div className="absolute bottom-6 right-6 h-32 w-32 rounded-4xl border border-white/20 bg-white/10 backdrop-blur-sm" />
             {event.square_image && (
               <div className="absolute right-6 top-6 h-28 w-28 overflow-hidden rounded-[1.75rem] border border-white/20 bg-white/10 shadow-xl backdrop-blur-sm">
                 <Image
@@ -188,7 +188,7 @@ export default async function EventPage({ params }: EventPageProps) {
               </div>
 
               {club?.slug && (
-                <div className="rounded-[1.5rem] border border-border bg-muted/35 p-5">
+                <div className="rounded-3xl border border-border bg-muted/35 p-5">
                   <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
                     Hosted by
                   </p>

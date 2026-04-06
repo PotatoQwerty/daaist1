@@ -9,9 +9,11 @@ import {
   Loader2,
   ScanLine,
   Search,
+  Trash2,
   UserRoundCheck,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -41,6 +43,12 @@ type CheckInResponse = {
   message?: string;
   alreadyCheckedIn?: boolean;
   participant?: Participant;
+  error?: string;
+};
+
+type DeleteRegistrationResponse = {
+  message?: string;
+  participantId?: string;
   error?: string;
 };
 
@@ -82,6 +90,9 @@ export default function EventCheckInClient({
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeParticipantId, setActiveParticipantId] = useState<string | null>(
+    null,
+  );
+  const [deletingParticipantId, setDeletingParticipantId] = useState<string | null>(
     null,
   );
   const [autoCheckInState, setAutoCheckInState] = useState<{
@@ -448,6 +459,63 @@ export default function EventCheckInClient({
     }
   };
 
+  const handleDeleteRegistration = useCallback(
+    async (participant: Participant) => {
+      const participantName =
+        `${participant.first_name} ${participant.last_name}`.trim();
+      const confirm = await Swal.fire({
+        title: "Delete this registration?",
+        text: participant.checked_in_at
+          ? `${participantName} is already checked in. Deleting this registration will also remove their check-in record.`
+          : `${participantName} will be removed from ${eventTitle}'s registration list.`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, delete registration",
+        confirmButtonColor: "oklch(0.67 0.23 25)",
+        cancelButtonText: "Cancel",
+        cancelButtonColor: "oklch(0.32 0.05 250)",
+      });
+
+      if (!confirm.isConfirmed) {
+        return;
+      }
+
+      try {
+        setDeletingParticipantId(participant.id);
+
+        const response = await fetch("/api/club/event/participants", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            eventId,
+            participantId: participant.id,
+          }),
+        });
+
+        const result: DeleteRegistrationResponse = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Unable to delete this registration.");
+        }
+
+        toast.success(result.message || "Registration deleted.");
+        await fetchParticipants(query);
+      } catch (error) {
+        console.error(error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Unable to delete this registration.",
+        );
+      } finally {
+        setDeletingParticipantId(null);
+      }
+    },
+    [eventId, eventTitle, fetchParticipants, query],
+  );
+
   const availableStudyYears = useMemo(() => {
     return Array.from(
       new Set(
@@ -766,81 +834,110 @@ export default function EventCheckInClient({
               No loaded participants match the current filters.
             </div>
           ) : (
-            filteredParticipants.map((participant) => (
-              <div
-                key={participant.id}
-                className="flex flex-col gap-4 rounded-2xl border border-border bg-background p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="space-y-1">
-                  <p className="text-lg font-semibold">
-                    {participant.first_name} {participant.last_name}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {participant.registration_number}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {participant.email} | {participant.phone}
-                  </p>
-                  <div className="flex flex-wrap gap-2 pt-1 text-xs">
-                    {participant.attendance_role_label ? (
-                      <span className="rounded-full border border-border bg-muted/45 px-3 py-1 text-muted-foreground">
-                        {participant.attendance_role_label}
-                      </span>
-                    ) : null}
-                    {participant.study_year ? (
-                      <span className="rounded-full border border-border bg-muted/45 px-3 py-1 text-muted-foreground">
-                        {participant.study_year}
-                      </span>
-                    ) : null}
-                    {!participant.checked_in_at ? (
-                      <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
-                        Pending
-                      </span>
-                    ) : null}
-                  </div>
-                  {participant.university && (
-                    <p className="text-sm text-muted-foreground">
-                      {participant.university}
-                    </p>
-                  )}
-                  {participant.created_at && (
-                    <p className="text-sm text-muted-foreground">
-                      Registered {new Date(participant.created_at).toLocaleString()}
-                    </p>
-                  )}
-                  {participant.checked_in_at && (
-                    <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                      Checked in{" "}
-                      {new Date(participant.checked_in_at).toLocaleString()} via{" "}
-                      {participant.check_in_method || "manual"}
-                    </p>
-                  )}
-                </div>
+            filteredParticipants.map((participant) => {
+              const isCheckingIn = activeParticipantId === participant.id;
+              const isDeleting = deletingParticipantId === participant.id;
+              const isBusy = isCheckingIn || isDeleting;
 
-                {participant.checked_in_at ? (
-                  <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-400">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Checked in
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    className="h-11 rounded-xl px-5"
-                    onClick={() => handleManualCheckIn(participant.id)}
-                    disabled={activeParticipantId === participant.id}
-                  >
-                    {activeParticipantId === participant.id ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Checking in...
-                      </>
-                    ) : (
-                      "Check in attendee"
+              return (
+                <div
+                  key={participant.id}
+                  className="flex flex-col gap-4 rounded-2xl border border-border bg-background p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="space-y-1">
+                    <p className="text-lg font-semibold">
+                      {participant.first_name} {participant.last_name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {participant.registration_number}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {participant.email} | {participant.phone}
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-1 text-xs">
+                      {participant.attendance_role_label ? (
+                        <span className="rounded-full border border-border bg-muted/45 px-3 py-1 text-muted-foreground">
+                          {participant.attendance_role_label}
+                        </span>
+                      ) : null}
+                      {participant.study_year ? (
+                        <span className="rounded-full border border-border bg-muted/45 px-3 py-1 text-muted-foreground">
+                          {participant.study_year}
+                        </span>
+                      ) : null}
+                      {!participant.checked_in_at ? (
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
+                          Pending
+                        </span>
+                      ) : null}
+                    </div>
+                    {participant.university && (
+                      <p className="text-sm text-muted-foreground">
+                        {participant.university}
+                      </p>
                     )}
-                  </Button>
-                )}
-              </div>
-            ))
+                    {participant.created_at && (
+                      <p className="text-sm text-muted-foreground">
+                        Registered{" "}
+                        {new Date(participant.created_at).toLocaleString()}
+                      </p>
+                    )}
+                    {participant.checked_in_at && (
+                      <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                        Checked in{" "}
+                        {new Date(participant.checked_in_at).toLocaleString()} via{" "}
+                        {participant.check_in_method || "manual"}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-2 sm:items-end">
+                    {participant.checked_in_at ? (
+                      <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-400">
+                        <CheckCircle2 className="h-4 w-4" />
+                        Checked in
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        className="h-11 rounded-xl px-5"
+                        onClick={() => handleManualCheckIn(participant.id)}
+                        disabled={isBusy}
+                      >
+                        {isCheckingIn ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Checking in...
+                          </>
+                        ) : (
+                          "Check in attendee"
+                        )}
+                      </Button>
+                    )}
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 rounded-xl border-destructive/30 px-5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => handleDeleteRegistration(participant)}
+                      disabled={isBusy}
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4" />
+                          Delete registration
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>

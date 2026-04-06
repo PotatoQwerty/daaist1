@@ -23,12 +23,11 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const { targetUserId, roles, firstname, lastname, username } = body;
-    console.log("Roles received:", roles);
 
     if (!targetUserId) {
       return NextResponse.json(
         { error: "Target User ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +47,7 @@ export async function POST(req: Request) {
       if (profileError) {
         return NextResponse.json(
           { error: "Failed to update profile: " + profileError.message },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -60,7 +59,7 @@ export async function POST(req: Request) {
         if (!ALLOWED_ROLES.includes(role)) {
           return NextResponse.json(
             { error: `Invalid role: ${role}` },
-            { status: 400 }
+            { status: 400 },
           );
         }
       }
@@ -75,7 +74,7 @@ export async function POST(req: Request) {
       if (deleteError) {
         return NextResponse.json(
           { error: "Failed to delete existing roles: " + deleteError.message },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
@@ -93,7 +92,7 @@ export async function POST(req: Request) {
       if (insertError) {
         return NextResponse.json(
           { error: "Failed to insert roles: " + insertError.message },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -124,7 +123,7 @@ export async function POST(req: Request) {
     console.error("Admin user update error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
