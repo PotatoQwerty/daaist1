@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getAttendanceRoleLabel,
-  normalizeAttendanceRole,
+  parseEventParticipantExtraData,
 } from "@/lib/event-extra";
 import { getEventByEventId, getUserClubRole } from "@/lib/supabase/actions";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
@@ -89,24 +89,18 @@ export async function GET(request: Request) {
   }
 
   const normalizedParticipants = (data ?? []).map((participant) => {
-    const extraData =
-      participant.extra_data &&
-      typeof participant.extra_data === "object" &&
-      !Array.isArray(participant.extra_data)
-        ? participant.extra_data
-        : {};
-    const attendanceRole = normalizeAttendanceRole(
-      (extraData as Record<string, unknown>).attendanceRole,
-    );
+    const extraData = parseEventParticipantExtraData(participant.extra_data);
     const participantFields = { ...participant };
     delete participantFields.extra_data;
 
     return {
       ...participantFields,
-      attendance_role: attendanceRole,
-      attendance_role_label: attendanceRole
-        ? getAttendanceRoleLabel(attendanceRole)
+      attendance_role: extraData.attendanceRole ?? null,
+      attendance_role_label: extraData.attendanceRole
+        ? getAttendanceRoleLabel(extraData.attendanceRole)
         : null,
+      experience_answers: extraData.experience ?? [],
+      yes_no_answers: extraData.yesNo ?? [],
     };
   });
 

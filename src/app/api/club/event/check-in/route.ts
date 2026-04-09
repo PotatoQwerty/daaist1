@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import {
   getAttendanceRoleLabel,
-  normalizeAttendanceRole,
+  parseEventParticipantExtraData,
 } from "@/lib/event-extra";
 import { getEventByEventId, getUserClubRole } from "@/lib/supabase/actions";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 
 type CheckInPayload = {
+  action?: "check_in" | "cancel";
   eventId?: string;
   token?: string;
   participantId?: string;
@@ -27,24 +28,18 @@ function normalizeParticipant(participant: {
   check_in_method?: string | null;
   extra_data?: unknown;
 }) {
-  const extraData =
-    participant.extra_data &&
-    typeof participant.extra_data === "object" &&
-    !Array.isArray(participant.extra_data)
-      ? participant.extra_data
-      : {};
-  const attendanceRole = normalizeAttendanceRole(
-    (extraData as Record<string, unknown>).attendanceRole,
-  );
+  const extraData = parseEventParticipantExtraData(participant.extra_data);
   const participantFields = { ...participant };
   delete participantFields.extra_data;
 
   return {
     ...participantFields,
-    attendance_role: attendanceRole,
-    attendance_role_label: attendanceRole
-      ? getAttendanceRoleLabel(attendanceRole)
+    attendance_role: extraData.attendanceRole ?? null,
+    attendance_role_label: extraData.attendanceRole
+      ? getAttendanceRoleLabel(extraData.attendanceRole)
       : null,
+    experience_answers: extraData.experience ?? [],
+    yes_no_answers: extraData.yesNo ?? [],
   };
 }
 
@@ -63,6 +58,7 @@ export async function POST(request: Request) {
   const eventId = payload.eventId?.trim();
   const token = payload.token?.trim();
   const participantId = payload.participantId?.trim();
+  const action = payload.action === "cancel" ? "cancel" : "check_in";
   const method =
     payload.method === "manual"
       ? "manual"
@@ -130,7 +126,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (participant.checked_in_at) {
+  if (action === "check_in" && participant.checked_in_at) {
     return NextResponse.json(
       {
         message: "Participant already checked in.",
@@ -141,14 +137,33 @@ export async function POST(request: Request) {
     );
   }
 
+  if (action === "cancel" && !participant.checked_in_at) {
+    return NextResponse.json(
+      {
+        message: "Participant is not currently checked in.",
+        participant: normalizeParticipant(participant),
+      },
+      { status: 200 },
+    );
+  }
+
+  const updatePayload =
+    action === "cancel"
+      ? {
+          checked_in_at: null,
+          checked_in_by: null,
+          check_in_method: null,
+        }
+      : {
+          checked_in_at: new Date().toISOString(),
+          checked_in_by: user.id,
+          check_in_method: method,
+        };
+
   const { data: updatedParticipant, error: updateError } = await supabaseServer
     .schema("public")
     .from("event_participants")
-    .update({
-      checked_in_at: new Date().toISOString(),
-      checked_in_by: user.id,
-      check_in_method: method,
-    })
+    .update(updatePayload)
     .eq("id", participant.id)
     .select(
       "id, first_name, last_name, email, phone, university, study_year, registration_number, created_at, checked_in_at, check_in_method, extra_data",
@@ -158,14 +173,22 @@ export async function POST(request: Request) {
   if (updateError) {
     console.error("Participant check-in update error:", updateError);
     return NextResponse.json(
-      { error: "Unable to complete check-in." },
+      {
+        error:
+          action === "cancel"
+            ? "Unable to cancel this check-in."
+            : "Unable to complete check-in.",
+      },
       { status: 500 },
     );
   }
 
   return NextResponse.json(
     {
-      message: "Participant checked in successfully.",
+      message:
+        action === "cancel"
+          ? "Participant check-in cancelled."
+          : "Participant checked in successfully.",
       alreadyCheckedIn: false,
       participant: normalizeParticipant(updatedParticipant),
     },

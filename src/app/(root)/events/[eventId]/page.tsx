@@ -13,6 +13,7 @@ import bannerFallback from "../../../../../public/images/banner.jpg";
 import {
   getClubById,
   getPublicEventById,
+  getUserEventPasses,
   getUserClubRole,
 } from "@/lib/supabase/actions";
 import { formatEventDateRange } from "@/lib/event-date";
@@ -23,6 +24,7 @@ import {
   getRegisterEventPath,
 } from "@/lib/event-path";
 import { createClient } from "@/lib/supabase/server";
+import { getUserContext } from "@/lib/supabase/user-context";
 
 type EventPageProps = {
   params: Promise<{ eventId: string }>;
@@ -79,6 +81,7 @@ export default async function EventPage({ params }: EventPageProps) {
 
   const club = event.club_id ? await getClubById(event.club_id) : null;
   const eventDate = formatEventDateRange(event.start_date, event.end_date);
+  const userContext = await getUserContext();
   const supabase = await createClient();
   const {
     data: { user },
@@ -91,6 +94,22 @@ export default async function EventPage({ params }: EventPageProps) {
     role === "president" ||
     role === "vice_president" ||
     role === "event_manager";
+  const userPasses = userContext.session?.user?.id
+    ? await getUserEventPasses({
+        userId: userContext.session.user.id,
+        email: userContext.session.user.email,
+        registrationNumber: userContext.user?.registration_number,
+      })
+    : [];
+  const existingPass = userPasses.find((pass) => pass.event_id === event.id);
+  const registerCtaLabel = existingPass ? "View event pass" : "Register now";
+  const registerPanelTitle = existingPass ? "Your pass is ready" : "Ready to join?";
+  const registerPanelCopy = existingPass
+    ? "You are already registered for this event. Open your event pass to review the QR code and check-in backup details."
+    : "Open the dedicated registration page for this event and submit your details in one step.";
+  const registerPanelButtonLabel = existingPass
+    ? "Open event pass"
+    : "Go to registration";
 
   return (
     <section className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8">
@@ -118,7 +137,7 @@ export default async function EventPage({ params }: EventPageProps) {
               href={getRegisterEventPath(event)}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-accent/90"
             >
-              Register now
+              {registerCtaLabel}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -241,16 +260,15 @@ export default async function EventPage({ params }: EventPageProps) {
               </div>
 
               <div className="rounded-2xl border border-border bg-card p-5">
-                <h3 className="text-lg font-bold">Ready to join?</h3>
+                <h3 className="text-lg font-bold">{registerPanelTitle}</h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Open the dedicated registration page for this event and submit
-                  your details in one step.
+                  {registerPanelCopy}
                 </p>
                 <Link
                   href={getRegisterEventPath(event)}
                   className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-accent/90"
                 >
-                  Go to registration
+                  {registerPanelButtonLabel}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>

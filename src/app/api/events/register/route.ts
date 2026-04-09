@@ -289,6 +289,7 @@ export async function POST(request: Request) {
   const experiencePrompts = eventExtraData.experiencePrompts ?? [];
   const yesNoPrompts = eventExtraData.yesNoQuestions ?? [];
   const allowedStudyYears = getAllowedStudyYears(eventExtraData);
+  const shouldCollectExtraAnswers = attendanceRole !== "invited_only";
 
   if (
     !allowedStudyYears.includes(studyYear as (typeof allowedStudyYears)[number])
@@ -307,41 +308,49 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   const generatedCheckInToken = randomUUID();
-  const normalizedExperienceAnswers = experiencePrompts.map((prompt) => {
-    const submittedAnswer = experienceAnswers.find(
-      (answer) =>
-        normalizeText(answer.topic).toLowerCase() === prompt.topic.toLowerCase(),
-    );
+  const normalizedExperienceAnswers = shouldCollectExtraAnswers
+    ? experiencePrompts.map((prompt) => {
+        const submittedAnswer = experienceAnswers.find(
+          (answer) =>
+            normalizeText(answer.topic).toLowerCase() ===
+            prompt.topic.toLowerCase(),
+        );
 
-    const percentage =
-      typeof submittedAnswer?.percentage === "number"
-        ? Math.min(100, Math.max(0, Math.round(submittedAnswer.percentage)))
-        : 50;
+        const percentage =
+          typeof submittedAnswer?.percentage === "number"
+            ? Math.min(100, Math.max(0, Math.round(submittedAnswer.percentage)))
+            : 50;
 
-    return {
-      topic: prompt.topic,
-      percentage,
-    };
-  });
+        return {
+          topic: prompt.topic,
+          percentage,
+        };
+      })
+    : [];
 
-  const normalizedYesNoAnswers = yesNoPrompts.map((prompt) => {
-    const submittedAnswer = yesNoAnswers.find(
-      (answer) =>
-        normalizeText(answer.question).toLowerCase() ===
-        prompt.question.toLowerCase(),
-    );
+  const normalizedYesNoAnswers = shouldCollectExtraAnswers
+    ? yesNoPrompts.map((prompt) => {
+        const submittedAnswer = yesNoAnswers.find(
+          (answer) =>
+            normalizeText(answer.question).toLowerCase() ===
+            prompt.question.toLowerCase(),
+        );
 
-    if (typeof submittedAnswer?.answer !== "boolean") {
-      return null;
-    }
+        if (typeof submittedAnswer?.answer !== "boolean") {
+          return null;
+        }
 
-    return {
-      question: prompt.question,
-      answer: submittedAnswer.answer,
-    };
-  });
+        return {
+          question: prompt.question,
+          answer: submittedAnswer.answer,
+        };
+      })
+    : [];
 
-  if (normalizedYesNoAnswers.some((answer) => answer === null)) {
+  if (
+    shouldCollectExtraAnswers &&
+    normalizedYesNoAnswers.some((answer) => answer === null)
+  ) {
     return NextResponse.json(
       { error: "Please answer every yes or no question before submitting." },
       { status: 400 },
@@ -352,11 +361,11 @@ export async function POST(request: Request) {
 
   participantExtraData.attendanceRole = attendanceRole;
 
-  if (normalizedExperienceAnswers.length > 0) {
+  if (shouldCollectExtraAnswers && normalizedExperienceAnswers.length > 0) {
     participantExtraData.experience = normalizedExperienceAnswers;
   }
 
-  if (normalizedYesNoAnswers.length > 0) {
+  if (shouldCollectExtraAnswers && normalizedYesNoAnswers.length > 0) {
     participantExtraData.yesNo = normalizedYesNoAnswers.filter(
       (
         answer,

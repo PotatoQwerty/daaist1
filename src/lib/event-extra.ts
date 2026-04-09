@@ -26,6 +26,16 @@ export type EventYesNoQuestion = {
   required?: boolean;
 };
 
+export type EventParticipantExperienceAnswer = {
+  topic: string;
+  percentage: number;
+};
+
+export type EventParticipantYesNoAnswer = {
+  question: string;
+  answer: boolean;
+};
+
 export type EventExtraData = {
   experiencePrompts?: EventExperiencePrompt[];
   yesNoQuestions?: EventYesNoQuestion[];
@@ -34,14 +44,8 @@ export type EventExtraData = {
 
 export type EventParticipantExtraData = {
   attendanceRole?: EventAttendanceRole;
-  experience?: Array<{
-    topic: string;
-    percentage: number;
-  }>;
-  yesNo?: Array<{
-    question: string;
-    answer: boolean;
-  }>;
+  experience?: EventParticipantExperienceAnswer[];
+  yesNo?: EventParticipantYesNoAnswer[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -50,6 +54,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function normalizeText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizePercentage(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.min(100, Math.max(0, Math.round(value)))
+    : null;
 }
 
 export function normalizeAttendanceRole(
@@ -101,6 +111,44 @@ function normalizeYesNoQuestion(value: unknown): EventYesNoQuestion | null {
   };
 }
 
+function normalizeParticipantExperienceAnswer(
+  value: unknown,
+): EventParticipantExperienceAnswer | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const topic = normalizeText(value.topic);
+  const percentage = normalizePercentage(value.percentage);
+
+  if (!topic || percentage === null) {
+    return null;
+  }
+
+  return {
+    topic,
+    percentage,
+  };
+}
+
+function normalizeParticipantYesNoAnswer(
+  value: unknown,
+): EventParticipantYesNoAnswer | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const question = normalizeText(value.question);
+  if (!question || typeof value.answer !== "boolean") {
+    return null;
+  }
+
+  return {
+    question,
+    answer: value.answer,
+  };
+}
+
 function dedupeExperiencePrompts(prompts: EventExperiencePrompt[]) {
   const seen = new Set<string>();
 
@@ -119,6 +167,34 @@ function dedupeYesNoQuestions(questions: EventYesNoQuestion[]) {
 
   return questions.filter((question) => {
     const key = question.question.toLowerCase();
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function dedupeParticipantExperienceAnswers(
+  answers: EventParticipantExperienceAnswer[],
+) {
+  const seen = new Set<string>();
+
+  return answers.filter((answer) => {
+    const key = answer.topic.toLowerCase();
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function dedupeParticipantYesNoAnswers(answers: EventParticipantYesNoAnswer[]) {
+  const seen = new Set<string>();
+
+  return answers.filter((answer) => {
+    const key = answer.question.toLowerCase();
     if (seen.has(key)) {
       return false;
     }
@@ -189,6 +265,40 @@ export function parseEventExtraData(value: unknown): EventExtraData {
     yesNoQuestions: yesNoQuestions.length > 0 ? yesNoQuestions : undefined,
     allowedStudyYears:
       allowedStudyYears.length > 0 ? allowedStudyYears : undefined,
+  };
+}
+
+export function parseEventParticipantExtraData(
+  value: unknown,
+): EventParticipantExtraData {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const attendanceRole = normalizeAttendanceRole(value.attendanceRole) ?? undefined;
+  const experience = dedupeParticipantExperienceAnswers(
+    Array.isArray(value.experience)
+      ? value.experience
+          .map(normalizeParticipantExperienceAnswer)
+          .filter(
+            (
+              answer,
+            ): answer is EventParticipantExperienceAnswer => Boolean(answer),
+          )
+      : [],
+  );
+  const yesNo = dedupeParticipantYesNoAnswers(
+    Array.isArray(value.yesNo)
+      ? value.yesNo
+          .map(normalizeParticipantYesNoAnswer)
+          .filter((answer): answer is EventParticipantYesNoAnswer => Boolean(answer))
+      : [],
+  );
+
+  return {
+    attendanceRole,
+    experience: experience.length > 0 ? experience : undefined,
+    yesNo: yesNo.length > 0 ? yesNo : undefined,
   };
 }
 

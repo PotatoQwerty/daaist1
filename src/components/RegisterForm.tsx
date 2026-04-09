@@ -125,6 +125,9 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
     () => eventExtraData.yesNoQuestions ?? [],
     [eventExtraData],
   );
+  const shouldAskExtraQuestions = form.attendanceRole !== "invited_only";
+  const hasExtraQuestions =
+    experiencePrompts.length > 0 || yesNoQuestions.length > 0;
   const allowedStudyYears = useMemo(
     () => getAllowedStudyYears(eventExtraData),
     [eventExtraData],
@@ -308,9 +311,11 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
   const handleSubmit = async (eventToSubmit: React.FormEvent<HTMLFormElement>) => {
     eventToSubmit.preventDefault();
 
-    const unansweredYesNo = yesNoQuestions.find(
-      (prompt) => typeof form.yesNoByQuestion[prompt.question] !== "boolean",
-    );
+    const unansweredYesNo = shouldAskExtraQuestions
+      ? yesNoQuestions.find(
+          (prompt) => typeof form.yesNoByQuestion[prompt.question] !== "boolean",
+        )
+      : undefined;
 
     if (unansweredYesNo) {
       toast.error(`Answer "${unansweredYesNo.question}" before submitting.`);
@@ -327,14 +332,18 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
         },
         body: JSON.stringify({
           eventId: event.id,
-          experienceAnswers: experiencePrompts.map((prompt) => ({
-            topic: prompt.topic,
-            percentage: form.experienceByTopic[prompt.topic] ?? 50,
-          })),
-          yesNoAnswers: yesNoQuestions.map((prompt) => ({
-            question: prompt.question,
-            answer: form.yesNoByQuestion[prompt.question],
-          })),
+          experienceAnswers: shouldAskExtraQuestions
+            ? experiencePrompts.map((prompt) => ({
+                topic: prompt.topic,
+                percentage: form.experienceByTopic[prompt.topic] ?? 50,
+              }))
+            : [],
+          yesNoAnswers: shouldAskExtraQuestions
+            ? yesNoQuestions.map((prompt) => ({
+                question: prompt.question,
+                answer: form.yesNoByQuestion[prompt.question],
+              }))
+            : [],
           ...form,
         }),
       });
@@ -713,39 +722,47 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                     </p>
                   </div>
 
-                  {experiencePrompts.map((prompt) => (
-                    <EventExperienceField
-                      key={prompt.topic}
-                      topic={prompt.topic}
-                      value={form.experienceByTopic[prompt.topic] ?? 50}
-                      onChange={(percentage) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          experienceByTopic: {
-                            ...prev.experienceByTopic,
-                            [prompt.topic]: percentage,
-                          },
-                        }))
-                      }
-                    />
-                  ))}
+                  {shouldAskExtraQuestions ? (
+                    <>
+                      {experiencePrompts.map((prompt) => (
+                        <EventExperienceField
+                          key={prompt.topic}
+                          topic={prompt.topic}
+                          value={form.experienceByTopic[prompt.topic] ?? 50}
+                          onChange={(percentage) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              experienceByTopic: {
+                                ...prev.experienceByTopic,
+                                [prompt.topic]: percentage,
+                              },
+                            }))
+                          }
+                        />
+                      ))}
 
-                  {yesNoQuestions.map((prompt) => (
-                    <EventYesNoQuestionField
-                      key={prompt.question}
-                      question={prompt.question}
-                      value={form.yesNoByQuestion[prompt.question] ?? null}
-                      onChange={(answer) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          yesNoByQuestion: {
-                            ...prev.yesNoByQuestion,
-                            [prompt.question]: answer,
-                          },
-                        }))
-                      }
-                    />
-                  ))}
+                      {yesNoQuestions.map((prompt) => (
+                        <EventYesNoQuestionField
+                          key={prompt.question}
+                          question={prompt.question}
+                          value={form.yesNoByQuestion[prompt.question] ?? null}
+                          onChange={(answer) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              yesNoByQuestion: {
+                                ...prev.yesNoByQuestion,
+                                [prompt.question]: answer,
+                              },
+                            }))
+                          }
+                        />
+                      ))}
+                    </>
+                  ) : hasExtraQuestions ? (
+                    <div className="rounded-2xl border border-border bg-muted/35 p-4 text-sm leading-6 text-muted-foreground">
+                      Invited-only guests can skip the event-specific questions.
+                    </div>
+                  ) : null}
 
                   <Button
                     type="submit"

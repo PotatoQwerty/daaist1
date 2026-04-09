@@ -5,6 +5,7 @@ import jsQR from "jsqr";
 import {
   Camera,
   CameraOff,
+  ChevronDown,
   CheckCircle2,
   Loader2,
   ScanLine,
@@ -16,6 +17,16 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+type ParticipantExperienceAnswer = {
+  topic: string;
+  percentage: number;
+};
+
+type ParticipantYesNoAnswer = {
+  question: string;
+  answer: boolean;
+};
 
 type Participant = {
   id: string;
@@ -31,6 +42,8 @@ type Participant = {
   attendance_role_label?: string | null;
   checked_in_at?: string | null;
   check_in_method?: string | null;
+  experience_answers?: ParticipantExperienceAnswer[];
+  yes_no_answers?: ParticipantYesNoAnswer[];
 };
 
 type EventCheckInClientProps = {
@@ -51,6 +64,43 @@ type DeleteRegistrationResponse = {
   participantId?: string;
   error?: string;
 };
+
+function getParticipantName(participant: Pick<Participant, "first_name" | "last_name">) {
+  return `${participant.first_name} ${participant.last_name}`.trim() || "This attendee";
+}
+
+function ParticipantExtraAnswers({ participant }: { participant: Participant }) {
+  const experienceAnswers = participant.experience_answers ?? [];
+  const yesNoAnswers = participant.yes_no_answers ?? [];
+
+  if (experienceAnswers.length === 0 && yesNoAnswers.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 rounded-2xl border border-border bg-muted/25 p-3">
+      <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+        Extra answers
+      </p>
+      <div className="mt-3 space-y-2 text-sm leading-6">
+        {experienceAnswers.map((answer) => (
+          <p key={`experience-${answer.topic}`}>
+            <span className="font-medium text-foreground">{answer.topic}:</span>{" "}
+            <span className="text-muted-foreground">{answer.percentage}%</span>
+          </p>
+        ))}
+        {yesNoAnswers.map((answer) => (
+          <p key={`yes-no-${answer.question}`}>
+            <span className="font-medium text-foreground">{answer.question}:</span>{" "}
+            <span className="text-muted-foreground">
+              {answer.answer ? "Yes" : "No"}
+            </span>
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function extractCheckInToken(value: string) {
   const trimmed = value.trim();
@@ -89,7 +139,13 @@ export default function EventCheckInClient({
   const [studyYearFilter, setStudyYearFilter] = useState("all");
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeParticipantId, setActiveParticipantId] = useState<string | null>(
+  const [expandedParticipantIds, setExpandedParticipantIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [participantActionState, setParticipantActionState] = useState<{
+    participantId: string;
+    type: "check_in" | "cancel_check_in";
+  } | null>(
     null,
   );
   const [deletingParticipantId, setDeletingParticipantId] = useState<string | null>(
@@ -187,15 +243,17 @@ export default function EventCheckInClient({
     return () => clearTimeout(timer);
   }, [fetchParticipants, query]);
 
-  const runCheckIn = useCallback(
+  const runCheckInAction = useCallback(
     async ({
+      action = "check_in",
       token,
       participantId,
       method,
     }: {
+      action?: "check_in" | "cancel";
       token?: string;
       participantId?: string;
-      method: "qr" | "manual" | "scanner";
+      method?: "qr" | "manual" | "scanner";
     }) => {
       const response = await fetch("/api/club/event/check-in", {
         method: "POST",
@@ -203,6 +261,7 @@ export default function EventCheckInClient({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          action,
           eventId,
           token,
           participantId,
@@ -248,7 +307,7 @@ export default function EventCheckInClient({
           participant: null,
         });
 
-        const result = await runCheckIn({
+        const result = await runCheckInAction({
           token: initialToken,
           method: "qr",
         });
@@ -271,7 +330,7 @@ export default function EventCheckInClient({
     };
 
     autoCheckIn();
-  }, [applyCheckInResult, fetchParticipants, initialToken, query, runCheckIn]);
+  }, [applyCheckInResult, fetchParticipants, initialToken, query, runCheckInAction]);
 
   useEffect(() => {
     if (!scannerEnabled) {
@@ -317,7 +376,7 @@ export default function EventCheckInClient({
       });
 
       try {
-        const result = await runCheckIn({
+        const result = await runCheckInAction({
           token,
           method: "scanner",
         });
@@ -432,21 +491,40 @@ export default function EventCheckInClient({
     applyCheckInResult,
     fetchParticipants,
     query,
-    runCheckIn,
+    runCheckInAction,
     scannerEnabled,
     stopScanner,
   ]);
 
-  const handleManualCheckIn = async (participantId: string) => {
+  const handleManualCheckIn = async (participant: Participant) => {
+    const participantName = getParticipantName(participant);
+    const confirmation = await Swal.fire({
+      title: "Check in this attendee?",
+      text: `${participantName} will be checked in manually.`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, check in",
+      confirmButtonColor: "oklch(0.62 0.18 145)",
+      cancelButtonText: "Cancel",
+      cancelButtonColor: "oklch(0.32 0.05 250)",
+    });
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
     try {
-      setActiveParticipantId(participantId);
-      const result = await runCheckIn({
-        participantId,
+      setParticipantActionState({
+        participantId: participant.id,
+        type: "check_in",
+      });
+      const result = await runCheckInAction({
+        participantId: participant.id,
         method: "manual",
       });
 
       toast.success(applyCheckInResult(result, "Participant checked in."));
-      fetchParticipants(query);
+      await fetchParticipants(query);
     } catch (error) {
       console.error(error);
       toast.error(
@@ -455,14 +533,63 @@ export default function EventCheckInClient({
           : "Unable to complete manual check-in.",
       );
     } finally {
-      setActiveParticipantId(null);
+      setParticipantActionState(null);
     }
   };
 
+  const handleCancelCheckIn = useCallback(
+    async (participant: Participant) => {
+      const participantName = getParticipantName(participant);
+      const confirmation = await Swal.fire({
+        title: "Cancel this check-in?",
+        text: `${participantName} will be marked as not checked in.`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, cancel check-in",
+        confirmButtonColor: "oklch(0.67 0.23 25)",
+        cancelButtonText: "Keep check-in",
+        cancelButtonColor: "oklch(0.32 0.05 250)",
+      });
+
+      if (!confirmation.isConfirmed) {
+        return;
+      }
+
+      try {
+        setParticipantActionState({
+          participantId: participant.id,
+          type: "cancel_check_in",
+        });
+
+        const result = await runCheckInAction({
+          action: "cancel",
+          participantId: participant.id,
+        });
+
+        setAutoCheckInState({
+          status: "success",
+          message: result.message || "Participant check-in cancelled.",
+          participant: result.participant || null,
+        });
+        toast.success(result.message || "Participant check-in cancelled.");
+        await fetchParticipants(query);
+      } catch (error) {
+        console.error(error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Unable to cancel this check-in.",
+        );
+      } finally {
+        setParticipantActionState(null);
+      }
+    },
+    [fetchParticipants, query, runCheckInAction],
+  );
+
   const handleDeleteRegistration = useCallback(
     async (participant: Participant) => {
-      const participantName =
-        `${participant.first_name} ${participant.last_name}`.trim();
+      const participantName = getParticipantName(participant);
       const confirm = await Swal.fire({
         title: "Delete this registration?",
         text: participant.checked_in_at
@@ -547,6 +674,18 @@ export default function EventCheckInClient({
     );
   }, [participants]);
 
+  const toggleParticipantExpanded = useCallback((participantId: string) => {
+    setExpandedParticipantIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(participantId)) {
+        next.delete(participantId);
+      } else {
+        next.add(participantId);
+      }
+      return next;
+    });
+  }, []);
+
   const filteredParticipants = useMemo(() => {
     return participants.filter((participant) => {
       if (statusFilter === "checked_in" && !participant.checked_in_at) {
@@ -619,6 +758,9 @@ export default function EventCheckInClient({
                       {autoCheckInParticipantDetails}
                     </p>
                   ) : null}
+                  <ParticipantExtraAnswers
+                    participant={autoCheckInState.participant}
+                  />
                 </div>
               )}
             </div>
@@ -835,106 +977,154 @@ export default function EventCheckInClient({
             </div>
           ) : (
             filteredParticipants.map((participant) => {
-              const isCheckingIn = activeParticipantId === participant.id;
+              const isCheckingIn =
+                participantActionState?.participantId === participant.id &&
+                participantActionState.type === "check_in";
+              const isCancellingCheckIn =
+                participantActionState?.participantId === participant.id &&
+                participantActionState.type === "cancel_check_in";
               const isDeleting = deletingParticipantId === participant.id;
-              const isBusy = isCheckingIn || isDeleting;
+              const isBusy = isCheckingIn || isCancellingCheckIn || isDeleting;
+              const isExpanded = expandedParticipantIds.has(participant.id);
 
               return (
                 <div
                   key={participant.id}
-                  className="flex flex-col gap-4 rounded-2xl border border-border bg-background p-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="rounded-2xl border border-border bg-background p-4"
                 >
-                  <div className="space-y-1">
-                    <p className="text-lg font-semibold">
-                      {participant.first_name} {participant.last_name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {participant.registration_number}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {participant.email} | {participant.phone}
-                    </p>
-                    <div className="flex flex-wrap gap-2 pt-1 text-xs">
-                      {participant.attendance_role_label ? (
-                        <span className="rounded-full border border-border bg-muted/45 px-3 py-1 text-muted-foreground">
-                          {participant.attendance_role_label}
-                        </span>
-                      ) : null}
-                      {participant.study_year ? (
-                        <span className="rounded-full border border-border bg-muted/45 px-3 py-1 text-muted-foreground">
-                          {participant.study_year}
-                        </span>
-                      ) : null}
-                      {!participant.checked_in_at ? (
-                        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
-                          Pending
-                        </span>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-2">
+                      <div className="space-y-1">
+                        <p className="text-lg font-semibold">
+                          {participant.first_name} {participant.last_name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {participant.registration_number}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        {participant.attendance_role_label ? (
+                          <span className="rounded-full border border-border bg-muted/45 px-3 py-1 text-muted-foreground">
+                            {participant.attendance_role_label}
+                          </span>
+                        ) : null}
+                        {participant.study_year ? (
+                          <span className="rounded-full border border-border bg-muted/45 px-3 py-1 text-muted-foreground">
+                            {participant.study_year}
+                          </span>
+                        ) : null}
+                        {participant.checked_in_at ? (
+                          <span className="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-green-700 dark:border-green-900/40 dark:bg-green-950/30 dark:text-green-300">
+                            Checked in
+                          </span>
+                        ) : (
+                          <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
+                            Pending
+                          </span>
+                        )}
+                      </div>
+
+                      {participant.checked_in_at ? (
+                        <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                          Checked in{" "}
+                          {new Date(participant.checked_in_at).toLocaleString()} via{" "}
+                          {participant.check_in_method || "manual"}
+                        </p>
                       ) : null}
                     </div>
-                    {participant.university && (
-                      <p className="text-sm text-muted-foreground">
-                        {participant.university}
-                      </p>
-                    )}
-                    {participant.created_at && (
-                      <p className="text-sm text-muted-foreground">
-                        Registered{" "}
-                        {new Date(participant.created_at).toLocaleString()}
-                      </p>
-                    )}
-                    {participant.checked_in_at && (
-                      <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                        Checked in{" "}
-                        {new Date(participant.checked_in_at).toLocaleString()} via{" "}
-                        {participant.check_in_method || "manual"}
-                      </p>
-                    )}
-                  </div>
 
-                  <div className="flex flex-col gap-2 sm:items-end">
-                    {participant.checked_in_at ? (
-                      <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-400">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Checked in
-                      </div>
-                    ) : (
+                    <div className="flex flex-col gap-2 lg:items-end">
+                      {participant.checked_in_at ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-11 rounded-xl border-amber-300 px-5 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:border-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-950/30"
+                          onClick={() => handleCancelCheckIn(participant)}
+                          disabled={isBusy}
+                        >
+                          {isCancellingCheckIn ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Canceling...
+                            </>
+                          ) : (
+                            "Cancel check-in"
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          className="h-11 rounded-xl px-5"
+                          onClick={() => handleManualCheckIn(participant)}
+                          disabled={isBusy}
+                        >
+                          {isCheckingIn ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Checking in...
+                            </>
+                          ) : (
+                            "Check in attendee"
+                          )}
+                        </Button>
+                      )}
+
                       <Button
                         type="button"
-                        className="h-11 rounded-xl px-5"
-                        onClick={() => handleManualCheckIn(participant.id)}
+                        variant="outline"
+                        className="h-11 rounded-xl border-destructive/30 px-5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => handleDeleteRegistration(participant)}
                         disabled={isBusy}
                       >
-                        {isCheckingIn ? (
+                        {isDeleting ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Checking in...
+                            Deleting...
                           </>
                         ) : (
-                          "Check in attendee"
+                          <>
+                            <Trash2 className="h-4 w-4" />
+                            Delete registration
+                          </>
                         )}
                       </Button>
-                    )}
 
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-11 rounded-xl border-destructive/30 px-5 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => handleDeleteRegistration(participant)}
-                      disabled={isBusy}
-                    >
-                      {isDeleting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Deleting...
-                        </>
-                      ) : (
-                        <>
-                          <Trash2 className="h-4 w-4" />
-                          Delete registration
-                        </>
-                      )}
-                    </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="h-10 rounded-xl px-3 text-muted-foreground hover:text-foreground"
+                        onClick={() => toggleParticipantExpanded(participant.id)}
+                      >
+                        {isExpanded ? "Hide details" : "Show details"}
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      </Button>
+                    </div>
                   </div>
+
+                  {isExpanded ? (
+                    <div className="mt-4 space-y-3 border-t border-border pt-4">
+                      <p className="text-sm text-muted-foreground">
+                        {participant.email} | {participant.phone}
+                      </p>
+                      {participant.university ? (
+                        <p className="text-sm text-muted-foreground">
+                          {participant.university}
+                        </p>
+                      ) : null}
+                      {participant.created_at ? (
+                        <p className="text-sm text-muted-foreground">
+                          Registered{" "}
+                          {new Date(participant.created_at).toLocaleString()}
+                        </p>
+                      ) : null}
+                      <ParticipantExtraAnswers participant={participant} />
+                    </div>
+                  ) : null}
                 </div>
               );
             })
