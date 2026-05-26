@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/spdfs",
-      "destination": "https://daaist.com/"
+      "destination": "https://spdfs.vercel.app/"
     },
     {
       "source": "/spdfs/:path*",
-      "destination": "https://daaist.com/:path*"
+      "destination": "https://spdfs.vercel.app/:path*"
     }
   ]
 }
