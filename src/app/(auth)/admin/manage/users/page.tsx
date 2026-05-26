@@ -13,6 +13,7 @@ export const metadata = {
     canonical: "https://daaist.com/admin/manage/users",
   },
 };
+
 export default async function AdminUsersPage() {
   const supabase = await createClient();
   const {

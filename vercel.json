@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/spdfs",
+      "destination": "https://daaist.com/"
+    },
+    {
+      "source": "/spdfs/:path*",
+      "destination": "https://daaist.com/:path*"
+    }
+  ]
+}
