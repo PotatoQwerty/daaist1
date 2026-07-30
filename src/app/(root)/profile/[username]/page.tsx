@@ -12,7 +12,7 @@ import { notFound, redirect } from "next/navigation";
 export async function generateMetadata({
   params,
 }: {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }): Promise<Metadata> {
   const { username } = await params;
   const title = `Daa'ist — ${username}'s profile`;
