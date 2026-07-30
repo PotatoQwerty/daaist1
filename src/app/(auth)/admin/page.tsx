@@ -14,7 +14,7 @@ export default async function AdminPage() {
   const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
   if (!isAdmin && !isSuperAdmin) notFound();
 
-  const getCount = async (label: string, query: Promise<any>) => {
+  const getCount = async (label: string, query: PromiseLike<any>) => {
     const { count, error } = await query;
     if (error) {
       console.error(`Error fetching ${label} count:`, error);

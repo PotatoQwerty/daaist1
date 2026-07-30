@@ -39,7 +39,7 @@ export default function EditProfileButton({
       if (data.error) throw new Error(data.error);
       if (data.imageUrl) {
         setImage(data.imageUrl);
-        setUser((prev) =>
+        setUser((prev: any) =>
           prev ? { ...prev, image: data.imageUrl } : prev
         );
         router.refresh();

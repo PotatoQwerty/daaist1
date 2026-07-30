@@ -8,7 +8,7 @@ import {
   getAttendanceRoleLabel,
   normalizeAttendanceRole,
 } from "../event-extra";
-import { supabaseServer } from "./server";
+import { createClient, supabaseServer } from "./server";
 import { getEventSlug, isEventUuid } from "../event-path";
 
 export async function isOnboarded(userId: string) {
@@ -472,6 +472,14 @@ export async function getEventById(id: string) {
   return data;
 }
 export const fetchUsers = async () => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return [];
+  }
+
   const { data: users } = await supabaseServer.schema("public").from("profiles")
     .select(`
   user_id,

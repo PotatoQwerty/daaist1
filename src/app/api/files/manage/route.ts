@@ -1,7 +1,21 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabase/server";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
+import { getUserRoles } from "@/lib/supabase/actions";
 
-export async function GET(req: Request) {
+export async function GET() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
+  if (!isAdmin && !isSuperAdmin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { data, error } = await supabaseServer.schema("public").from("files")
     .select(`
       id,

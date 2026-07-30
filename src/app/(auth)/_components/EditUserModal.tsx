@@ -15,9 +15,9 @@ interface User {
   firstname?: string | null;
   lastname?: string | null;
   role?: string;
-  registration_number?: string;
+  registration_number?: string | null;
   id?: string;
-  user_roles?: { role: string }[]; // Array of role objects from Supabase
+  user_roles?: { role: string }[] | null; // Array of role objects from Supabase
   // Add other fields as needed
 }
 

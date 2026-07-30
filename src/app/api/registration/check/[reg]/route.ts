@@ -18,11 +18,9 @@ export async function GET(
   const { data: studiesDaa, error } = await supabaseServer
     .schema("public")
     .from("students-data")
-    .select("*")
+    .select("firstname, lastname")
     .eq("registration_number", registration_number)
     .single();
-
-  
 
   if (!studiesDaa) {
     return NextResponse.json({ error: "Not a DAA student" }, { status: 404 });

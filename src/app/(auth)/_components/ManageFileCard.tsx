@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 type ManageFileCardProps = {
+  id: string;
   file_name: string;
   type: string;
   url: string;

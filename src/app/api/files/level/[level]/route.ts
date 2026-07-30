@@ -3,9 +3,9 @@ import { supabaseServer } from "@/lib/supabase/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { level: string } }
+  { params }: { params: Promise<{ level: string }> }
 ) {
-  const { level } = params;
+  const { level } = await params;
 
   if (!level) {
     return NextResponse.json({ error: "Level is required" }, { status: 400 });
