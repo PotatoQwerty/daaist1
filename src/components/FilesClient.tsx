@@ -100,7 +100,7 @@ export default function FilesClient({ initialFiles, level }: FilesClientProps) {
   return (
     <div className="flex w-full flex-col gap-6">
       {level && subjects.length > 0 && (
-        <div className="rounded-3xl border border-border/60 bg-background/60 p-4 shadow-sm">
+        <div className="rule-b pb-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <Button
@@ -141,8 +141,9 @@ export default function FilesClient({ initialFiles, level }: FilesClientProps) {
                 </Label>
               </div>
 
-              <p className="text-xs text-muted-foreground">
-                {filesToDisplay.length} result{filesToDisplay.length === 1 ? "" : "s"}
+              <p className="annot">
+                {filesToDisplay.length}{" "}
+                {filesToDisplay.length === 1 ? "result" : "results"}
               </p>
             </div>
           </div>

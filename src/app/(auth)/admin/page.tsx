@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { Users, FileText, Heart, School, UserCheck, Link } from "lucide-react";
 import MainAdmin from "../_components/MainAdmin";
 import { getUserRoles } from "@/lib/supabase/actions";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
@@ -85,105 +84,54 @@ export default async function AdminPage() {
     ),
   ]);
 
+  // Dense metric surface: no card boxes, no icons in tinted circles.
+  // Hairlines separate the numbers and the numbers are set in the mono
+  // face with tabular figures, so columns of digits line up.
   const stats = [
+    { label: "Users", value: usersCount, helper: "Registered profiles" },
+    { label: "Files", value: filesCount, helper: "Uploads stored" },
+    { label: "Favorites", value: likesCount, helper: "Total likes" },
+    { label: "Clubs", value: clubsCount, helper: `${activeClubsCount} active` },
     {
-      label: "Users",
-      value: usersCount,
-      helper: "Registered profiles",
-      icon: Users,
-      accent: "text-primary bg-primary/10",
-    },
-    {
-      label: "Files",
-      value: filesCount,
-      helper: "Uploads stored",
-      icon: FileText,
-      accent: "text-accent bg-accent/10",
-    },
-    {
-      label: "Favorites",
-      value: likesCount,
-      helper: "Total likes",
-      icon: Heart,
-      accent: "text-accent bg-accent/10",
-    },
-    {
-      label: "Clubs",
-      value: clubsCount,
-      helper: `${activeClubsCount} active`,
-      icon: School,
-      accent: "text-primary bg-primary/10",
-    },
-    {
-      label: "Club Members",
+      label: "Club members",
       value: clubMembersCount,
       helper: "Memberships",
-      icon: UserCheck,
-      accent: "text-primary bg-primary/10",
     },
     {
-      label: "Pending Invites",
+      label: "Pending invites",
       value: pendingInvitesCount,
       helper: "Awaiting signup",
-      icon: Link,
-      accent: "text-accent bg-accent/10",
     },
   ];
 
   return (
-    <div className="relative min-h-screen w-full bg-background text-foreground">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-background to-secondary/10" />
-        <div className="absolute -top-24 right-10 h-64 w-64 rounded-full bg-secondary/20 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-primary/15 blur-3xl" />
-      </div>
-
-      <div className="mx-auto w-full max-w-6xl space-y-8 px-6 py-10">
-        <header className="flex flex-col gap-3 text-center md:text-left">
-          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-            Overview
-          </p>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-            Admin Dashboard
+    <div className="w-full bg-background text-foreground">
+      <div className="mx-auto w-full max-w-6xl px-6 py-10">
+        <header className="rule-b pb-8">
+          <div className="h-1 w-16 bg-foreground" aria-hidden="true" />
+          <h1 className="mt-6 text-3xl font-bold md:text-4xl">
+            Admin dashboard
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Key metrics and tools to manage Daa&apos;ist.
+          <p className="mt-3 text-sm text-muted-foreground">
+            Current totals across Daa&apos;ist.
           </p>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={stat.label}
-                className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-5 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70"
-              >
-                <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-accent/10 opacity-0 transition group-hover:opacity-100" />
-                <div className="relative flex items-start gap-4">
-                  <div
-                    className={`flex h-11 w-11 items-center justify-center rounded-xl ${stat.accent}`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                      {stat.label}
-                    </p>
-                    <p className="text-2xl font-semibold">
-                      {stat.value.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {stat.helper}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <section className="grid grid-cols-2 gap-px bg-rule md:grid-cols-3">
+          {stats.map((stat) => (
+            <div key={stat.label} className="bg-background px-5 py-7">
+              <p className="annot">{stat.label}</p>
+              <p className="mt-2 font-mono text-3xl font-medium tabular-nums md:text-4xl">
+                {stat.value.toLocaleString()}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {stat.helper}
+              </p>
+            </div>
+          ))}
         </section>
 
-        <section>
+        <section className="mt-12">
           <MainAdmin />
         </section>
       </div>

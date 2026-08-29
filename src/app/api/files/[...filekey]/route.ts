@@ -16,7 +16,10 @@ export async function DELETE(
     return NextResponse.json({ message: "unauthorized" }, { status: 401 });
   }
 
-  const { isAdmin } = await getUserRoles(user.id);
+  // isSuperAdmin was previously ignored here, so a super_admin without a
+  // separate admin row could not delete anything.
+  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
+  const isSiteAdmin = isAdmin || isSuperAdmin;
   const fileKeyArray = (await params).filekey;
   const fileKey = fileKeyArray.join("/");
 
@@ -33,7 +36,7 @@ export async function DELETE(
     return NextResponse.json({ message: "File not found" }, { status: 404 });
   }
 
-  if (fileData.uploaded_by !== user.id && !isAdmin) {
+  if (fileData.uploaded_by !== user.id && !isSiteAdmin) {
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   }
 

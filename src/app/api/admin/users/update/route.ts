@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { getUserRoles } from "@/lib/supabase/actions";
+import { ACCOUNT_ROLES } from "@/lib/roles";
 
-const ALLOWED_ROLES = ["admin", "super_admin", "club", "student"] as const;
+// Single source of truth, shared with the invite flow and the capability
+// helpers, so the two cannot drift apart again.
+const ALLOWED_ROLES = ACCOUNT_ROLES;
+
+// Granting or removing super_admin is reserved for super_admins. Without
+// this an "admin" could POST {targetUserId: <self>, roles: ["super_admin"]}
+// and promote themselves, or strip an existing super_admin's roles.
+const SUPER_ADMIN_ONLY_ROLES = new Set(["super_admin"]);
 
 export async function POST(req: Request) {
   try {
@@ -60,6 +68,34 @@ export async function POST(req: Request) {
           return NextResponse.json(
             { error: `Invalid role: ${role}` },
             { status: 400 },
+          );
+        }
+      }
+
+      // No editing your own roles. Closes the self-promotion path and
+      // stops an admin locking themselves out mid-request.
+      if (targetUserId === user.id) {
+        return NextResponse.json(
+          { error: "You cannot change your own roles." },
+          { status: 403 },
+        );
+      }
+
+      if (!isSuperAdmin) {
+        if (roles.some((role: string) => SUPER_ADMIN_ONLY_ROLES.has(role))) {
+          return NextResponse.json(
+            { error: "Only a super admin can grant that role." },
+            { status: 403 },
+          );
+        }
+
+        // The write below replaces the target's roles wholesale, so an
+        // admin must not be able to aim it at a super_admin.
+        const { roles: targetRoles } = await getUserRoles(targetUserId);
+        if (targetRoles.some((role) => SUPER_ADMIN_ONLY_ROLES.has(role))) {
+          return NextResponse.json(
+            { error: "Only a super admin can change a super admin's roles." },
+            { status: 403 },
           );
         }
       }

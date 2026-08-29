@@ -1,164 +1,192 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
-import { ParamValue } from "next/dist/server/request/params";
-import { useUser } from "@/context/user-context";
-import { redirect, RedirectType } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { validateUsername } from "@/lib/username";
 
-function AdminOnboarding({ token }: { token: ParamValue }) {
-  const formRef = useRef<HTMLDivElement>(null);
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [form, setForm] = useState<{
-    firstname: string;
-    lastname: string;
-    phone: string;
-    username: string;
-  }>({
+type FormState = {
+  firstname: string;
+  lastname: string;
+  phone: string;
+  username: string;
+};
+
+const inputClass =
+  "w-full rounded-md border border-input bg-background p-3.5 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus:border-ring focus:outline-none";
+
+function AdminOnboarding({
+  token,
+  roleLabel,
+}: {
+  token: string | undefined;
+  /** What the invite grants, so the form states what is being accepted. */
+  roleLabel: string;
+}) {
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [form, setForm] = useState<FormState>({
     firstname: "",
     lastname: "",
     username: "",
     phone: "",
   });
-  const { session, loading } = useUser();
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === "username") setUsernameError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (submitting) return;
+
+    // Same rule the server enforces, so the person is told before a round trip
+    // that costs them their single-use invite.
+    const check = validateUsername(form.username);
+    if (!check.ok) {
+      setUsernameError(check.error);
+      return;
+    }
+
     setSubmitting(true);
 
-    const body = { form, token };
+    // try/finally: previously a rejected request threw out of the handler, so
+    // setSubmitting(false) never ran and the button stayed disabled for good.
+    try {
+      const res = await fetch("/api/admin/onboard", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, form: { ...form, username: check.username } }),
+      });
 
-    await toast.promise(
-      (async () => {
-        const res = await fetch("/api/admin/onboard", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
+      const data = await res.json().catch(() => ({}));
 
-        if (!res.ok) {
-          const error = await res.json().catch(() => ({}));
-          throw new Error(error.error || "Onboarding failed");
+      if (!res.ok) {
+        if (res.status === 409 && data.error?.includes("username")) {
+          setUsernameError(data.error);
         }
-
-        return res.json();
-      })(),
-      {
-        loading: "Onboarding…",
-        success: "Onboarding completed",
-        error: (err) => err.message || "Something went wrong",
+        toast.error(data.error || "Could not complete setup.");
+        return;
       }
-    );
 
-    setSubmitting(false);
-    redirect("/admin", RedirectType.replace);
+      toast.success(`You're set up as ${data.roleLabel ?? roleLabel}.`);
+      // router.replace, not redirect(): redirect() throws NEXT_REDIRECT, which
+      // inside an event handler surfaces as an unhandled rejection.
+      router.replace("/admin");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  if (loading && !session)
-    return (
-      <div className="w-full h-screen items-center justify-center">
-        <span className="flex gap-1">
-          <Loader2 className="size-5 animate-spin" />
-          Loading...
-        </span>
-      </div>
-    );
   return (
-    <div
-      className="w-full flex flex-col justify-center items-center px-6 md:px-12 py-10"
-      ref={formRef}
-    >
-      <div className="w-full max-w-lg space-y-10">
-        <div className="text-center space-y-3">
-          <h2 className="text-4xl font-extrabold text-primary uppercase tracking-tight">
-            Admin Sign Up
-          </h2>
-          <p className="text-accent text-lg">
-            Complete your admin profile to start managing DAA'ist
-          </p>
-        </div>
+    <div className="w-full max-w-lg py-16">
+      <div className="h-1 w-16 bg-primary" aria-hidden="true" />
 
-        <form
-          aria-label="Admin Sign up Form"
-          className="flex flex-col gap-6"
-          method="POST"
-          onSubmit={handleSubmit}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <h1 className="mt-6 text-3xl leading-tight font-bold sm:text-4xl">
+        Set up your {roleLabel.toLowerCase()} account.
+      </h1>
+      <p className="mt-3 text-sm text-muted-foreground">
+        This invite works once. Fill it in now and you&apos;ll be signed
+        straight into the dashboard.
+      </p>
+
+      <form
+        aria-label={`${roleLabel} sign-up`}
+        className="mt-10 flex flex-col gap-5"
+        onSubmit={handleSubmit}
+      >
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="firstname" className="text-sm font-bold">
+              First name
+            </label>
             <input
-              onChange={handleChange}
-              type="text"
-              name="lastname"
-              value={form.lastname}
-              required
-              placeholder="Last name"
-              className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-gray-400"
-            />
-            <input
-              onChange={handleChange}
-              type="text"
+              id="firstname"
               name="firstname"
-              value={form.firstname}
+              type="text"
               required
-              placeholder="First name"
-              className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-gray-400"
+              value={form.firstname}
+              onChange={handleChange}
+              className={inputClass}
             />
           </div>
 
+          <div className="flex flex-col gap-2">
+            <label htmlFor="lastname" className="text-sm font-bold">
+              Last name
+            </label>
+            <input
+              id="lastname"
+              name="lastname"
+              type="text"
+              required
+              value={form.lastname}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="username" className="text-sm font-bold">
+            Username
+          </label>
           <input
-            onChange={handleChange}
-            type="text"
+            id="username"
             name="username"
-            value={form.username}
-            required
-            placeholder="username"
-            className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-gray-400"
-          />
-          {/* <input
-            onChange={handleChange}
-            type="email"
-            name="email"
-            value={form.email}
-            required
-            placeholder="Email address"
-            className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-gray-400"
-          /> */}
-
-          <input
-            onChange={handleChange}
-            type="tel"
-            name="phone"
-            value={form.phone}
-            placeholder="Phone number"
-            className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-gray-400"
-          />
-
-          {/* <input
-            onChange={handleChange}
             type="text"
-            name="department"
-            value={form.department}
             required
-            placeholder="Department"
-            className="w-full border border-gray-300 p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-gray-400"
-          /> */}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-primary mt-4 flex gap-2 justify-center items-center text-white p-4 rounded-xl font-bold text-lg hover:bg-blue-800 transition shadow-lg shadow-blue-500/20 active:scale-[0.98] cursor-pointer"
+            value={form.username}
+            onChange={handleChange}
+            aria-invalid={usernameError ? true : undefined}
+            aria-describedby="username-help"
+            className={inputClass}
+          />
+          <p
+            id="username-help"
+            className={`text-xs ${usernameError ? "text-destructive" : "text-muted-foreground"}`}
           >
-            {submitting ? <Loader2 className="animate-spin" /> : "Create Admin"}
-          </button>
-        </form>
-      </div>
+            {usernameError ??
+              "5 to 20 characters. Letters, numbers, dots and underscores."}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="phone" className="text-sm font-bold">
+            Phone{" "}
+            <span className="font-normal text-muted-foreground">optional</span>
+          </label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            value={form.phone}
+            onChange={handleChange}
+            className={inputClass}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="mt-3 inline-flex items-center justify-center gap-2 rounded-md bg-accent px-6 py-3.5 font-bold text-accent-foreground transition-transform duration-150 hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {submitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              Setting up
+            </>
+          ) : (
+            "Accept invite"
+          )}
+        </button>
+      </form>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 "use server";
+import { canUploadResources } from "@/lib/roles";
 import { randomUUID } from "crypto";
 import {
   canAttachParticipantToUser,
@@ -57,6 +58,8 @@ export async function getUserData(userId: string) {
   const roles = rolesData?.map((r) => r.role) || [];
   const isAdmin = roles.includes("admin");
   const isSuperAdmin = roles.includes("super_admin");
+  const isTeacher = roles.includes("teacher");
+  const canUpload = canUploadResources(roles);
 
   const completeUser = profile
     ? {
@@ -71,12 +74,15 @@ export async function getUserData(userId: string) {
     roles,
     isAdmin,
     isSuperAdmin,
+    isTeacher,
+    canUpload,
   };
 }
 
 export async function getUserRoles(userId: string) {
-  const { roles, isAdmin, isSuperAdmin } = await getUserData(userId);
-  return { roles, isAdmin, isSuperAdmin };
+  const { roles, isAdmin, isSuperAdmin, isTeacher, canUpload } =
+    await getUserData(userId);
+  return { roles, isAdmin, isSuperAdmin, isTeacher, canUpload };
 }
 
 export async function getClubs() {

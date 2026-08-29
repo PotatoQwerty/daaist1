@@ -11,8 +11,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
-  if (!isAdmin && !isSuperAdmin) {
+  const { canUpload } = await getUserRoles(user.id);
+  if (!canUpload) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

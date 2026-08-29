@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { generateInviteToken } from "@/lib/admin";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { canAdminister, INVITABLE_ROLES, isInvitableRole } from "@/lib/roles";
 
-const ALLOWED_INVITE_ROLES = ["admin", "teacher"] as const;
+/** How long a freshly issued link stays redeemable. */
+const INVITE_EXPIRY_MS = 1000 * 60 * 60 * 24;
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -15,48 +18,84 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   }
 
-  const { data: userRole } = await supabaseServer
+  // Reads every role row rather than .single(). With .single() an account
+  // holding two roles produced an error, the role came back undefined, and a
+  // legitimate admin was refused.
+  const { data: roleRows, error: roleError } = await supabaseServer
+    .schema("public")
     .from("user_roles")
     .select("role")
-    .eq("user_id", user.id)
-    .single();
+    .eq("user_id", user.id);
 
-  const roleName = userRole?.role;
+  if (roleError) {
+    console.error("Invite role lookup failed:", roleError);
+    return NextResponse.json(
+      { error: "Unable to verify your permissions." },
+      { status: 500 },
+    );
+  }
 
-  if (roleName !== "admin" && roleName !== "super_admin") {
+  const roles = (roleRows ?? []).map((row) => row.role);
+
+  if (!canAdminister(roles)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { role } = await req.json();
+  const limited = enforceRateLimit(req, RATE_LIMITS.inviteCreate, {
+    bucket: "invite-create",
+    userId: user.id,
+  });
+  if (limited) return limited;
 
-  if (!ALLOWED_INVITE_ROLES.includes(role)) {
+  let body: { role?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  }
+
+  if (!isInvitableRole(body.role)) {
     return NextResponse.json(
-      { error: "Invalid role for invite" },
+      {
+        error: `Role must be one of: ${INVITABLE_ROLES.join(", ")}.`,
+      },
       { status: 400 },
     );
   }
 
+  const role = body.role;
   const { rawToken, hash } = generateInviteToken();
-  const INVITE_EXPIRY_MS = 1000 * 60 * 60 * 24;
+  const expiresAt = new Date(Date.now() + INVITE_EXPIRY_MS);
 
-  const inviteLink = `${process.env.NEXT_PUBLIC_BASE_URL}/invite/${rawToken}`;
-
-  const { error: TokenError } = await supabaseServer
+  const { data: invite, error: tokenError } = await supabaseServer
     .schema("public")
     .from("invites")
     .insert({
       token_hash: hash,
       role_to_assign: role,
       created_by: user.id,
-      expires_at: new Date(Date.now() + INVITE_EXPIRY_MS),
-    });
+      expires_at: expiresAt,
+    })
+    .select("id")
+    .single();
 
-  if (TokenError) {
+  if (tokenError || !invite) {
+    console.error("Invite creation failed:", tokenError);
     return NextResponse.json(
       { error: "Failed to create invite" },
       { status: 500 },
     );
   }
 
-  return NextResponse.json({ link: inviteLink });
+  // The raw token is returned exactly once, here. Only its hash is stored, so
+  // it cannot be recovered later.
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const inviteLink = `${baseUrl}/invite/${rawToken}`;
+
+  return NextResponse.json({
+    id: invite.id,
+    link: inviteLink,
+    role,
+    expiresAt: expiresAt.toISOString(),
+  });
 }

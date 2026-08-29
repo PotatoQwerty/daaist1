@@ -2,6 +2,7 @@ import Image from "next/image";
 import banner from "../../public/images/banner.jpg";
 import logo from "../../public/images/logo.png";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 interface Club {
   name: string;
@@ -11,54 +12,57 @@ interface Club {
   logo_url?: string;
 }
 
+/**
+ * The whole card is the link, so the target is the full block rather than
+ * a small button at the bottom. The logo sits inside the content column
+ * instead of straddling the banner edge, which kept forcing a large top
+ * padding to clear it.
+ */
 function ClubCard({ club }: { club: Club }) {
   return (
-    <div className="bg-chart-5/20 dark:bg-chart-5/10 border border-chart-5/20 rounded-xl overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 w-full h-full group">
-      {/* Banner */}
-      <div className="relative h-40">
-        <div className="absolute inset-0 overflow-hidden">
-          <Image
-            src={club.banner_url || banner}
-            alt={`${club.name} banner`}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-            priority={false} // Set to true if above the fold
-          />
-          {/* Fixed typo: bg-linear-to-r → bg-gradient-to-r */}
-          <div className="absolute inset-0 bg-linear-to-r from-black/60 to-transparent opacity-60" />
-        </div>
+    <Link
+      href={`/club/${club.slug}`}
+      className="group flex h-full w-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors duration-200 hover:border-domain-clubs"
+    >
+      <div className="relative h-36 overflow-hidden border-b border-border">
+        <Image
+          src={club.banner_url || banner}
+          alt=""
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+        />
+      </div>
 
-        {/* Logo container */}
-        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-10">
-          <div className="relative h-20 w-20 rounded-full ring-4 ring-background overflow-hidden bg-background">
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex items-center gap-3">
+          <div className="relative size-10 shrink-0 overflow-hidden rounded-full border border-border bg-background">
             <Image
               src={club.logo_url || logo}
-              alt={`${club.name} logo`}
+              alt=""
               fill
-              sizes="80px"
+              sizes="40px"
               className="object-cover"
             />
           </div>
+          <h3 className="text-lg leading-tight font-bold">{club.name}</h3>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="pt-12 px-6 pb-6 flex flex-col flex-1 items-center text-center">
-        <h2 className="text-2xl font-bold tracking-tight mb-2">{club.name}</h2>
-
-        <p className="text-muted-foreground text-sm line-clamp-3 mb-6">
+        <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
           {club.description}
         </p>
 
-        <Link
-          href={`/club/${club.slug}`}
-          className="mt-auto w-full rounded-lg bg-primary text-primary-foreground px-4 py-3 font-semibold hover:bg-primary/90 transition-colors shadow-sm"
-        >
-          View Club
-        </Link>
+        {/* accent-ink rather than the raw brand red: at 14px the pure
+            #ed2024 clears only 4.06:1 on the card, which misses AA. */}
+        <span className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-accent-ink">
+          View club
+          <ArrowRight
+            className="size-4 transition-transform duration-300 group-hover:translate-x-1"
+            aria-hidden="true"
+          />
+        </span>
       </div>
-    </div>
+    </Link>
   );
 }
 

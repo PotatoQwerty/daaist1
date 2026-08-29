@@ -18,7 +18,7 @@ export default function EventExperienceField({
   onChange,
 }: EventExperienceFieldProps) {
   return (
-    <div className="space-y-3 rounded-2xl border border-border bg-muted/25 p-4">
+    <div className="space-y-3 rounded-lg border border-border bg-muted/25 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <Label htmlFor={`experience-${topic}`} className="text-sm font-medium">

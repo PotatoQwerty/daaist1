@@ -145,17 +145,14 @@ export default function UploadForm() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-background text-foreground">
+    <div className="relative min-h-[100dvh] w-full bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-background to-secondary/10" />
-        <div className="absolute -top-32 right-1/2 h-72 w-72 translate-x-1/2 rounded-full bg-secondary/20 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-primary/15 blur-3xl" />
       </div>
 
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-10">
-        <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 md:p-10">
+        <div className="rounded-lg border border-border bg-card p-6 md:p-10">
           <div className="text-center space-y-2">
-            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            <p className="annot">
               Upload
             </p>
             <h1 className="text-3xl md:text-4xl font-bold">Share a file</h1>
@@ -217,7 +214,7 @@ export default function UploadForm() {
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
-                className="w-full rounded-xl border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition"
+                className="w-full rounded-md border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition"
               />
             </div>
 
@@ -286,7 +283,7 @@ export default function UploadForm() {
                 title="file input"
                 type="file"
                 name="file"
-                className="w-full cursor-pointer rounded-xl border border-dashed border-border bg-background/70 p-3 text-sm file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:font-semibold file:text-accent-foreground hover:border-accent/60"
+                className="w-full cursor-pointer rounded-md border border-dashed border-border bg-background/70 p-3 text-sm file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-accent file:px-4 file:py-2 file:text-sm file:font-semibold file:text-accent-foreground hover:border-accent/60"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
               />
               <p className="text-xs text-muted-foreground">
@@ -297,7 +294,7 @@ export default function UploadForm() {
             <button
               type="submit"
               disabled={isUploading}
-              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent text-accent-foreground py-3 text-sm font-semibold shadow-sm hover:brightness-95 transition disabled:opacity-60"
+              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md bg-accent text-accent-foreground py-3 text-sm font-semibold shadow-sm hover:brightness-95 transition disabled:opacity-60"
             >
               {isUploading ? (
                 <>

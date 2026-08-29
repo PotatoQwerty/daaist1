@@ -7,7 +7,6 @@ import Link from "next/link";
 import { Stars, UserIcon, ShieldUser, FolderOpen, Heart } from "lucide-react";
 import EditProfileButton from "@/components/EditProfileButton";
 import ProfileBio from "@/components/EditProfileBio";
-import DaaLogo from "@/components/DaaLogo";
 import HorizontalUploads from "@/components/HorizontalUploads";
 import HorizontalLikes from "@/components/HorizontalLikes";
 import EmptyState from "@/components/EmptyState";
@@ -47,7 +46,7 @@ interface ProfileClientProps {
 export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const { session } = useUser();
   const [user, setUser] = useState(initialUser);
-  const { isAdmin, isSuperAdmin } = useCurrentRole();
+  const { isAdmin, isSuperAdmin, canUpload } = useCurrentRole();
 
   const isOwnProfile = session?.user.id === user.user_id;
 
@@ -72,34 +71,31 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         })(),
         {
           loading: "Deleting file...",
-          success: "File deleted successfully!",
-          error: "Something went wrong!",
+          success: "File deleted",
+          error: "Could not delete the file. Try again.",
         },
       );
 
-      // Remove the deleted file from user.uploads
       setUser((prev) => ({
         ...prev,
         uploads: prev.uploads.filter((file) => file.url !== fileUrl),
       }));
     } catch (err) {
       console.error(err);
-      toast.error("Failed to delete file ❌");
+      toast.error("Could not delete the file. Try again.");
     }
   };
 
   const handleLike = async (fileId: string) => {
-    // If not logged in or invalid state, return
     if (!user) return;
 
     const isLiked = user.likes?.some((item) => item.id === fileId);
 
-    // 🔹 Optimistic UI update
     setUser((prev) => ({
       ...prev,
       likes: isLiked
-        ? prev.likes.filter((item) => item.id !== fileId) // unlike
-        : [...prev.likes, { id: fileId }], // like (placeholder object)
+        ? prev.likes.filter((item) => item.id !== fileId)
+        : [...prev.likes, { id: fileId }],
     }));
 
     try {
@@ -111,7 +107,6 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
       if (res.ok) {
         const data = await res.json();
-        // Sync with backend response if needed
         if (data.likedposts) {
           setUser((prev) => ({
             ...prev,
@@ -123,7 +118,6 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       }
     } catch (err) {
       console.error("Like/unlike failed:", err);
-      // Revert optimization on error if needed (omitted for brevity)
     }
   };
 
@@ -136,205 +130,153 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const likesCount = user.likes?.length ?? 0;
   const clubs = user.clubs ?? [];
 
+  const standing =
+    isAdmin || isSuperAdmin ? "Admin" : user.isdaa ? "DAA'ist" : "Guest";
+  const StandingIcon =
+    isAdmin || isSuperAdmin ? ShieldUser : user.isdaa ? Stars : UserIcon;
+
   return (
-    <div className="relative min-h-screen w-full bg-background text-foreground">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-background to-secondary/10" />
-        <div className="absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-secondary/20 blur-3xl" />
-        <div className="absolute top-24 right-0 h-64 w-64 rounded-full bg-accent/15 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-primary/15 blur-3xl" />
-      </div>
+    <main className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-6 md:py-16">
+      {/* Identity block. Avatar, name, standing, and the two counts that
+          describe this person's activity, on one rule. */}
+      <header className="rule-b flex flex-col gap-8 pb-10 md:flex-row md:items-start md:justify-between">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+          <EditProfileButton
+            isOwnProfile={isOwnProfile}
+            currentImage={user.image || "/images/placeholder.png"}
+          />
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-10">
-        <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70">
-          <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-accent/10" />
-          <div className="relative flex flex-col gap-8 p-6 md:p-10 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col gap-6 md:flex-row md:items-start">
-              <EditProfileButton
-                isOwnProfile={isOwnProfile}
-                currentImage={user.image || "/images/placeholder.png"}
-              />
-
-              <div className="flex flex-col items-center md:items-start text-center md:text-left gap-4">
-                <div className="space-y-1">
-                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-                    {displayName}
-                  </h1>
-                  {user.username && (
-                    <p className="text-sm text-muted-foreground">
-                      @{user.username}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                  <span className="text-xs font-semibold bg-secondary text-secondary-foreground px-3 py-1 rounded-full shadow-sm">
-                    {displayYear?.label || "Unknown year"}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
-                    {isAdmin || isSuperAdmin ? (
-                      <ShieldUser
-                        className="size-4"
-                        fill="var(--secondary)"
-                        stroke="var(--primary)"
-                        strokeWidth="1px"
-                      />
-                    ) : user.isdaa ? (
-                      <Stars
-                        className="size-4"
-                        fill="var(--secondary)"
-                        stroke="none"
-                      />
-                    ) : (
-                      <UserIcon
-                        className="size-4"
-                        fill="var(--primary)"
-                        stroke="none"
-                      />
-                    )}
-                    <span>
-                      {isAdmin || isSuperAdmin
-                        ? "Admin"
-                        : user.isdaa
-                          ? "DAA'ist"
-                          : "Guest"}
-                    </span>
-                  </span>
-                </div>
-
-                <div className="grid w-full max-w-sm grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-center md:text-left">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Uploads
-                    </p>
-                    <p className="text-lg font-semibold">{uploadsCount}</p>
-                  </div>
-                  <div className="rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-center md:text-left">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Favorites
-                    </p>
-                    <p className="text-lg font-semibold">{likesCount}</p>
-                  </div>
-                </div>
-
-                <div className="w-full max-w-sm rounded-2xl border border-border/60 bg-background/70 p-4">
-                  <ProfileBio
-                    actualBio={user.bio}
-                    isOwnProfile={isOwnProfile}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="hidden lg:flex items-center justify-center">
-              <div className="scale-90 opacity-90">
-                <DaaLogo />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="w-full">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold text-foreground">Clubs</h2>
-          </div>
-
-          {clubs.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {clubs.map((club) => {
-                const roleLabel = club.role
-                  ? club.role.replace(/_/g, " ")
-                  : null;
-                return (
-                  <div
-                    key={club.id}
-                    className="rounded-2xl border border-border/60 bg-card/60 p-4 shadow-sm"
-                  >
-                    {club.slug ? (
-                      <Link
-                        href={`/club/${club.slug}`}
-                        className="inline-flex items-center text-lg font-semibold text-foreground hover:text-accent transition"
-                      >
-                        Member of {club.name}
-                      </Link>
-                    ) : (
-                      <p className="text-lg font-semibold text-foreground">
-                        Member of {club.name}
-                      </p>
-                    )}
-                    {roleLabel && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Role: {roleLabel}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-border/60 bg-card/60 px-4 py-6 text-sm text-muted-foreground">
-              Not a member of any club yet.
-            </div>
-          )}
-        </section>
-
-        <section className="w-full">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h2 className="text-2xl font-semibold text-foreground">
-              Uploaded Projects
-            </h2>
-            {isOwnProfile && isAdmin && (
-              <Link
-                href="/upload"
-                className="inline-flex items-center gap-2 rounded-full bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold shadow-sm hover:bg-secondary transition"
-              >
-                + Upload New
-              </Link>
+          <div className="min-w-0">
+            <h1 className="text-3xl leading-tight font-bold sm:text-4xl">
+              {displayName}
+            </h1>
+            {user.username && (
+              <p className="annot mt-1.5">@{user.username}</p>
             )}
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-border px-3 py-1 text-xs font-bold">
+                {displayYear?.label || "Year not set"}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary px-3 py-1 text-xs font-bold text-primary">
+                <StandingIcon
+                  className="size-3.5"
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                />
+                {standing}
+              </span>
+            </div>
+
+            <div className="mt-6 max-w-md">
+              <ProfileBio actualBio={user.bio} isOwnProfile={isOwnProfile} />
+            </div>
           </div>
+        </div>
 
-          {user.uploads && user.uploads.length > 0 ? (
-            <HorizontalUploads
-              isOwnProfile={isOwnProfile}
-              uploads={user.uploads}
-              handleDelete={handleDelete}
-            />
-          ) : (
-            <EmptyState
-              icon={FolderOpen}
-              title="No Uploads Yet"
-              description={
-                isOwnProfile
-                  ? "You haven't uploaded any files yet. Share your work with the community!"
-                  : "This user hasn't uploaded any documents yet."
-              }
-            />
-          )}
-        </section>
-
-        <section className="w-full">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold text-foreground">
-              Favorites
-            </h2>
+        <dl className="flex gap-10 md:shrink-0">
+          <div>
+            <dt className="annot">Uploads</dt>
+            <dd className="mt-1 font-mono text-3xl font-medium tabular-nums">
+              {uploadsCount}
+            </dd>
           </div>
+          <div>
+            <dt className="annot">Favorites</dt>
+            <dd className="mt-1 font-mono text-3xl font-medium tabular-nums">
+              {likesCount}
+            </dd>
+          </div>
+        </dl>
+      </header>
 
-          {user.likes && user.likes.length > 0 ? (
-            <HorizontalLikes
-              isOwnProfile={isOwnProfile}
-              likes={user.likes}
-              liked={user.likes}
-              handleLike={handleLike}
-            />
-          ) : (
-            <EmptyState
-              icon={Heart}
-              title="No Favorites"
-              description="No favorite files yet. Heart some files to see them here!"
-            />
+      <section className="mt-14">
+        <h2 className="text-2xl font-bold">Clubs</h2>
+
+        {clubs.length > 0 ? (
+          <ul className="mt-5">
+            {clubs.map((club) => {
+              const roleLabel = club.role ? club.role.replace(/_/g, " ") : null;
+              return (
+                <li
+                  key={club.id}
+                  className="rule-t flex items-baseline justify-between gap-4 py-4"
+                >
+                  {club.slug ? (
+                    <Link
+                      href={`/club/${club.slug}`}
+                      className="font-bold transition-colors hover:text-accent-ink"
+                    >
+                      {club.name}
+                    </Link>
+                  ) : (
+                    <span className="font-bold">{club.name}</span>
+                  )}
+                  {roleLabel && <span className="annot">{roleLabel}</span>}
+                </li>
+              );
+            })}
+            <li className="rule-t" />
+          </ul>
+        ) : (
+          <p className="mt-5 text-sm text-muted-foreground">
+            {isOwnProfile
+              ? "You are not in a club yet. Club pages list how to join."
+              : "Not a member of any club yet."}
+          </p>
+        )}
+      </section>
+
+      <section className="mt-14">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-2xl font-bold">Uploads</h2>
+          {isOwnProfile && canUpload && (
+            <Link
+              href="/upload"
+              className="inline-flex items-center rounded-md bg-accent px-4 py-2 text-sm font-bold text-accent-foreground transition-transform duration-150 hover:brightness-110 active:scale-[0.98]"
+            >
+              Upload a file
+            </Link>
           )}
-        </section>
-      </div>
-    </div>
+        </div>
+
+        {user.uploads && user.uploads.length > 0 ? (
+          <HorizontalUploads
+            isOwnProfile={isOwnProfile}
+            uploads={user.uploads}
+            handleDelete={handleDelete}
+          />
+        ) : (
+          <EmptyState
+            icon={FolderOpen}
+            title="Nothing uploaded yet"
+            description={
+              isOwnProfile
+                ? "Share a course, a TD or a corrected exam and it will show up here."
+                : "This student has not uploaded anything yet."
+            }
+          />
+        )}
+      </section>
+
+      <section className="mt-14">
+        <h2 className="mb-5 text-2xl font-bold">Favorites</h2>
+
+        {user.likes && user.likes.length > 0 ? (
+          <HorizontalLikes
+            isOwnProfile={isOwnProfile}
+            likes={user.likes}
+            liked={user.likes}
+            handleLike={handleLike}
+          />
+        ) : (
+          <EmptyState
+            icon={Heart}
+            title="No favorites yet"
+            description="Heart a file anywhere in the archive and it will be saved here for quick access."
+          />
+        )}
+      </section>
+    </main>
   );
 }

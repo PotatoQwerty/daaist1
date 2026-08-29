@@ -1,5 +1,6 @@
 import WindRose from "@/components/WindRose";
 import SunPathTool from "@/components/SunPathTool";
+import PageHeader from "@/components/PageHeader";
 import {
   Accordion,
   AccordionContent,
@@ -7,48 +8,71 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
+export const metadata = {
+  title: "Daa'ist - Tools",
+  description:
+    "Site analysis generators for studio work: wind rose and sun path diagrams.",
+};
+
+const TOOLS = [
+  {
+    value: "windrose",
+    name: "Wind rose",
+    does: "Plots wind direction and speed frequency for a location.",
+    render: () => <WindRose />,
+  },
+  {
+    value: "sunpath-2d",
+    name: "Sun path, 2D",
+    does: "Stereographic sun path diagram for a latitude and date range.",
+    render: () => <SunPathTool variant="2d" />,
+  },
+  {
+    value: "sunpath-3d",
+    name: "Sun path, 3D",
+    does: "The same solar geometry, drawn on a hemisphere.",
+    render: () => <SunPathTool variant="3d" />,
+  },
+];
+
 function ToolsPage() {
   return (
-    <main className="relative min-h-screen w-full bg-background px-4 py-10 text-foreground">
-      <div className="mx-auto w-full max-w-5xl">
-        <section className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 md:p-8">
-          <h1 className="text-3xl font-bold tracking-tight">Useful Tools</h1>
+    <main className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-6 md:py-16">
+      <PageHeader
+        title="Tools"
+        lede="Site analysis generators for studio work. Enter a location, take the diagram."
+        meta={`${TOOLS.length} tools`}
+      />
 
-          <Accordion
-            type="single"
-            collapsible
-            defaultValue="windrose"
-            className="mt-6 rounded-2xl border border-border/60 bg-background/50 px-4"
+      <Accordion
+        type="single"
+        collapsible
+        defaultValue="windrose"
+        className="mt-10"
+      >
+        {TOOLS.map((tool) => (
+          <AccordionItem
+            key={tool.value}
+            value={tool.value}
+            className="rule-t border-b-0"
           >
-            <AccordionItem value="windrose">
-              <AccordionTrigger className="text-base font-semibold hover:no-underline">
-                Windrose Generator
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <WindRose />
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="sunpath-2d">
-              <AccordionTrigger className="text-base font-semibold hover:no-underline">
-                Sun Path 2D Generator
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <SunPathTool variant="2d" />
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="sunpath-3d">
-              <AccordionTrigger className="text-base font-semibold hover:no-underline">
-                Sun Path 3D Generator
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <SunPathTool variant="3d" />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </section>
-      </div>
+            <AccordionTrigger className="py-6 hover:no-underline">
+              <span className="flex flex-col items-start gap-1 text-left">
+                <span className="text-xl font-bold sm:text-2xl">
+                  {tool.name}
+                </span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {tool.does}
+                </span>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 pb-10">
+              {tool.render()}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+      <div className="rule-t" />
     </main>
   );
 }

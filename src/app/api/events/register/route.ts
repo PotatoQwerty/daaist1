@@ -12,6 +12,7 @@ import {
   parseEventExtraData,
 } from "@/lib/event-extra";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 type RegistrationPayload = {
   eventId?: string;
@@ -151,6 +152,14 @@ export async function GET(request: Request) {
   if (!user?.id && !(email && registrationNumber)) {
     return NextResponse.json({ alreadyRegistered: false }, { status: 200 });
   }
+
+  // This reports whether a given email or matricule is registered, so it is
+  // a lookup oracle in its own right.
+  const limited = enforceRateLimit(request, RATE_LIMITS.eventRegister, {
+    bucket: "event-register-check",
+    userId: user?.id ?? null,
+  });
+  if (limited) return limited;
 
   const {
     data: existingParticipant,
@@ -306,6 +315,16 @@ export async function POST(request: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Anonymous sign-ups fall back to IP, so the ceiling is set high enough
+  // that a room of students registering off one campus connection is not
+  // mistaken for a script.
+  const limited = enforceRateLimit(request, RATE_LIMITS.eventRegister, {
+    bucket: "event-register",
+    userId: user?.id ?? null,
+    message: "Too many registration attempts. Please wait and try again.",
+  });
+  if (limited) return limited;
 
   const generatedCheckInToken = randomUUID();
   const normalizedExperienceAnswers = shouldCollectExtraAnswers

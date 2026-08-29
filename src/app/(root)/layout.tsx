@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
-import { Josefin_Sans } from "next/font/google";
+import { Josefin_Sans, IBM_Plex_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "next-themes";
@@ -8,10 +8,22 @@ import Footer from "@/components/Footer";
 import ChatBubble from "@/components/ChatBubble";
 import { UserProvider } from "@/context/user-context";
 import { getUserContext } from "@/lib/supabase/user-context";
+
 const josefin = Josefin_Sans({
   subsets: ["latin"],
   variable: "--font-josefin",
+  display: "swap",
 });
+
+// The annotation face: years, file sizes, counts, dates. Kept to
+// the utility role so it never competes with Kabel for display.
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-plex-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Daa'ist",
   description:
@@ -32,13 +44,15 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "https://daaist.com/" },
 };
+
+// maximumScale and userScalable were removed: locking zoom breaks
+// pinch-to-zoom for low-vision users and fails WCAG 1.4.4.
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   interactiveWidget: "resizes-content",
 };
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -47,8 +61,26 @@ export default async function RootLayout({
   const userContext = await getUserContext();
 
   return (
-    <html lang="en" suppressHydrationWarning className={`${josefin.variable}`}>
-      <body className="kabel-reg">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${josefin.variable} ${plexMono.variable}`}
+    >
+      <head>
+        {/* Adobe Fonts kit carrying neue-kabel. Preconnecting lets the
+            font request start before the CSS finishes parsing, which an
+            @import inside globals.css could not do. */}
+        <link rel="preconnect" href="https://use.typekit.net" crossOrigin="" />
+        <link rel="preconnect" href="https://p.typekit.net" crossOrigin="" />
+        <link rel="stylesheet" href="https://use.typekit.net/eef1cbb.css" />
+        {/* Scroll reveals start at opacity 0 and are switched on by an
+            IntersectionObserver. With scripting off nothing would ever
+            switch them on, so the content is forced visible instead. */}
+        <noscript>
+          <style>{`.reveal{opacity:1 !important;transform:none !important}`}</style>
+        </noscript>
+      </head>
+      <body className="kabel-reg antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -61,13 +93,21 @@ export default async function RootLayout({
             initialIsAdmin={userContext.isAdmin}
             initialIsSuperAdmin={userContext.isSuperAdmin}
           >
+            <a
+              href="#main"
+              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+            >
+              Skip to content
+            </a>
             <Toaster position="top-right" />
             <Navbar />
-            {children}
+            <div id="main" className="min-h-[60vh]">
+              {children}
+            </div>
             <ChatBubble />
+            <Footer />
           </UserProvider>
         </ThemeProvider>
-        <Footer />
       </body>
     </html>
   );

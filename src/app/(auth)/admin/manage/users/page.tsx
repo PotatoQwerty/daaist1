@@ -7,7 +7,7 @@ import { fetchUsers, getUserRoles } from "@/lib/supabase/actions";
 export const revalidate = 1800;
 
 export const metadata = {
-  title: "Daa'ist — Manage Users",
+  title: "Daa'ist - Manage Users",
   description: "Manage Daa'ist users.",
   alternates: {
     canonical: "https://daaist.com/admin/manage/users",

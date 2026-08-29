@@ -198,11 +198,11 @@ function OnboardingForm() {
   };
 
   const inputClassName =
-    "w-full rounded-xl border border-border bg-background/80 p-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground";
+    "w-full rounded-md border border-border bg-background/80 p-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground";
   const readonlyInputClassName =
-    "w-full rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground cursor-not-allowed";
+    "w-full rounded-md border border-border bg-muted p-4 text-sm text-muted-foreground cursor-not-allowed";
   const buttonClassName =
-    "w-full rounded-xl bg-primary p-4 text-base font-semibold text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90 transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background";
+    "w-full rounded-md bg-primary p-4 text-base font-semibold text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90 transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background";
 
   const usernameMessage = usernameConflict
     ? "Username is already taken. Please choose another one."
@@ -212,7 +212,7 @@ function OnboardingForm() {
     <div ref={formRef} className="mx-auto w-full max-w-lg">
       <div className="space-y-8">
         <div className="text-center space-y-2">
-          <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+          <p className="annot">
             Student Setup
           </p>
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
@@ -229,7 +229,7 @@ function OnboardingForm() {
           method="POST"
           onSubmit={handleSubmit}
         >
-          <div className="rounded-2xl border border-border bg-background/60 p-4">
+          <div className="rounded-lg border border-border bg-background/60 p-4">
             <div className="flex flex-col items-center gap-4 text-center">
               <span className="text-sm font-semibold text-foreground">
                 Do you study in DAA?

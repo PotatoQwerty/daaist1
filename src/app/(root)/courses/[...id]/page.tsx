@@ -1,8 +1,9 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import FilesClient from "@/components/FilesClient";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
+import PageHeader from "@/components/PageHeader";
+import { yearOptions, type LevelKey } from "@/constants/uploadConstants";
 
 export const revalidate = 3600; // Cache for 1 hour
 
@@ -24,40 +25,29 @@ export default async function CoursesPage({
     console.error("Fetch courses error:", error);
   }
 
+  const yearLabel =
+    yearOptions.find((option) => option.value === (year as LevelKey))?.label ??
+    year;
+  const count = courses?.length ?? 0;
+
   return (
-    <main className="relative min-h-screen w-full bg-background text-foreground">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-background to-accent/10" />
-        <div className="absolute -top-40 right-0 h-[520px] w-[520px] rounded-full bg-primary/15 blur-3xl" />
-        <div className="absolute -bottom-40 left-0 h-[520px] w-[520px] rounded-full bg-accent/15 blur-3xl" />
-      </div>
+    <main className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-6 md:py-16">
+      <Link
+        href="/courses"
+        className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ChevronLeft className="size-4" aria-hidden="true" />
+        All years
+      </Link>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
-        <header className="flex items-start gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-            className="shrink-0 rounded-full"
-          >
-            <Link href="/courses" aria-label="Back to course years">
-              <ChevronLeft className="size-5" />
-            </Link>
-          </Button>
+      <PageHeader
+        title={yearLabel}
+        lede="Filter by subject, or narrow to summaries only."
+        domain="courses"
+        meta={`${count} ${count === 1 ? "file" : "files"}`}
+      />
 
-          <div className="min-w-0">
-            <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
-              Courses
-            </p>
-            <h1 className="mt-2 text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-              {year}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Browse resources and materials for {year}
-            </p>
-          </div>
-        </header>
-
+      <div className="mt-10">
         <FilesClient initialFiles={courses || []} level={year} />
       </div>
     </main>

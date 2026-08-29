@@ -82,10 +82,10 @@ export default function CheckInQRCode({
   };
 
   return (
-    <div className="rounded-[1.75rem] border border-border bg-card p-6">
+    <div className="rounded-lg border border-border bg-card p-6">
       <div className="space-y-4">
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+          <p className="annot">
             Check-In Pass
           </p>
           <h3 className="text-xl font-bold">{eventTitle}</h3>
@@ -100,29 +100,29 @@ export default function CheckInQRCode({
             {checkInUrl ? (
               <canvas
                 ref={canvasRef}
-                className={`rounded-xl bg-white p-3 ${
+                className={`rounded-md bg-white p-3 ${
                   qrReady ? "block" : "hidden"
                 }`}
               />
             ) : null}
 
             {!qrReady && (
-              <div className="flex h-[220px] w-[220px] items-center justify-center rounded-xl bg-white text-primary">
+              <div className="flex h-[220px] w-[220px] items-center justify-center rounded-md bg-white text-primary">
                 <QrCode className="h-10 w-10" />
               </div>
             )}
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-muted/35 p-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            <div className="rounded-lg border border-border bg-muted/35 p-4">
+              <p className="annot">
                 Pass reference
               </p>
               <p className="mt-2 text-lg font-semibold">#{shortToken}</p>
             </div>
 
-            <div className="rounded-2xl border border-border bg-muted/35 p-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            <div className="rounded-lg border border-border bg-muted/35 p-4">
+              <p className="annot">
                 Backup link
               </p>
               <p className="mt-2 break-all text-sm leading-6 text-muted-foreground">
@@ -133,7 +133,7 @@ export default function CheckInQRCode({
             <Button
               type="button"
               variant="outline"
-              className="h-11 rounded-xl px-5"
+              className="h-11 rounded-md px-5"
               onClick={handleCopy}
               disabled={!checkInUrl}
             >

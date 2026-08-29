@@ -194,7 +194,7 @@ function ChatBubble() {
     <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end">
       {/* CHAT WINDOW */}
       {isOpen && (
-        <div className="mb-4 w-[350px] h-[500px] bg-white border border-gray-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
+        <div className="mb-4 flex h-[500px] w-[min(90vw,350px)] flex-col overflow-hidden rounded-lg border border-border bg-card shadow-lg animate-in slide-in-from-bottom-5 fade-in duration-300">
           {/* Header */}
           <div className="bg-primary p-4 flex justify-between items-center text-primary-foreground">
             <div>
@@ -207,7 +207,7 @@ function ChatBubble() {
               type="button"
               title="close Chat"
               onClick={() => setIsOpen(false)}
-              className="hover:bg-white/20 p-1 rounded-full transition-colors"
+              className="rounded-full p-1 transition-colors hover:bg-white/20"
             >
               <X className="size-5" />
             </button>
@@ -216,11 +216,11 @@ function ChatBubble() {
           {/* Messages Area (Scrollable) */}
           <div className="flex-1 overflow-y-auto p-4 bg-background flex flex-col space-y-2">
             {isLoading ? (
-              <div className="flex justify-center items-center h-full text-gray-400">
+              <div className="flex h-full items-center justify-center text-muted-foreground">
                 <Loader2 className="animate-spin size-6" />
               </div>
             ) : messages.length === 0 ? (
-              <div className="text-center text-gray-400 mt-10 text-sm">
+              <div className="mt-10 text-center text-sm text-muted-foreground">
                 No messages yet. Say hello!
               </div>
             ) : (
@@ -231,13 +231,13 @@ function ChatBubble() {
 
           {/* Error Message Banner */}
           {error && (
-            <div className="mx-3 mb-2 p-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm animate-in slide-in-from-bottom-2 fade-in duration-200">
+            <div className="mx-3 mb-2 flex items-center gap-2 rounded-md border-l-2 border-destructive bg-subtle p-2 text-sm text-foreground animate-in slide-in-from-bottom-2 fade-in duration-200">
               <AlertCircle className="size-4 shrink-0" />
               <span className="flex-1">{error}</span>
               <button
                 type="button"
                 onClick={() => setError(null)}
-                className="hover:bg-red-100 p-1 rounded transition-colors"
+                className="rounded p-1 transition-colors hover:bg-muted"
                 aria-label="Dismiss error"
               >
                 <X className="size-3" />
@@ -248,7 +248,7 @@ function ChatBubble() {
           {/* Input Area (Fixed at bottom) */}
           <form
             onSubmit={handleSend}
-            className="p-3 bg-background border-t flex items-center gap-2"
+            className="flex items-center gap-2 border-t border-border bg-background p-3"
           >
             <input
               type="text"
@@ -256,14 +256,14 @@ function ChatBubble() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 py-2 px-3 bg-background rounded-full text-sm focus:outline-none border-white border focus:ring-2 focus:ring-primary/50"
+              className="flex-1 rounded-full border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:border-ring"
               disabled={isSending}
             />
             <button
               title="send message"
               type="submit"
               disabled={!newMessage.trim() || isSending}
-              className="bg-primary text-primary-foreground p-2 rounded-full hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="rounded-full bg-primary p-2 text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSending ? (
                 <Loader2 className="size-5 animate-spin" />
@@ -284,8 +284,8 @@ function ChatBubble() {
           h-14 w-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300
           ${
             isOpen
-              ? "bg-gray-500 hover:bg-gray-600 rotate-90 opacity-0 pointer-events-none absolute"
-              : "bg-primary hover:bg-primary/90 text-primary-foreground"
+              ? "pointer-events-none absolute rotate-90 opacity-0"
+              : "bg-accent text-accent-foreground hover:brightness-110"
           }
         `}
       >

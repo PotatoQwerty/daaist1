@@ -5,6 +5,7 @@ import {
 } from "@/lib/event-extra";
 import { getEventByEventId, getUserClubRole } from "@/lib/supabase/actions";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 type CheckInPayload = {
   action?: "check_in" | "cancel";
@@ -98,6 +99,14 @@ export async function POST(request: Request) {
   if (!canManageEvents) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  // High ceiling: staff scan a queue in bursts. This only catches a runaway
+  // scanner loop or an attempt to probe check-in tokens.
+  const limited = enforceRateLimit(request, RATE_LIMITS.checkIn, {
+    bucket: "event-check-in",
+    userId: user.id,
+  });
+  if (limited) return limited;
 
   const participantLookup = supabaseServer
     .schema("public")

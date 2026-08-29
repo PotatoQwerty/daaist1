@@ -52,7 +52,7 @@ export function AppSidebar() {
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
   return (
-    <Sidebar className="flex flex-col h-screen bg-sidebar text-foreground">
+    <Sidebar className="flex h-[100dvh] flex-col bg-sidebar text-foreground">
       {/* Logo */}
       <SidebarHeader className="flex justify-center py-4">
         <Link href="/">

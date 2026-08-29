@@ -34,7 +34,7 @@ const Message = memo(function Message({
         src={img || placeholder}
         width={32}
         height={32}
-        className="rounded-full object-cover w-8 h-8 border border-gray-100"
+        className="rounded-full object-cover w-8 h-8 border border-border"
         alt={`${username}'s profile picture`}
         loading="lazy"
       />
@@ -53,12 +53,12 @@ const Message = memo(function Message({
                 showAvatar
                   ? "rounded-l-lg rounded-tr-lg rounded-br-none"
                   : "rounded-lg"
-              } ${isFailed ? "opacity-50 border border-red-300" : ""}`}
+              } ${isFailed ? "opacity-50 border border-destructive" : ""}`}
             >
               <p>{messageContent}</p>
             </div>
             {isFailed && (
-              <div className="flex items-center gap-1 text-xs text-red-600">
+              <div className="flex items-center gap-1 text-xs text-destructive">
                 <AlertCircle className="size-3" />
                 <span>Failed to send</span>
               </div>

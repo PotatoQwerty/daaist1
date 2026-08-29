@@ -668,7 +668,7 @@ function ManageClubEvents({ club }: { club: Club }) {
             </Label>
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/35 p-4">
+          <div className="rounded-md border border-border bg-muted/35 p-4">
             <div className="mb-3 flex items-start gap-3">
               <Info className="mt-0.5 h-4 w-4 text-primary" />
               <div>
@@ -726,7 +726,7 @@ function ManageClubEvents({ club }: { club: Club }) {
             )}
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/35 p-4">
+          <div className="rounded-md border border-border bg-muted/35 p-4">
             <div className="mb-3 flex items-start gap-3">
               <Info className="mt-0.5 h-4 w-4 text-primary" />
               <div>
@@ -781,7 +781,7 @@ function ManageClubEvents({ club }: { club: Club }) {
             )}
           </div>
 
-          <div className="rounded-xl border border-border bg-muted/35 p-4">
+          <div className="rounded-md border border-border bg-muted/35 p-4">
             <div className="mb-3 flex items-start gap-3">
               <Info className="mt-0.5 h-4 w-4 text-primary" />
               <div>
@@ -797,7 +797,7 @@ function ManageClubEvents({ club }: { club: Club }) {
                 <label
                   key={year}
                   htmlFor={`allowed-year-${year}`}
-                  className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm"
+                  className="flex items-center gap-3 rounded-md border border-border bg-background px-4 py-3 text-sm"
                 >
                   <Checkbox
                     id={`allowed-year-${year}`}

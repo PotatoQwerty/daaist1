@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -11,6 +12,13 @@ export async function POST(request: Request) {
   if (!user?.id)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  // Each call writes an object to storage and deletes the previous one.
+  const limited = enforceRateLimit(request, RATE_LIMITS.avatarUpload, {
+    bucket: "avatar-upload",
+    userId: user.id,
+  });
+  if (limited) return limited;
+
   const formData = await request.formData();
   const file = formData.get("file") as File;
 
@@ -18,7 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
   // 🧩 Get the user's current image first
-  const { data: userData, error: fetchError } = await supabase
+  const { data: userData, error: fetchError } = await supabaseServer
     .schema("public")
     .from("profiles")
     .select("image")
@@ -37,7 +45,7 @@ export async function POST(request: Request) {
   if (userData?.image?.includes("supabase.co")) {
     const oldImagePath = userData.image.split("/storage/v1/object/public/")[1];
     if (oldImagePath) {
-      const { error: deleteError } = await supabase.storage
+      const { error: deleteError } = await supabaseServer.storage
         .from("avatars") // Ensure this matches your bucket name
         .remove([oldImagePath]);
 
@@ -52,7 +60,7 @@ export async function POST(request: Request) {
   const fileName = `${user.id}-${randomUUID()}.${fileExt}`;
   const filePath = `/users/profile_pictures/${fileName}`;
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await supabaseServer.storage
     .from("daa")
     .upload(filePath, file);
 
@@ -62,11 +70,11 @@ export async function POST(request: Request) {
       { status: 500 },
     );
 
-  const { data: publicUrlData } = supabase.storage
+  const { data: publicUrlData } = supabaseServer.storage
     .from("daa")
     .getPublicUrl(filePath);
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await supabaseServer
     .schema("public")
     .from("profiles")
     .update({ image: publicUrlData.publicUrl })

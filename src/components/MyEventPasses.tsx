@@ -71,36 +71,36 @@ export default function MyEventPasses({
     <section className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
-            My Event Passes
-          </p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight">
-            Reopen your saved QR codes
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-7 text-muted-foreground">
-            Signed-in registrations stay here so you can quickly reopen your
-            access pass, copy the backup link, or jump back to the event form.
+          {/* The eyebrow said the same thing as the heading below it. */}
+          <h2 className="text-2xl font-bold sm:text-3xl">Your event passes</h2>
+          <p className="mt-2 max-w-[60ch] text-sm leading-relaxed text-muted-foreground">
+            Every event you registered for while signed in. Reopen the QR code
+            here, or copy the backup link.
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:w-auto">
-          <div className="rounded-2xl border border-border bg-card px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+          <div className="rounded-lg border border-border bg-card px-4 py-3">
+            <p className="annot">
               Ready
             </p>
-            <p className="mt-2 text-2xl font-bold">{summary.ready}</p>
+            <p className="mt-2 font-mono text-2xl font-medium tabular-nums">
+              {summary.ready}
+            </p>
           </div>
-          <div className="rounded-2xl border border-border bg-card px-4 py-3">
-            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+          <div className="rounded-lg border border-border bg-card px-4 py-3">
+            <p className="annot">
               Checked In
             </p>
-            <p className="mt-2 text-2xl font-bold">{summary.checkedIn}</p>
+            <p className="mt-2 font-mono text-2xl font-medium tabular-nums">
+              {summary.checkedIn}
+            </p>
           </div>
         </div>
       </div>
 
       {passes.length === 0 ? (
-        <div className="rounded-[2rem] border border-dashed border-border bg-card px-6 py-12">
+        <div className="rounded-lg border border-dashed border-border bg-card px-6 py-12">
           <h3 className="text-xl font-bold">No saved passes yet</h3>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
             Once you register for a public event while signed in, your QR access
@@ -120,7 +120,7 @@ export default function MyEventPasses({
             return (
               <article
                 key={pass.id}
-                className="overflow-hidden rounded-[2rem] border border-border bg-card"
+                className="overflow-hidden rounded-lg border border-border bg-card"
               >
                 <div className="grid gap-0 lg:grid-cols-[280px_1fr]">
                   <div className="relative min-h-[220px]">
@@ -135,13 +135,13 @@ export default function MyEventPasses({
                       sizes="(max-width: 1024px) 100vw, 280px"
                       className="object-cover"
                     />
-                    <div className="absolute inset-0 bg-linear-to-t from-primary/80 via-primary/20 to-transparent" />
+                    <div className="absolute inset-0 bg-daa-black/40" />
                     <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] uppercase tracking-[0.25em] text-primary-foreground backdrop-blur-sm">
+                      <span className="rounded-full border border-white/40 px-3 py-1 font-mono text-[10px] tracking-wide uppercase text-white">
                         Pass saved
                       </span>
                       {pass.checked_in_at ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-success px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
                           <CheckCircle2 className="h-3 w-3" />
                           Checked in
                         </span>
@@ -186,7 +186,7 @@ export default function MyEventPasses({
                       <Button
                         type="button"
                         variant={isExpanded ? "secondary" : "outline"}
-                        className="h-11 rounded-xl px-5"
+                        className="h-11 rounded-md px-5"
                         onClick={() =>
                           setExpandedPassId((current) =>
                             current === pass.id ? null : pass.id,
@@ -205,7 +205,7 @@ export default function MyEventPasses({
                     </div>
 
                     <div className="grid gap-3 md:grid-cols-2">
-                      <div className="rounded-2xl border border-border bg-muted/35 p-4 text-sm text-muted-foreground">
+                      <div className="rounded-lg border border-border bg-muted/35 p-4 text-sm text-muted-foreground">
                         <p className="flex items-center gap-2 font-medium text-foreground">
                           <CalendarDays className="h-4 w-4 text-primary" />
                           {eventDate}
@@ -216,7 +216,7 @@ export default function MyEventPasses({
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-border bg-muted/35 p-4 text-sm text-muted-foreground">
+                      <div className="rounded-lg border border-border bg-muted/35 p-4 text-sm text-muted-foreground">
                         <p>
                           Saved{" "}
                           {pass.created_at
@@ -239,12 +239,12 @@ export default function MyEventPasses({
                     </div>
 
                     <div className="flex flex-wrap gap-3">
-                      <Button asChild variant="outline" className="h-11 rounded-xl px-5">
+                      <Button asChild variant="outline" className="h-11 rounded-md px-5">
                         <Link href={getRegisterEventPath(pass.event)}>
                           Open registration page
                         </Link>
                       </Button>
-                      <Button asChild variant="ghost" className="h-11 rounded-xl px-5">
+                      <Button asChild variant="ghost" className="h-11 rounded-md px-5">
                         <Link href={getEventPath(pass.event)}>Open event page</Link>
                       </Button>
                     </div>

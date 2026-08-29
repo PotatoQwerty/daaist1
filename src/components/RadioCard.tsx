@@ -31,7 +31,7 @@ const RadioCard: React.FC<RadioCardProps> = ({
         required={required}
         checked={checked}
       />
-      <div className="flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-xl border border-border/60 bg-background/70 px-3 py-4 text-center text-foreground transition hover:-translate-y-0.5 hover:shadow-sm peer-checked:border-primary/50 peer-checked:bg-primary/10 peer-checked:text-primary">
+      <div className="flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-md border border-border bg-background/70 px-3 py-4 text-center text-foreground transition hover:-translate-y-0.5 hover:shadow-sm peer-checked:border-primary/50 peer-checked:bg-primary/10 peer-checked:text-primary">
         <p className="text-sm font-semibold">{label}</p>
         {icon && <div className="text-lg">{icon}</div>}
       </div>

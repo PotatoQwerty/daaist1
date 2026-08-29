@@ -1,15 +1,16 @@
-export async function generateMetadata() {
-  const title = "Daa'ist — Clubs";
-  const description = "Explore All DAA's clubs, and future events.";
-  return {
-    title,
-    description,
-  };
-}
-
 import Carossel from "@/components/Carossel";
 import ClubCard from "@/components/ClubCard";
+import PageHeader from "@/components/PageHeader";
+import Reveal from "@/components/Reveal";
 import { getClubs, getPublicEvents } from "@/lib/supabase/actions";
+
+export async function generateMetadata() {
+  return {
+    title: "Daa'ist - Clubs",
+    description:
+      "The student clubs running at the Département d'Architecture d'Alger, and the events they have coming up.",
+  };
+}
 
 export const revalidate = 30;
 
@@ -17,40 +18,39 @@ async function ClubPage() {
   const [clubs, events] = await Promise.all([getClubs(), getPublicEvents()]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center py-20 px-4 sm:px-8">
-      <div className="w-full max-w-7xl space-y-4 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-linear-to-r from-primary to-accent bg-clip-text text-transparent pb-2">
-          Explore DAA&#39;s Events
-        </h1>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Discover, join, and find your passion at DAA.
-        </p>
-        <Carossel data={events} />
-        <div className="space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-linear-to-r from-primary to-accent bg-clip-text text-transparent pb-2">
-            Explore DAA&#39;s Clubs
-          </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Discover communities, join events, and find your passion at DAA.
-          </p>
-        </div>
+    <main className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-6 md:py-16">
+      <PageHeader
+        title="Clubs"
+        lede="The student clubs running at DAA, and the events they have coming up."
+        domain="clubs"
+        meta={`${clubs.length} ${clubs.length === 1 ? "club" : "clubs"}`}
+      />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {clubs.length > 0 ? (
-            clubs.map((club) => <ClubCard key={club.id} club={club} />)
-          ) : (
-            <div className="col-span-full flex flex-col items-center justify-center p-12 text-center border-2 border-dashed rounded-xl bg-muted/30">
-              <p className="text-xl font-semibold text-muted-foreground">
-                No clubs found currently.
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Check back later for new communities!
-              </p>
-            </div>
-          )}
+      <section className="mt-14">
+        <h2 className="text-2xl font-bold sm:text-3xl">Upcoming events</h2>
+        <div className="mt-6">
+          <Carossel data={events} />
         </div>
-      </div>
-    </div>
+      </section>
+
+      <section className="rule-t mt-16 pt-12">
+        <h2 className="text-2xl font-bold sm:text-3xl">All clubs</h2>
+
+        {clubs.length > 0 ? (
+          <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {clubs.map((club, i) => (
+              <Reveal key={club.id} delay={i * 60} className="h-full">
+                <ClubCard club={club} />
+              </Reveal>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-8 border border-dashed border-border px-6 py-12 text-center text-muted-foreground">
+            No clubs are listed yet. Once a club is registered it shows up here.
+          </p>
+        )}
+      </section>
+    </main>
   );
 }
 

@@ -4,6 +4,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getUserRoles } from "@/lib/supabase/actions";
 import { createClient } from "@/lib/supabase/server";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const PUT = async (request: Request) => {
   const supabase = await createClient();
@@ -12,9 +13,17 @@ export const PUT = async (request: Request) => {
   } = await supabase.auth.getUser();
   if (!user)
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
-  if ((!isAdmin && !isSuperAdmin) || !user)
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  // Teachers publish coursework too, so this is the upload capability
+  // rather than an admin check.
+  const { canUpload } = await getUserRoles(user.id);
+  if (!canUpload)
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+
+  const limited = enforceRateLimit(request, RATE_LIMITS.uploadUrl, {
+    bucket: "upload-url",
+    userId: user.id,
+  });
+  if (limited) return limited;
 
   try {
     const formData = await request.formData();

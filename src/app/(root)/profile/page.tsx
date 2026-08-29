@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 
 export default async function Profile() {
   const supabase = await createClient();
@@ -12,7 +12,7 @@ export default async function Profile() {
   }
 
   // Fetch username directly from DB to avoid stale session data
-  const { data: profile } = await supabase
+  const { data: profile } = await supabaseServer
     .schema("public")
     .from("profiles")
     .select("username")

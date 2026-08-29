@@ -9,8 +9,8 @@ async function UploadPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/", RedirectType.replace);
-  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
-  if (!isAdmin && !isSuperAdmin) notFound();
+  const { canUpload } = await getUserRoles(user.id);
+  if (!canUpload) notFound();
 
   return <UploadForm />;
 }

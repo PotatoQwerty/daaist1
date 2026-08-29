@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/auth/server";
 import OnboardingForm from "@/components/OnboardingForm";
 import { isOnboarded } from "@/lib/supabase/actions";
 import { redirect } from "next/navigation";
+import BrandMark from "@/components/BrandMark";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -15,6 +16,15 @@ export const metadata = {
   },
 };
 
+// What the form actually asks for, in the order it asks. This is the
+// only place on the site where a numbered list is honest: it is a
+// sequence the person is about to walk through.
+const STEPS = [
+  "Pick a username. It appears on your profile and on anything you upload.",
+  "Choose your study year, so your courses come up first.",
+  "Tell us if you study at DAA. If you do, your name fills in after verification.",
+];
+
 export default async function OnboardingPage() {
   const supabase = await createClient();
   const {
@@ -27,61 +37,40 @@ export default async function OnboardingPage() {
   if (onboarded) redirect("/");
 
   return (
-    <main className="relative min-h-screen w-full bg-background text-foreground">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-background to-accent/10" />
-        <div className="absolute -top-40 right-0 h-[520px] w-[520px] rounded-full bg-primary/15 blur-3xl" />
-        <div className="absolute -bottom-40 left-0 h-[520px] w-[520px] rounded-full bg-accent/15 blur-3xl" />
-      </div>
+    <main className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-6 md:py-16">
+      <div className="grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:gap-20">
+        <section className="order-2 lg:order-1">
+          <BrandMark className="h-auto w-16 text-foreground" />
 
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 py-10 md:grid-cols-2 md:items-start">
-        <section className="order-2 md:order-1 relative overflow-hidden rounded-3xl border border-border/60 bg-card/80 p-8 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 md:p-10">
-          <div className="pointer-events-none absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-linear-to-br from-primary/15 via-transparent to-accent/15" />
-            <div className="absolute -top-20 -right-24 h-80 w-80 rounded-full bg-secondary/15 blur-3xl" />
-            <div className="absolute -bottom-20 -left-24 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-          </div>
-
-          <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
-            Onboarding
-          </p>
-          <h1 className="mt-3 text-4xl md:text-5xl font-black tracking-tight">
-            Welcome to Daa&apos;ist
+          <h1 className="mt-8 text-4xl leading-[1.05] font-bold sm:text-5xl">
+            Set up your profile.
           </h1>
-          <p className="mt-3 text-sm md:text-base text-muted-foreground">
-            Complete your profile to unlock courses, projects, clubs, and shared
-            documents.
+          <p className="mt-4 max-w-[48ch] text-base text-muted-foreground">
+            Three questions, about a minute. You can change any of it later
+            from your profile.
           </p>
 
-          <div className="mt-8 space-y-4 text-sm text-muted-foreground">
-            <div className="flex items-start gap-3">
-              <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />
-              <p>
-                Choose a username that will appear on your profile and uploads.
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />
-              <p>Add your study year for personalized quick access.</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />
-              <p>
-                If you study in DAA, we&apos;ll auto-fill your name after
-                verification.
-              </p>
-            </div>
-          </div>
-
-          <p className="mt-10 text-xs text-muted-foreground">
-            This takes about a minute. You can update your profile later.
-          </p>
+          <ol className="mt-10">
+            {STEPS.map((step, i) => (
+              <li
+                key={step}
+                className="rule-t flex gap-5 py-5 text-sm leading-relaxed text-muted-foreground"
+              >
+                <span
+                  className="font-mono text-xs text-foreground tabular-nums"
+                  aria-hidden="true"
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+          <div className="rule-t" />
         </section>
 
-        <section className="order-1 md:order-2 rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 md:p-10">
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-            <OnboardingForm />
-          </div>
+        <section className="order-1 rounded-lg border border-border bg-card p-6 md:p-8 lg:order-2">
+          <OnboardingForm />
         </section>
       </div>
     </main>

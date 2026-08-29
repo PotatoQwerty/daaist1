@@ -1,6 +1,13 @@
-import { MoreVertical, Trash2, FileIcon } from "lucide-react";
+"use client";
+
+import { MoreVertical, Trash2, FileText } from "lucide-react";
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function UploadedCard({
   title,
@@ -22,114 +29,88 @@ export default function UploadedCard({
   onDelete: () => void;
   isOwnProfile: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const extension = type.split("/")[1]?.toUpperCase() || "DOC";
+  const isImage = type.includes("image");
 
   return (
-    <div className="group relative w-full h-full bg-card/40 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-500 border border-white/20 flex flex-col overflow-hidden">
-      {/* Visual Header / Background Element */}
-      <div className="absolute top-0 left-0 w-full h-24 bg-linear-to-br from-primary/10 via-accent/5 to-transparent -z-10 group-hover:from-primary/20 group-hover:via-accent/10 transition-colors duration-500" />
-
-      {/* Badges Container */}
-      <div className="absolute top-3 left-3 z-20 flex flex-wrap gap-2">
-        {category === "td" && (
-          <span className="bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full backdrop-blur-md border border-orange-500/20 shadow-sm">
-            TD
-          </span>
+    <article className="group flex h-full w-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors duration-200 hover:border-foreground">
+      <div className="relative flex h-40 items-center justify-center overflow-hidden border-b border-border bg-subtle">
+        {isImage ? (
+          <Image
+            src={link || ""}
+            alt={title || "File preview"}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            sizes="256px"
+          />
+        ) : (
+          <FileText
+            className="size-9 text-muted-foreground"
+            strokeWidth={1.25}
+            aria-hidden="true"
+          />
         )}
-      </div>
 
-      {/* Delete Menu */}
-      <div className="absolute top-3 right-3 z-30" ref={menuRef}>
+        {/* Radix replaces the hand-rolled menu, which had no keyboard
+            support and no focus management. */}
         {isOwnProfile && (
-          <button
-            title="delete"
-            type="button"
-            className="bg-white/50 dark:bg-black/20 backdrop-blur-md shadow-sm border border-white/30 dark:border-white/10 rounded-full p-2 hover:bg-red-50 hover:text-red-500 transition-all duration-300"
-            onClick={() => setOpen((p) => !p)}
-          >
-            <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-          </button>
-        )}
-        {open && (
-          <div className="absolute right-0 mt-2 bg-white border rounded-lg shadow-lg w-32 z-50">
-            <button
-              type="button"
-              onClick={onDelete}
-              className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-gray-100 rounded-lg w-full text-left text-sm"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={`Actions for ${title}`}
+                className="absolute top-2 right-2 rounded-md border border-border bg-card p-2 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <MoreVertical className="size-4" strokeWidth={2} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40 rounded-lg">
+              <DropdownMenuItem
+                onClick={onDelete}
+                className="cursor-pointer text-destructive focus:bg-destructive focus:text-destructive-foreground"
+              >
+                <Trash2 className="mr-2 size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
 
-      {/* File Preview Section */}
-      <div className="relative flex flex-col items-center justify-center pt-8 pb-4 px-4 overflow-hidden h-40">
-        <div className="absolute inset-0 bg-radial-gradient from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-        <div className="relative w-full h-full flex items-center justify-center transform group-hover:scale-105 transition-transform duration-500 ease-out">
-          {/* Since we don't have a URL for image preview in the props passed to UploadedCard effectively (link is passed), assuming basic icon for now or we could try to use link if it's an image. FileCard uses 'url'. UploadedCard has 'link'. */}
-          {type.includes("image") ? (
-            // Assuming 'link' is the accessible URL
-            <div className="relative w-full h-full bg-white/40 dark:bg-white/5 rounded-2xl shadow-inner border border-white/40 overflow-hidden">
-              <Image
-                src={link || ""}
-                alt={title || "Image Preview"}
-                fill
-                className="object-cover w-full h-full rounded-xl transition-transform duration-500 hover:scale-110"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-            </div>
-          ) : (
-            <div className="p-4 bg-white/40 dark:bg-white/5 rounded-2xl shadow-inner border border-white/40">
-              <FileIcon className="size-14 text-primary" />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* File Info Section */}
-      <div className="p-5 flex flex-col grow gap-1 mt-auto bg-linear-to-t from-white/40 to-transparent dark:from-black/10">
-        <h2 className="font-bold text-foreground text-lg leading-tight group-hover:text-primary transition-colors duration-300 line-clamp-2 min-h-10">
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="line-clamp-2 text-base leading-snug font-bold text-foreground">
           {title}
-        </h2>
+        </h3>
 
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-[11px] font-medium text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-md border border-border/50">
-            {type.split("/")[1]?.toUpperCase() || "DOC"}
-          </span>
+        <p className="annot mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span>{extension}</span>
           {subject && (
-            <span className="text-[11px] font-bold text-primary/80 dark:text-primary-foreground/70 truncate uppercase tracking-tighter bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
-              {subject}
-            </span>
+            <>
+              <span aria-hidden="true">/</span>
+              <span className="text-foreground">{subject}</span>
+            </>
           )}
-        </div>
-
-        <p className="text-[12px] text-muted-foreground mt-2 font-medium flex items-center gap-1.5">
-          <span className="w-1 h-1 rounded-full bg-muted-foreground/60" />
-          {(size / (1024 * 1024)).toFixed(2)} MB
+          <span aria-hidden="true">/</span>
+          <span>{(size / (1024 * 1024)).toFixed(2)} MB</span>
         </p>
 
-        {/* View Button */}
+        {category === "td" && (
+          <p className="mt-3">
+            <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-[10px] tracking-wide uppercase text-muted-foreground">
+              TD / Exam
+            </span>
+          </p>
+        )}
+
         <a
           href={link}
           target="_blank"
-          className="mt-4 w-full cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-white py-2.5 px-4 text-sm font-bold hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98] transition-all duration-300 group/btn"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-transform duration-150 hover:brightness-110 active:scale-[0.98]"
         >
           View file
         </a>
       </div>
-    </div>
+    </article>
   );
 }

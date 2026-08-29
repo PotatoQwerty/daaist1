@@ -1,187 +1,194 @@
-@import url("https://use.typekit.net/eef1cbb.css");
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================
+   DAA'IST DESIGN SYSTEM
+   ------------------------------------------------------------
+   Direction: Bauhaus Foundation.
+   Not invented. Recovered. The DAA mark is three quarter-circle
+   lens forms in ultramarine / red / yellow with a black dot, and
+   the licensed display face (neue-kabel) is a Rudolf Koch Kabel
+   revival from 1927. The palette below is sampled directly from
+   public/images/DAAIST-LOGO-HOR.svg. Flat color, hard edges,
+   hairline structure. No gradients, no glass, no blur blobs.
+   ============================================================ */
+
 :root {
-  /* Base colors */
-  --background: oklch(0.98 0.01 270); /* near-white neutral background */
-  --foreground: oklch(0.18 0.02 270); /* deep charcoal text */
+  /* --- Brand constants, sampled from the logo file ---------- */
+  --daa-blue: #233e95;
+  --daa-red: #ed2024;
+  --daa-yellow: #ffca3f;
+  --daa-black: #16161a;
 
-  /* Surfaces */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 270);
+  /* Text-safe red. #ed2024 on paper is 4.06:1, which clears AA
+     for large text only. Small red text uses this instead. */
+  --daa-red-ink: #c8151a;
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 270);
+  /* --- Surfaces --------------------------------------------- */
+  --paper: #f4f4f2;
+  --background: var(--paper);
+  --foreground: var(--daa-black);
 
-  /* Primary (Midnight Blue) */
-  --primary: oklch(0.32 0.05 250); /* deep midnight blue */
-  --primary-foreground: oklch(0.98 0.01 270);
+  --card: #ffffff;
+  --card-foreground: var(--daa-black);
+  --popover: #ffffff;
+  --popover-foreground: var(--daa-black);
 
-  /* Secondary (Golden Yellow) */
-  --secondary: oklch(0.82 0.14 85); /* vibrant Bauhaus yellow */
-  --secondary-foreground: oklch(0.18 0.02 270);
+  /* --- Roles ------------------------------------------------
+     Blue is structure (headers, links, primary surfaces).
+     Red is THE accent (CTAs, active state, likes). One accent.
+     Yellow is a marker only, never a text color on light. */
+  --primary: var(--daa-blue);
+  --primary-foreground: #ffffff;
 
-  /* Accent (Pop Red) */
-  --accent: oklch(0.67 0.23 25); /* bold coral red */
-  --accent-foreground: oklch(0.98 0.01 270);
+  --accent: var(--daa-red);
+  --accent-foreground: #ffffff;
+  --accent-ink: var(--daa-red-ink);
 
-  /* Muted / Neutral elements */
-  --muted: oklch(0.92 0.01 270);
-  --muted-foreground: oklch(0.42 0.03 270);
+  --secondary: var(--daa-yellow);
+  --secondary-foreground: var(--daa-black);
 
-  /* Destructive (alert red) */
-  --destructive: oklch(0.55 0.25 25);
-  --destructive-foreground: oklch(0.98 0.01 270);
+  /* --- Neutrals: cool grey ramp derived from the ink --------- */
+  --muted: #e7e7e4;
+  --muted-foreground: #5c5c66;
+  --subtle: #eeeeec;
 
-  /* Borders / Inputs / Rings */
-  --border: oklch(0.88 0.01 270);
-  --input: oklch(0.9 0.01 270);
-  --ring: oklch(0.55 0.12 250);
+  --destructive: var(--daa-red-ink);
+  --destructive-foreground: #ffffff;
 
-  /* Charts */
-  --chart-1: oklch(0.72 0.23 40); /* warm red */
-  --chart-2: oklch(0.75 0.15 95); /* yellow */
-  --chart-3: oklch(0.42 0.1 250); /* blue */
-  --chart-4: oklch(0.6 0.18 120); /* green */
-  --chart-5: oklch(0.8 0.13 280); /* violet */
+  /* Status. Semantic only: these say "active" or "pending", they are
+     never reached for as decoration. Both clear AA on paper. */
+  --success: #1f6b4d;
+  --warning: #7a5410;
 
-  /* Sidebar */
-  --sidebar: oklch(0.96 0.01 270);
-  --sidebar-foreground: oklch(0.18 0.02 270);
-  --sidebar-primary: oklch(0.32 0.05 250);
-  --sidebar-primary-foreground: oklch(0.98 0.01 270);
-  --sidebar-accent: oklch(0.82 0.14 85);
-  --sidebar-accent-foreground: oklch(0.18 0.02 270);
-  --sidebar-border: oklch(0.88 0.01 270);
-  --sidebar-ring: oklch(0.55 0.12 250);
+  /* --- Structure -------------------------------------------- */
+  --border: #d8d8d4;
+  --rule: #c9c9c4;
+  --input: #d8d8d4;
+  --ring: var(--daa-blue);
 
-  /* Radius for rounded corners */
-  --radius: 0.625rem;
+  /* --- Section coding ---------------------------------------
+     The three lens forms of the mark map to the three content
+     domains, so color tells you where you are. */
+  --domain-courses: var(--daa-blue);
+  --domain-clubs: var(--daa-red);
+  --domain-docs: var(--daa-yellow);
+
+  /* --- Data viz --------------------------------------------- */
+  --chart-1: var(--daa-blue);
+  --chart-2: var(--daa-red);
+  --chart-3: var(--daa-yellow);
+  --chart-4: #2f7a5c;
+  --chart-5: #5c5c66;
+
+  /* --- Sidebar (admin) -------------------------------------- */
+  --sidebar: #ffffff;
+  --sidebar-foreground: var(--daa-black);
+  --sidebar-primary: var(--daa-blue);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--subtle);
+  --sidebar-accent-foreground: var(--daa-black);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--daa-blue);
+
+  /* --- Radius: ONE scale, tight. Drafted, not pillowy. -------
+     Interactive chips are the only full-round exception, and
+     that rule is applied everywhere it appears. */
+  --radius: 0.375rem;
+
+  /* --- Motion ----------------------------------------------- */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 140ms;
+  --dur-base: 240ms;
+  --dur-slow: 520ms;
 }
 
+/* Dark mode brightens the brand hues rather than desaturating
+   them, so the identity survives the theme switch.
+   Contrast against #121215: blue 5.99:1, red 6.29:1, yellow 12.2:1. */
+.dark,
 [data-theme="dark"] {
-  /* Base colors */
-  --background: oklch(0.15 0.02 270); /* deep neutral charcoal */
-  --foreground: oklch(0.95 0.01 270); /* near-white text */
+  --daa-blue: #6f8fe8;
+  --daa-red: #ff5c5f;
+  --daa-yellow: #ffca3f;
+  --daa-red-ink: #ff8083;
 
-  /* Surfaces */
-  --card: oklch(0.17 0.02 270);
-  --card-foreground: oklch(0.95 0.01 270);
+  --paper: #121215;
+  --background: var(--paper);
+  --foreground: #eeeef0;
 
-  --popover: oklch(0.18 0.02 270);
-  --popover-foreground: oklch(0.95 0.01 270);
+  --card: #1a1a1f;
+  --card-foreground: #eeeef0;
+  --popover: #1a1a1f;
+  --popover-foreground: #eeeef0;
 
-  /* Primary (Midnight Blue) */
-  --primary: oklch(0.45 0.15 250); /* from #0a192f */
-  --primary-foreground: oklch(0.98 0.01 270);
+  --primary: var(--daa-blue);
+  --primary-foreground: #0e0e11;
 
-  /* Secondary (Golden Yellow) */
-  --secondary: oklch(0.78 0.14 85); /* from #ffb703 */
-  --secondary-foreground: oklch(0.18 0.02 270);
+  --accent: var(--daa-red);
+  --accent-foreground: #16161a;
+  --accent-ink: var(--daa-red-ink);
 
-  /* Accent (Pop Red) */
-  --accent: oklch(0.65 0.23 25); /* from #ff4d6d */
-  --accent-foreground: oklch(0.98 0.01 270);
+  --secondary: var(--daa-yellow);
+  --secondary-foreground: #16161a;
 
-  /* Muted / Neutral elements */
-  --muted: oklch(0.22 0.02 270);
-  --muted-foreground: oklch(0.68 0.03 270);
+  --muted: #232329;
+  --muted-foreground: #9c9ca8;
+  --subtle: #1d1d22;
 
-  /* Destructive (alert red) */
-  --destructive: oklch(0.53 0.25 25);
-  --destructive-foreground: oklch(0.98 0.01 270);
+  --destructive: #ff5c5f;
+  --destructive-foreground: #16161a;
 
-  /* Borders / Inputs / Rings */
-  --border: oklch(0.25 0.02 270);
-  --input: oklch(0.22 0.02 270);
-  --ring: oklch(0.6 0.12 250);
+  --success: #56c496;
+  --warning: var(--daa-yellow);
 
-  /* Charts */
-  --chart-1: oklch(0.72 0.23 40); /* warm red */
-  --chart-2: oklch(0.75 0.15 95); /* yellow */
-  --chart-3: oklch(0.42 0.1 250); /* blue */
-  --chart-4: oklch(0.6 0.18 120); /* green */
-  --chart-5: oklch(0.8 0.13 280); /* violet */
+  --border: #2c2c33;
+  --rule: #34343c;
+  --input: #2c2c33;
+  --ring: var(--daa-blue);
 
-  /* Sidebar */
-  --sidebar: oklch(0.13 0.02 270);
-  --sidebar-border: oklch(0.2 0.02 270); /* Visible border */
-  --sidebar-foreground: oklch(0.9 0.01 270);
-  --sidebar-primary: oklch(0.28 0.05 250);
-  --sidebar-primary-foreground: oklch(0.98 0.01 270);
-  --sidebar-accent: oklch(0.78 0.14 85);
-  --sidebar-accent-foreground: oklch(0.18 0.02 270);
-  --sidebar-ring: oklch(0.6 0.12 250);
+  --domain-courses: var(--daa-blue);
+  --domain-clubs: var(--daa-red);
+  --domain-docs: var(--daa-yellow);
 
-  /* Radius for rounded corners */
-  --radius: 0.625rem;
+  --chart-1: var(--daa-blue);
+  --chart-2: var(--daa-red);
+  --chart-3: var(--daa-yellow);
+  --chart-4: #4fb98c;
+  --chart-5: #9c9ca8;
+
+  --sidebar: #16161b;
+  --sidebar-foreground: #eeeef0;
+  --sidebar-primary: var(--daa-blue);
+  --sidebar-primary-foreground: #0e0e11;
+  --sidebar-accent: #232329;
+  --sidebar-accent-foreground: #eeeef0;
+  --sidebar-border: #2c2c33;
+  --sidebar-ring: var(--daa-blue);
 }
-.dark {
-  /* Base colors */
-  --background: oklch(0.15 0.02 270); /* deep neutral charcoal */
-  --foreground: oklch(0.95 0.01 270); /* near-white text */
 
-  /* Surfaces */
-  --card: oklch(0.17 0.02 270);
-  --card-foreground: oklch(0.95 0.01 270);
-
-  --popover: oklch(0.18 0.02 270);
-  --popover-foreground: oklch(0.95 0.01 270);
-
-  /* Primary (Midnight Blue) */
-  --primary: oklch(0.45 0.15 250); /* from #0a192f */
-  --primary-foreground: oklch(0.98 0.01 270);
-
-  /* Secondary (Golden Yellow) */
-  --secondary: oklch(0.78 0.14 85); /* from #ffb703 */
-  --secondary-foreground: oklch(0.18 0.02 270);
-
-  /* Accent (Pop Red) */
-  --accent: oklch(0.65 0.23 25); /* from #ff4d6d */
-  --accent-foreground: oklch(0.98 0.01 270);
-
-  /* Muted / Neutral elements */
-  --muted: oklch(0.22 0.02 270);
-  --muted-foreground: oklch(0.68 0.03 270);
-
-  /* Destructive (alert red) */
-  --destructive: oklch(0.53 0.25 25);
-  --destructive-foreground: oklch(0.98 0.01 270);
-
-  /* Borders / Inputs / Rings */
-  --border: oklch(0.25 0.02 270);
-  --input: oklch(0.22 0.02 270);
-  --ring: oklch(0.6 0.12 250);
-
-  /* Charts */
-  --chart-1: oklch(0.72 0.23 40); /* warm red */
-  --chart-2: oklch(0.75 0.15 95); /* yellow */
-  --chart-3: oklch(0.42 0.1 250); /* blue */
-  --chart-4: oklch(0.6 0.18 120); /* green */
-  --chart-5: oklch(0.8 0.13 280); /* violet */
-
-  /* Sidebar */
-  --sidebar: oklch(0.13 0.02 270);
-  --sidebar-border: oklch(0.2 0.02 270); /* Visible border */
-  --sidebar-foreground: oklch(0.9 0.01 270);
-  --sidebar-primary: oklch(0.28 0.05 250);
-  --sidebar-primary-foreground: oklch(0.98 0.01 270);
-  --sidebar-accent: oklch(0.78 0.14 85);
-  --sidebar-accent-foreground: oklch(0.18 0.02 270);
-  --sidebar-ring: oklch(0.6 0.12 250);
-
-  /* Radius for rounded corners */
-  --radius: 0.625rem;
-}
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-paper: var(--paper);
   --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
   --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-rule: var(--rule);
+
+  --color-daa-blue: var(--daa-blue);
+  --color-daa-red: var(--daa-red);
+  --color-daa-yellow: var(--daa-yellow);
+  --color-daa-black: var(--daa-black);
+
+  --color-domain-courses: var(--domain-courses);
+  --color-domain-clubs: var(--domain-clubs);
+  --color-domain-docs: var(--domain-docs);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -199,6 +206,9 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-muted-foreground: var(--muted-foreground);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -207,12 +217,23 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  /* Explicit radius scale, not derived by calc, so nothing
+     silently clamps to zero. */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.625rem;
+
+  /* Display + UI: the licensed Kabel revival.
+     Utility: IBM Plex Mono, for the annotation layer (years,
+     file sizes, counts, dates) the way a drawing is annotated. */
+  --font-display: "neue-kabel", var(--font-josefin), "Josefin Sans", sans-serif;
+  --font-sans: "neue-kabel", var(--font-josefin), "Josefin Sans", sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  --animate-accordion-down: accordion-down 0.2s var(--ease-out-quint);
+  --animate-accordion-up: accordion-up 0.2s var(--ease-out-quint);
 }
 
 @keyframes accordion-down {
@@ -232,59 +253,253 @@
     height: 0;
   }
 }
-.kabel-light {
-  font-family: "neue-kabel", "Josefin Sans", sans-serif;
-  font-weight: 300;
-  font-style: normal;
-}
-
-.kabel-reg {
-  font-family: "neue-kabel", "Josefin Sans", sans-serif;
-  font-weight: 400;
-  font-style: normal;
-}
-.kabel-bold {
-  font-family: "neue-kabel", "Josefin Sans", sans-serif;
-  font-weight: 700;
-  font-style: normal;
-}
-.kabel-ita {
-  font-family: neue-kabel, "Josefin Sans", sans-serif;
-  font-weight: 400;
-  font-style: italic;
-}
-.onboard-input {
-  border: #ff4d6d 2px solid;
-  background-color: white;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 16px;
-  width: 100%;
-  color: var(--primary);
-  outline: none; /* focus:outline-none */
-  transition: box-shadow 0.2s ease;
-}
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Display type is set tight and heavy. Kabel has a small
+     x-height, so headings need negative tracking to hold
+     together. */
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-bold;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Keyboard focus is always visible and always the brand blue. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }
-/* Tailwind custom */
+
+/* ============================================================
+   Typography roles
+   ============================================================ */
+
+.kabel-light {
+  font-family: "neue-kabel", var(--font-josefin), "Josefin Sans", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.kabel-reg {
+  font-family: "neue-kabel", var(--font-josefin), "Josefin Sans", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.kabel-bold {
+  font-family: "neue-kabel", var(--font-josefin), "Josefin Sans", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.kabel-ita {
+  font-family: "neue-kabel", var(--font-josefin), "Josefin Sans", sans-serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* The annotation layer: metadata, counts, years, sizes, dates.
+   Mono is reserved for values that are read, not prose. */
+.annot {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   Structure: the drafting rule
+   ------------------------------------------------------------
+   Hairlines organise real content. They are never decoration.
+   ============================================================ */
+
+.rule-t {
+  border-top: 1px solid var(--rule);
+}
+
+.rule-b {
+  border-bottom: 1px solid var(--rule);
+}
+
+/* The signature: a four-band color stripe carrying the mark's
+   three lenses plus the black dot. Used once per page to head
+   the main region, so the brand reads as structure rather than
+   as a logo pasted in a corner. */
+.brand-band {
+  display: grid;
+  grid-template-columns: 3fr 2fr 2fr 1fr;
+  height: 4px;
+  width: 100%;
+}
+
+.brand-band > span:nth-child(1) {
+  background: var(--daa-blue);
+}
+.brand-band > span:nth-child(2) {
+  background: var(--daa-red);
+}
+.brand-band > span:nth-child(3) {
+  background: var(--daa-yellow);
+}
+.brand-band > span:nth-child(4) {
+  background: var(--foreground);
+}
+
+/* ============================================================
+   Motion
+   ------------------------------------------------------------
+   MOTION_INTENSITY 4. Entry reveals and hover feedback only.
+   Everything here collapses under reduced motion.
+   ============================================================ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity var(--dur-slow) var(--ease-out-quint),
+    transform var(--dur-slow) var(--ease-out-quint);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal[data-shown="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Swiper
+   ------------------------------------------------------------
+   Swiper ships an iOS blue (#007aff) for its arrows and bullets.
+   Point it at the brand accent so the carousel controls stop
+   being the only off-palette colour on the page.
+   ============================================================ */
+
+.swiper {
+  --swiper-theme-color: var(--accent);
+  --swiper-navigation-size: 24px;
+  --swiper-navigation-color: var(--foreground);
+  --swiper-pagination-bullet-inactive-color: var(--muted-foreground);
+  --swiper-pagination-bullet-inactive-opacity: 0.35;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  transition: opacity var(--dur-base) var(--ease-out-quint);
+}
+
+.swiper-button-next:focus-visible,
+.swiper-button-prev:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+
+/* ============================================================
+   Legal prose
+   ------------------------------------------------------------
+   Privacy and terms are long-form reading, so they get a real
+   measure, a proper heading rhythm, and nothing else. The copy
+   inside is untouched.
+   ============================================================ */
+
+.legal {
+  max-width: 68ch;
+}
+
+.legal h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-top: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.legal h2:first-of-type {
+  margin-top: 0;
+}
+
+.legal p {
+  color: var(--muted-foreground);
+  line-height: 1.75;
+}
+
+.legal p + p {
+  margin-top: 1rem;
+}
+
+.legal ul {
+  margin-top: 0.75rem;
+  padding-left: 1.125rem;
+  list-style: disc;
+  color: var(--muted-foreground);
+  line-height: 1.75;
+}
+
+.legal li + li {
+  margin-top: 0.375rem;
+}
+
+.legal a {
+  color: var(--primary);
+  text-underline-offset: 3px;
+  text-decoration: underline;
+}
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
+/* Social marks inherit the text color so they survive the theme
+   switch, then take their true brand color on hover. */
 .socials a svg {
-  fill: black;
-  transition: fill 0.25s ease;
+  fill: currentColor;
+  transition: fill var(--dur-base) var(--ease-out-quint);
 }
 
 .socials a:hover .facebook {
@@ -297,4 +512,30 @@
 
 .socials a:hover .tiktok {
   fill: #fe2c55;
+}
+
+/* Onboarding input keeps its own identity but now reads from
+   tokens, so it is legible in dark mode. */
+.onboard-input {
+  border: 1px solid var(--input);
+  border-bottom: 2px solid var(--accent);
+  background-color: var(--card);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  font-size: 1rem;
+  width: 100%;
+  color: var(--foreground);
+  outline: none;
+  transition:
+    border-color var(--dur-base) var(--ease-out-quint),
+    background-color var(--dur-base) var(--ease-out-quint);
+}
+
+.onboard-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.onboard-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
 }

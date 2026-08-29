@@ -39,7 +39,7 @@ function roleBadgeClassName(role: string) {
     case "admin":
       return "bg-destructive/10 text-destructive border-destructive/20";
     case "super_admin":
-      return "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/20";
+      return "border-warning/30 bg-warning/10 text-warning";
     case "club":
       return "bg-accent/10 text-accent border-accent/20";
     default:
@@ -90,16 +90,13 @@ export default function ManageUsers({
   const toggleSort = () => setSortDir((d) => (d === "asc" ? "desc" : "asc"));
 
   return (
-    <div className="relative min-h-screen w-full bg-background text-foreground">
+    <div className="relative min-h-[100dvh] w-full bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-background to-secondary/10" />
-        <div className="absolute -top-24 right-10 h-64 w-64 rounded-full bg-secondary/20 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-primary/15 blur-3xl" />
       </div>
 
       <div className="mx-auto w-full max-w-7xl space-y-8 px-6 py-10">
         <header className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+          <p className="annot">
             Admin
           </p>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
@@ -110,7 +107,7 @@ export default function ManageUsers({
           </p>
         </header>
 
-        <section className="rounded-3xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70">
+        <section className="rounded-lg border border-border bg-card p-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="relative w-full sm:w-[380px]">
@@ -136,9 +133,9 @@ export default function ManageUsers({
           </div>
         </section>
 
-        <section className="overflow-auto rounded-3xl border border-border/60 bg-card/80 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70">
+        <section className="overflow-auto rounded-lg border border-border bg-card">
           <table className="w-full min-w-[1100px] text-sm">
-            <thead className="sticky top-0 z-10 border-b border-border bg-muted/50 backdrop-blur supports-backdrop-filter:bg-muted/40">
+            <thead className="sticky top-0 z-10 border-b border-border bg-subtle">
               <tr className="text-left">
                 <th className="p-3 font-semibold">
                   <button
@@ -181,22 +178,22 @@ export default function ManageUsers({
                 filteredUsers.map((user) => {
                   const isDaa = Boolean(user.student_enrollments?.isdaa);
                   const isMe = user.user_id === currentUserId;
-                  const username = user.username ? `@${user.username}` : "—";
+                  const username = user.username ? `@${user.username}` : "-";
 
                   return (
                     <tr
                       key={user.user_id}
                       className={cn(
-                        "border-b border-border/60 last:border-0 transition-colors",
+                        "border-b border-border last:border-0 transition-colors",
                         isDaa
                           ? "bg-primary/5 hover:bg-primary/10"
                           : "hover:bg-muted/30"
                       )}
                     >
                       <td className="p-3 font-medium">
-                        {user.lastname || "—"}
+                        {user.lastname || "-"}
                       </td>
-                      <td className="p-3">{user.firstname || "—"}</td>
+                      <td className="p-3">{user.firstname || "-"}</td>
                       <td className="p-3">
                         <span className="font-medium text-foreground">
                           {username}
@@ -209,7 +206,7 @@ export default function ManageUsers({
                       </td>
                       <td className="p-3">
                         <span className="text-muted-foreground">
-                          {user.registration_number || "—"}
+                          {user.registration_number || "-"}
                         </span>
                       </td>
                       <td className="p-3">
@@ -225,7 +222,7 @@ export default function ManageUsers({
                         </span>
                       </td>
                       <td className="p-3 text-muted-foreground">
-                        {user.student_enrollments?.study_year || "—"}
+                        {user.student_enrollments?.study_year || "-"}
                       </td>
                       <td className="p-3">
                         <div className="flex flex-wrap gap-2">
@@ -242,7 +239,7 @@ export default function ManageUsers({
                               </span>
                             ))
                           ) : (
-                            <span className="text-muted-foreground">—</span>
+                            <span className="text-muted-foreground">-</span>
                           )}
                         </div>
                       </td>
@@ -258,7 +255,7 @@ export default function ManageUsers({
                             </Link>
                           </Button>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </td>
                       <td className="p-3 text-right">

@@ -2,7 +2,7 @@
 import Loading from "@/components/Loading";
 function loading() {
   return (
-    <div className="w-full h-screen">
+    <div className="w-full">
       <Loading />
     </div>
   );

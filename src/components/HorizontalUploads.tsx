@@ -1,7 +1,6 @@
 "use client";
-import { useRef } from "react";
 import UploadedCard from "./UploadedCard";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import HorizontalScroller from "./HorizontalScroller";
 import type { File } from "../types/next-auth";
 
 interface Props {
@@ -15,65 +14,29 @@ export default function HorizontalUploads({
   handleDelete,
   isOwnProfile,
 }: Props) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (direction: "left" | "right") => {
-    if (!scrollRef.current) return;
-    const scrollAmount = scrollRef.current.offsetWidth * 0.8; // scroll 80% of visible width
-    scrollRef.current.scrollBy({
-      left: direction === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
-    });
-  };
+  if (uploads.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">Nothing uploaded yet.</p>
+    );
+  }
 
   return (
-    <div className="relative w-full rounded-2xl border border-border/60 bg-card/50 supports-backdrop-filter:bg-card/60 min-h-[350px] flex items-center">
-      {/* Scrollable row */}
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto py-4 px-6 md:px-16 scrollbar-hide scroll-smooth snap-x snap-mandatory w-full"
-      >
-        {uploads.length > 0 ? (
-          <>
-            <button
-              type="button"
-              title="left-scroll"
-              onClick={() => scroll("left")}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-foreground/70 text-background shadow-md hover:bg-foreground/80 hover:scale-110 transition-all"
-            >
-              <ChevronLeftIcon className="size-5" />
-            </button>
-            <button
-              type="button"
-              title="right-scroll"
-              onClick={() => scroll("right")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-foreground/70 text-background shadow-md hover:bg-foreground/80 hover:scale-110 transition-all"
-            >
-              <ChevronRightIcon className="w-5 h-5" />
-            </button>
-            {uploads.map((i) => (
-              <div key={i.id} className="shrink-0 snap-start w-64 h-[320px]">
-                <UploadedCard
-                  isOwnProfile={isOwnProfile}
-                  type={i.type}
-                  title={i.file_name}
-                  link={i.url}
-                  category={i.category}
-                  level={i.level}
-                  subject={i.subject}
-                  size={i.size}
-                  onDelete={() => handleDelete(i.url)}
-                />
-              </div>
-            ))}
-          </>
-        ) : (
-          <p className="text-muted-foreground font-medium w-full text-center">
-            Nothing posted yet.
-          </p>
-        )}
-      </div>
-    </div>
+    <HorizontalScroller label="Uploads">
+      {uploads.map((file) => (
+        <div key={file.id} className="w-64 shrink-0 snap-start">
+          <UploadedCard
+            isOwnProfile={isOwnProfile}
+            type={file.type}
+            title={file.file_name}
+            link={file.url}
+            category={file.category}
+            level={file.level}
+            subject={file.subject}
+            size={file.size}
+            onDelete={() => handleDelete(file.url)}
+          />
+        </div>
+      ))}
+    </HorizontalScroller>
   );
 }
-

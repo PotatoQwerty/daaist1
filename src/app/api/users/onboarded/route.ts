@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -10,7 +10,7 @@ export async function GET() {
     return NextResponse.json({ onboarded: null }, { status: 401 });
   }
 
-  const { data: onboarded, error } = await supabase
+  const { data: onboarded, error } = await supabaseServer
     .schema("public")
     .from("onboarding_status")
     .select("onboarded")

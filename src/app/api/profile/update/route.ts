@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +14,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const limited = enforceRateLimit(req, RATE_LIMITS.profileUpdate, {
+      bucket: "profile-update",
+      userId: user.id,
+    });
+    if (limited) return limited;
+
     const { bio, firstname, lastname, phone, image, username } =
       await req.json();
 
@@ -24,7 +31,7 @@ export async function POST(req: Request) {
     if (image !== undefined) updateData.image = image;
     if (username !== undefined) updateData.username = username;
 
-    const { data, error: updateError } = await supabase
+    const { data, error: updateError } = await supabaseServer
       .schema("public")
       .from("profiles")
       .update(updateData)

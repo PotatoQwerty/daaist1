@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 import type { User } from "@supabase/supabase-js";
 export async function getUserSession() {
   const supabase = await createClient();
@@ -10,8 +10,7 @@ export async function getUserSession() {
 }
 export async function saveUserProfile(user: User) {
   try {
-    const supabase = await createClient();
-    const { error } = await supabase
+    const { error } = await supabaseServer
       .schema("public")
       .from("profiles")
       .upsert(

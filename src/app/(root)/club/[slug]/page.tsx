@@ -11,6 +11,7 @@ import logo from "../../../../../public/images/logo.png";
 import Carossel from "@/components/Carossel";
 import ManageClub from "@/components/ManageClub";
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 export async function generateMetadata({
   params,
 }: {
@@ -56,64 +57,69 @@ async function ClubDetailsPage({
     : events?.filter((event) => event.is_public);
 
   return (
-    <div className="min-h-screen py-20 px-4 sm:px-8 flex flex-col items-center gap-10">
-      <div className="w-full max-w-5xl bg-card border rounded-2xl overflow-hidden shadow-sm">
-        {/* Banner Section */}
-        <div className="relative h-64 md:h-80 w-full">
+    <main className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-6 md:py-16">
+      <Link
+        href="/club"
+        className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ChevronLeft className="size-4" aria-hidden="true" />
+        All clubs
+      </Link>
+
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="relative h-56 w-full border-b border-border md:h-72">
           <Image
             src={club.banner_url || banner}
-            alt={`${club.name} banner`}
+            alt=""
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="(max-width: 1400px) 100vw, 1400px"
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+        </div>
 
-          <div className="absolute -bottom-16 left-8 md:left-12 z-20">
-            <div className="relative h-32 w-32 md:h-40 md:w-40 rounded-full border-4 border-background bg-background overflow-hidden shadow-md">
+        <div className="p-6 md:p-10">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <div className="relative size-20 shrink-0 overflow-hidden rounded-full border border-border bg-background md:size-24">
               <Image
                 src={club.logo_url || logo}
                 alt={`${club.name} logo`}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                sizes="96px"
                 fill
                 className="object-cover"
               />
             </div>
-          </div>
-        </div>
 
-        {/* Club Info */}
-        <div className="pt-20 px-8 md:px-12 pb-12 space-y-6 flex flex-col">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-              {club.name}
-            </h1>
-            <div className="flex items-center gap-3 mt-3">
-              <span
-                className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-                  club.is_active
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                }`}
-              >
-                {club.is_active ? "Active Club" : "Inactive"}
-              </span>
+            <div className="min-w-0">
+              <h1 className="text-3xl leading-tight font-bold md:text-4xl">
+                {club.name}
+              </h1>
+              <p className="annot mt-2 inline-flex items-center gap-2">
+                <span
+                  className={`size-2 rounded-full ${
+                    club.is_active ? "bg-chart-4" : "bg-muted-foreground"
+                  }`}
+                  aria-hidden="true"
+                />
+                {club.is_active ? "Active" : "Inactive"}
+              </p>
             </div>
           </div>
 
-          <div className="max-w-none">
-            <h3 className="text-xl font-semibold mb-2">About Us</h3>
-            <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
+          <div className="rule-t mt-8 pt-8">
+            <h2 className="text-lg font-bold">About</h2>
+            <p className="mt-3 max-w-[68ch] leading-relaxed whitespace-pre-wrap text-muted-foreground">
               {club.description}
             </p>
           </div>
-          <div className="max-w-none place-self-end flex gap-4 socials">
+
+          <div className="socials mt-8 flex gap-4 text-muted-foreground">
             {club.socials.facebook && (
               <Link
                 href={club.socials.facebook || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={`${club.name} on Facebook`}
               >
                 <svg
                   className="facebook"
@@ -131,6 +137,7 @@ async function ClubDetailsPage({
                 href={club.socials.tiktok || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={`${club.name} on Tiktok`}
               >
                 <svg
                   className="tiktok"
@@ -148,6 +155,7 @@ async function ClubDetailsPage({
                 href={club.socials.instagram || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={`${club.name} on Instagram`}
               >
                 <svg
                   className="instagram"
@@ -178,15 +186,17 @@ async function ClubDetailsPage({
         </div>
       </div>
 
-      <div className="w-full max-w-5xl space-y-4">
-        <h2 className="text-2xl font-bold">Upcoming {club.name} Events</h2>
-        <Carossel data={visibleEvents ?? []} />
-      </div>
+      <section className="mt-16">
+        <h2 className="text-2xl font-bold sm:text-3xl">Upcoming events</h2>
+        <div className="mt-6">
+          <Carossel data={visibleEvents ?? []} />
+        </div>
+      </section>
 
-      <div className="w-full max-w-5xl">
+      <div className="mt-12">
         <ManageClub club={club} role={role} />
       </div>
-    </div>
+    </main>
   );
 }
 

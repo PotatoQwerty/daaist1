@@ -29,7 +29,7 @@ type ManageFileCardProps = {
 function categoryBadgeClassName(category?: string | null) {
   switch (category) {
     case "td":
-      return "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20";
+      return "border-warning/30 bg-warning/10 text-warning";
     case "doc":
       return "bg-primary/10 text-primary border-primary/20";
     case "course":
@@ -68,9 +68,8 @@ export default function ManageFileCard({
   const isImage = type?.includes("image");
 
   return (
-    <div className="group relative w-full overflow-hidden rounded-3xl border border-border/60 bg-card/80 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 transition hover:-translate-y-1 hover:shadow-md">
+    <div className="group relative w-full overflow-hidden rounded-lg border border-border bg-card transition hover:-translate-y-1 hover:shadow-md">
       <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-transparent to-accent/10" />
       </div>
 
       <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-2">
@@ -133,7 +132,7 @@ export default function ManageFileCard({
           className="block"
           aria-label={`Open ${file_name}`}
         >
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-border bg-muted/30">
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-border bg-muted/30">
             {isImage ? (
               <Image
                 src={url}

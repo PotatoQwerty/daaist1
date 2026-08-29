@@ -181,7 +181,7 @@ export default function EditUserModal({
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
       <div
-        className="w-full max-w-md bg-card border rounded-xl shadow-lg animate-in zoom-in-95 duration-200 flex flex-col"
+        className="w-full max-w-md bg-card border rounded-md shadow-lg animate-in zoom-in-95 duration-200 flex flex-col"
         role="dialog"
         aria-modal="true"
       >

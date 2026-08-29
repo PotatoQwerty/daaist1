@@ -325,7 +325,7 @@ function CreateClubForm() {
     <div className="w-full">
       <div className="grid gap-8 lg:grid-cols-[2fr,1fr]">
         <div className="space-y-8">
-            <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 space-y-6">
+            <div className="rounded-lg border border-border bg-card p-6 space-y-6">
               <h2 className="text-xl font-semibold kabel-bold flex items-center gap-2">
                 Basic Info
               </h2>
@@ -418,7 +418,7 @@ function CreateClubForm() {
             </div>
 
             {/* Club Leadership */}
-            <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 space-y-6">
+            <div className="rounded-lg border border-border bg-card p-6 space-y-6">
               <h2 className="text-xl font-semibold kabel-bold flex items-center gap-2">
                 Club Leadership
               </h2>
@@ -445,7 +445,7 @@ function CreateClubForm() {
             </div>
 
             {/* Social Media Links */}
-            <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 space-y-6">
+            <div className="rounded-lg border border-border bg-card p-6 space-y-6">
               <h2 className="text-xl font-semibold kabel-bold flex items-center gap-2">
                 Social Media
               </h2>
@@ -527,7 +527,7 @@ function CreateClubForm() {
             </div>
 
             {/* Media Uploads */}
-            <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 space-y-6">
+            <div className="rounded-lg border border-border bg-card p-6 space-y-6">
               <h2 className="text-xl font-semibold kabel-bold flex items-center gap-2">
                 Branding
               </h2>
@@ -543,7 +543,7 @@ function CreateClubForm() {
                     <Image
                       src={logoPreview}
                       alt="Logo preview"
-                      className="w-32 h-32 rounded-xl object-cover border-2 border-border shadow-sm transition-transform group-hover:scale-[1.02]"
+                      className="w-32 h-32 rounded-md object-cover border-2 border-border shadow-sm transition-transform group-hover:scale-[1.02]"
                     />
                     <button
                       title="remove logo"
@@ -555,7 +555,7 @@ function CreateClubForm() {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-muted-foreground/25 rounded-xl cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-all group">
+                  <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-muted-foreground/25 rounded-md cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-all group">
                     <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
                     <span className="text-[10px] uppercase font-bold text-muted-foreground mt-2">
                       Upload Logo
@@ -582,7 +582,7 @@ function CreateClubForm() {
                 </label>
 
                 {bannerPreview ? (
-                  <div className="relative group rounded-xl overflow-hidden border border-border ">
+                  <div className="relative group rounded-md overflow-hidden border border-border ">
                     <Image
                       src={bannerPreview}
                       alt="Banner preview"
@@ -599,7 +599,7 @@ function CreateClubForm() {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-muted-foreground/25 rounded-xl cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-all group">
+                  <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-muted-foreground/25 rounded-md cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-all group">
                     <div className="p-4 bg-background rounded-full shadow-sm mb-3 group-hover:scale-110 transition-transform">
                       <ImageIcon className="w-6 h-6 text-muted-foreground group-hover:text-primary" />
                     </div>
@@ -627,7 +627,7 @@ function CreateClubForm() {
           </div>
 
         <div className="space-y-8">
-            <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 space-y-6">
+            <div className="rounded-lg border border-border bg-card p-6 space-y-6">
               <h3 className="font-semibold text-lg kabel-bold">Settings</h3>
 
               {/* Is Active */}

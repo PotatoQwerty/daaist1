@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -15,6 +16,13 @@ export async function POST(req: Request) {
       { error: "You are not signed in || the file does not exist anymore" },
       { status: 401 }
     );
+
+  // Loose on purpose: this backs a button people click in bursts.
+  const limited = enforceRateLimit(req, RATE_LIMITS.likeToggle, {
+    bucket: "like-toggle",
+    userId,
+  });
+  if (limited) return limited;
 
   // first check if it exists in the likes table
   const { data: exists, error: selectErr } = await supabaseServer

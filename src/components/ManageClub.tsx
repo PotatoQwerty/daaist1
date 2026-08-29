@@ -25,7 +25,7 @@ function ManageClub({ club, role }: { club: any; role: string | null }) {
     <Accordion type="multiple" className="w-full max-w-5xl">
       <AccordionItem
         value="item-1"
-        className="border rounded-xl bg-card overflow-hidden shadow-sm"
+        className="border rounded-md bg-card overflow-hidden shadow-sm"
       >
         <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-muted/50 transition-colors">
           <div className="flex items-center gap-3">

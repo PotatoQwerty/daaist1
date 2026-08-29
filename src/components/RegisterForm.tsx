@@ -395,12 +395,12 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
   };
 
   const inputClassName =
-    "h-12 rounded-xl border-border bg-background/80 px-4 text-base md:text-sm";
+    "h-12 rounded-md border-border bg-background/80 px-4 text-base md:text-sm";
   const selectClassName =
-    "h-12 w-full rounded-xl border border-border bg-background/80 px-4 text-base outline-none transition focus:border-ring focus:ring-[3px] focus:ring-ring/50 md:text-sm";
+    "h-12 w-full rounded-md border border-border bg-background/80 px-4 text-base outline-none transition focus:border-ring focus:ring-[3px] focus:ring-ring/50 md:text-sm";
 
   return (
-    <section className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8">
+    <section className="min-h-[100dvh] bg-background px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <Link
           href="/register"
@@ -410,7 +410,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
           Back to events
         </Link>
 
-        <div className="overflow-hidden rounded-4xl border border-border bg-card shadow-[0_20px_80px_-40px_rgba(10,25,47,0.45)]">
+        <div className="overflow-hidden rounded-lg border border-border bg-card shadow-[0_20px_80px_-40px_rgba(10,25,47,0.45)]">
           <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
             <div className="relative min-h-[360px] overflow-hidden">
               <Image
@@ -421,12 +421,10 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                 sizes="(max-width: 1024px) 100vw, 55vw"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-linear-to-br from-primary/95 via-primary/80 to-accent/70" />
-              <div className="absolute -left-12 top-8 h-32 w-32 rounded-full border border-white/30 bg-secondary/70 blur-sm" />
-              <div className="absolute bottom-6 right-6 h-28 w-28 rounded-3xl border border-white/20 bg-white/10 backdrop-blur-sm" />
+              <div className="absolute inset-0 bg-daa-black/55" />
 
               {event.square_image && (
-                <div className="absolute right-6 top-6 h-28 w-28 overflow-hidden rounded-[1.75rem] border border-white/20 bg-white/10 shadow-xl backdrop-blur-sm">
+                <div className="absolute right-6 top-6 h-28 w-28 overflow-hidden rounded-md border border-white/25">
                   <Image
                     src={event.square_image}
                     alt={`${event.title} square cover`}
@@ -439,7 +437,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
 
               <div className="relative flex h-full flex-col justify-between p-6 text-primary-foreground sm:p-8">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs uppercase tracking-[0.35em]">
+                  <span className="rounded-full border border-white/40 px-4 py-1 text-xs font-bold">
                     Event Registration
                   </span>
                   {isSignedIn && (
@@ -455,18 +453,18 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                     <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
                       {event.title}
                     </h1>
-                    <p className="max-w-2xl text-sm leading-6 text-primary-foreground/85 sm:text-base">
+                    <p className="max-w-2xl text-sm leading-6 text-white/85 sm:text-base">
                       {event.description?.trim() ||
                         "Reserve your place with a quick registration form designed to match the event and save time for signed-in members."}
                     </p>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                    <div className="rounded-md border border-white/25 p-4">
                       <div className="mb-2 inline-flex rounded-full bg-white/15 p-2">
                         <CalendarDays className="h-4 w-4" />
                       </div>
-                      <p className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">
+                      <p className="text-xs uppercase tracking-[0.25em] text-white/70">
                         Schedule
                       </p>
                       <p className="mt-2 text-sm font-semibold leading-6">
@@ -474,11 +472,11 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                       </p>
                     </div>
 
-                    <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                    <div className="rounded-md border border-white/25 p-4">
                       <div className="mb-2 inline-flex rounded-full bg-white/15 p-2">
                         <MapPin className="h-4 w-4" />
                       </div>
-                      <p className="text-xs uppercase tracking-[0.25em] text-primary-foreground/70">
+                      <p className="text-xs uppercase tracking-[0.25em] text-white/70">
                         Location
                       </p>
                       <p className="mt-2 text-sm font-semibold leading-6">
@@ -493,19 +491,14 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
             <div className="bg-background p-6 sm:p-8">
               <div className="mb-6 flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
-                    Registration Form
-                  </p>
-                  <h2 className="mt-2 text-2xl font-bold tracking-tight">
-                    Save your spot
-                  </h2>
+                  <h2 className="text-2xl font-bold">Save your spot</h2>
                 </div>
-                <div className="rounded-2xl bg-secondary px-4 py-3 text-secondary-foreground">
+                <div className="rounded-lg bg-secondary px-4 py-3 text-secondary-foreground">
                   <Sparkles className="h-5 w-5" />
                 </div>
               </div>
 
-              <div className="mb-6 rounded-2xl border border-border bg-muted/50 p-4">
+              <div className="mb-6 rounded-lg border border-border bg-muted/50 p-4">
                 {isSignedIn ? (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">
@@ -542,7 +535,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                     </div>
                     <SignInButton
                       redirectTo={getRegisterEventPath(event)}
-                      className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                      className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
                     >
                       Sign in
                     </SignInButton>
@@ -552,7 +545,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
 
               {submitted ? (
                 <div className="space-y-5">
-                  <div className="space-y-4 rounded-[1.75rem] border border-border bg-card p-6">
+                  <div className="space-y-4 rounded-lg border border-border bg-card p-6">
                     <div className="inline-flex rounded-full bg-secondary/25 p-3 text-secondary-foreground">
                       <UserRoundCheck className="h-6 w-6" />
                     </div>
@@ -759,7 +752,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                       ))}
                     </>
                   ) : hasExtraQuestions ? (
-                    <div className="rounded-2xl border border-border bg-muted/35 p-4 text-sm leading-6 text-muted-foreground">
+                    <div className="rounded-lg border border-border bg-muted/35 p-4 text-sm leading-6 text-muted-foreground">
                       Invited-only guests can skip the event-specific questions.
                     </div>
                   ) : null}
@@ -767,7 +760,7 @@ function RegisterForm({ baseUrl, event }: RegisterFormProps) {
                   <Button
                     type="submit"
                     disabled={submitting || checkingExistingRegistration}
-                    className="h-12 w-full rounded-xl bg-accent text-base font-semibold text-accent-foreground shadow-lg shadow-accent/20 transition hover:bg-accent/90"
+                    className="h-12 w-full rounded-md bg-accent text-base font-semibold text-accent-foreground shadow-lg shadow-accent/20 transition hover:bg-accent/90"
                   >
                     {submitting || checkingExistingRegistration ? (
                       <>

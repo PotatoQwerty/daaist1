@@ -1,13 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 import FilesClient from "@/components/FilesClient";
-import Link from "next/link";
-import SignInButton from "@/components/SignInButton";
+import AccessGate from "@/components/AccessGate";
+import PageHeader from "@/components/PageHeader";
 
 export const revalidate = 3600; // Cache for 1 hour (ISR)
 
 export const metadata = {
-  title: "Daa'ist — Documents",
-  description: "Explore resources, and materials for all academic years.",
+  title: "Daa'ist - Documents",
+  description:
+    "Admin paperwork, forms and reference material for students at the Département d'Architecture d'Alger.",
   alternates: {
     canonical: "https://daaist.com/docs",
   },
@@ -21,47 +22,33 @@ export default async function Documents() {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md bg-card border border-accent/30 rounded-2xl p-8 text-center shadow-sm">
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            Access restricted
-          </h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            You need to be signed in to view courses and resources.
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <SignInButton className="inline-flex items-center px-4 py-2 bg-accent text-background rounded-md shadow-sm hover:brightness-95 transition">
-              Sign in
-            </SignInButton>
-            <Link
-              href="/"
-              className="inline-flex items-center px-4 py-2 border border-accent/20 rounded-md text-foreground hover:bg-accent/5 transition"
-            >
-              Go home
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return <AccessGate what="the document archive" redirectTo="/docs" />;
   }
 
-  const { data: files, error: fetchDocError } = await supabase
+  const { data: files, error: fetchDocError } = await supabaseServer
     .schema("public")
     .from("files")
     .select("*")
     .eq("category", "doc");
 
   if (fetchDocError) {
-    console.error("Error fetching docs:", error);
+    console.error("Error fetching docs:", fetchDocError);
   }
 
+  const count = files?.length ?? 0;
+
   return (
-    <div className="flex flex-col w-full min-h-screen p-6 bg-background">
-      <h1 className="text-3xl font-bold mb-6 text-center text-foreground">
-        Documents
-      </h1>
-      <FilesClient initialFiles={files || []} />
-    </div>
+    <main className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-6 md:py-16">
+      <PageHeader
+        title="Documents"
+        lede="Admin paperwork, forms and reference material, shared by students and staff."
+        domain="docs"
+        meta={`${count} ${count === 1 ? "file" : "files"}`}
+      />
+
+      <div className="mt-10">
+        <FilesClient initialFiles={files || []} />
+      </div>
+    </main>
   );
 }

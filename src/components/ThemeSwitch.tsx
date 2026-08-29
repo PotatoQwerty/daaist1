@@ -10,15 +10,25 @@ export const ThemeSwitch = () => {
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted) return null;
+  // Reserve the space before mount so the nav row does not reflow once
+  // the resolved theme arrives.
+  if (!mounted) return <div className="size-9" aria-hidden="true" />;
+
+  const next = resolvedTheme === "dark" ? "light" : "dark";
 
   return (
     <button
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      aria-label="Toggle dark or light mode"
-      className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+      type="button"
+      onClick={() => setTheme(next)}
+      aria-label={`Switch to ${next} mode`}
+      title={`Switch to ${next} mode`}
+      className="flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-subtle hover:text-foreground"
     >
-      {resolvedTheme === "dark" ? <Sun /> : <Moon />}
+      {resolvedTheme === "dark" ? (
+        <Sun className="size-[18px]" strokeWidth={1.75} />
+      ) : (
+        <Moon className="size-[18px]" strokeWidth={1.75} />
+      )}
     </button>
   );
 };

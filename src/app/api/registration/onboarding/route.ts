@@ -1,5 +1,6 @@
 import { supabaseServer } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/auth/server";
 
 export async function POST(request: Request) {
@@ -14,6 +15,30 @@ export async function POST(request: Request) {
   }
 
   const userId = user.id;
+
+  const limited = enforceRateLimit(request, RATE_LIMITS.onboarding, {
+    bucket: "onboarding",
+    userId,
+  });
+  if (limited) return limited;
+
+  // Onboarding runs once. Without this an already-onboarded user could POST
+  // here again at any time to rewrite their registration number, their DAA
+  // status, or their name.
+  const { data: existingOnboarding } = await supabaseServer
+    .schema("public")
+    .from("onboarding_status")
+    .select("onboarded")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existingOnboarding?.onboarded) {
+    return NextResponse.json(
+      { error: "You have already completed onboarding." },
+      { status: 409 },
+    );
+  }
+
   // Make sure to parse the body correctly based on how you send it
   // If you send JSON.stringify({ form: values }), this is correct.
   const { form } = await request.json();
@@ -27,15 +52,56 @@ export async function POST(request: Request) {
     isdaa,
   } = form || {};
 
+  // A claim of DAA membership is verified here rather than trusted from the
+  // request body. The client checks the matricule against this same table
+  // before submitting, so a genuine student sees no change; what this stops
+  // is someone posting a registration number that is not theirs (they are
+  // easy to guess, and printed on student cards) to pass as a real student.
+  let verifiedRegistrationNumber: string | null = null;
+  let verifiedFirstname = firstname;
+  let verifiedLastname = lastname;
+  const claimsDaa = isdaa === true;
+
+  if (claimsDaa) {
+    const matricule =
+      typeof registration_number === "string" ? registration_number.trim() : "";
+
+    if (!matricule) {
+      return NextResponse.json(
+        { error: "A registration number is required for DAA students." },
+        { status: 400 },
+      );
+    }
+
+    const { data: student } = await supabaseServer
+      .schema("public")
+      .from("students-data")
+      .select("firstname, lastname")
+      .eq("registration_number", matricule)
+      .maybeSingle();
+
+    if (!student) {
+      return NextResponse.json(
+        { error: "That registration number is not on the DAA student list." },
+        { status: 400 },
+      );
+    }
+
+    // The roster is the source of truth for the name, not the form.
+    verifiedRegistrationNumber = matricule;
+    verifiedFirstname = student.firstname;
+    verifiedLastname = student.lastname;
+  }
+
   const { error: profileError } = await supabaseServer
     .schema("public")
     .from("profiles")
     .upsert({
       user_id: userId,
-      firstname,
-      lastname,
+      firstname: verifiedFirstname,
+      lastname: verifiedLastname,
       username,
-      registration_number,
+      registration_number: verifiedRegistrationNumber,
     });
 
   if (profileError) {
@@ -68,7 +134,8 @@ export async function POST(request: Request) {
         {
           user_id: userId,
           study_year: studyyear,
-          isdaa: isdaa,
+          // Verified above, so an unverified claim cannot set this true.
+          isdaa: claimsDaa,
         },
         { onConflict: "user_id" }
       );
@@ -78,17 +145,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Enrollment failed" }, { status: 500 });
     }
   }
-  const { error: roleError } = await supabaseServer
+  // Only seed the default role when the account has none. The previous
+  // upsert could replace an existing role with "student".
+  const { data: currentRoles } = await supabaseServer
     .schema("public")
     .from("user_roles")
-    .upsert({
-      user_id: userId,
-      role: "student",
-    });
+    .select("role")
+    .eq("user_id", userId);
 
-  if (roleError) {
-    console.error("Role update error:", roleError);
-    return NextResponse.json({ error: "Role update failed" }, { status: 500 });
+  if (!currentRoles || currentRoles.length === 0) {
+    const { error: roleError } = await supabaseServer
+      .schema("public")
+      .from("user_roles")
+      .insert({
+        user_id: userId,
+        role: "student",
+      });
+
+    if (roleError) {
+      console.error("Role update error:", roleError);
+      return NextResponse.json(
+        { error: "Role update failed" },
+        { status: 500 },
+      );
+    }
   }
 
   /* ---------------------------------------------------------

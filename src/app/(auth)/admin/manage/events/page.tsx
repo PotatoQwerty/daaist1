@@ -11,7 +11,7 @@ async function EventsPage() {
   const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
   if (!isAdmin && !isSuperAdmin) notFound();
   return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="flex min-h-[60dvh] items-center justify-center">
       <h1 className="animate-spin text-4xl font-bold hover:animate-none">
         Still working on this 🤨
       </h1>

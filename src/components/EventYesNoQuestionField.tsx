@@ -26,7 +26,7 @@ function Choice({ id, label, selected, onSelect, icon }: ChoiceProps) {
         onChange={onSelect}
         className="peer sr-only"
       />
-      <div className="min-w-[120px] rounded-xl border border-border bg-background/80 p-3 text-sm font-semibold text-foreground ring-2 ring-transparent ring-offset-2 ring-offset-background transition hover:bg-muted/50 hover:shadow-sm peer-checked:border-primary/40 peer-checked:bg-primary/10 peer-checked:ring-primary">
+      <div className="min-w-[120px] rounded-md border border-border bg-background/80 p-3 text-sm font-semibold text-foreground ring-2 ring-transparent ring-offset-2 ring-offset-background transition hover:bg-muted/50 hover:shadow-sm peer-checked:border-primary/40 peer-checked:bg-primary/10 peer-checked:ring-primary">
         <div className="flex items-center justify-center gap-2">
           <span>{label}</span>
           {icon === "yes" ? (
@@ -51,7 +51,7 @@ export default function EventYesNoQuestionField({
     .replace(/(^-|-$)/g, "");
 
   return (
-    <div className="space-y-3 rounded-[1.5rem] border border-border bg-card/80 p-4">
+    <div className="space-y-3 rounded-[1.5rem] border border-border bg-card p-4">
       <Label className="text-base font-semibold leading-6">{question}</Label>
       <div className="flex flex-wrap gap-3">
         <Choice

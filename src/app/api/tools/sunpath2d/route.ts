@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildToolsApiUrl } from "@/lib/toolsApi";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 type FileType = "png" | "svg";
 const FIXED_TIMEZONE = "Africa/Algiers";
@@ -37,6 +38,13 @@ function parseLatLon(value: unknown): number | null {
 }
 
 export async function POST(request: Request) {
+  // Unauthenticated and each call does real work upstream, so this is keyed
+  // by IP. Sized to let someone iterate on coordinates without tripping it.
+  const limited = enforceRateLimit(request, RATE_LIMITS.tools, {
+    bucket: "tools-sunpath2d",
+  });
+  if (limited) return limited;
+
   try {
     const body = (await request.json()) as Record<string, unknown>;
     const lat = parseLatLon(body.lat);

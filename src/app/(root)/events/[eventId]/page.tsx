@@ -58,15 +58,15 @@ export default async function EventPage({ params }: EventPageProps) {
 
   if (!event) {
     return (
-      <section className="min-h-screen px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl rounded-4xl border border-dashed border-border bg-card px-6 py-16 text-center">
+      <section className="min-h-[100dvh] px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl rounded-lg border border-dashed border-border bg-card px-6 py-16 text-center">
           <h1 className="text-3xl font-bold">Event not found</h1>
           <p className="mt-4 text-sm leading-7 text-muted-foreground">
             This public event is no longer available or the link is invalid.
           </p>
           <Link
             href="/register"
-            className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
           >
             Browse public events
           </Link>
@@ -112,7 +112,7 @@ export default async function EventPage({ params }: EventPageProps) {
     : "Go to registration";
 
   return (
-    <section className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8">
+    <section className="min-h-[100dvh] bg-background px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
@@ -127,7 +127,7 @@ export default async function EventPage({ params }: EventPageProps) {
             {canManageCheckIns && (
               <Link
                 href={getEventCheckInPath(event)}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background px-5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-border bg-background px-5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
               >
                 Organizer check-in
                 <QrCode className="h-4 w-4" />
@@ -135,7 +135,7 @@ export default async function EventPage({ params }: EventPageProps) {
             )}
             <Link
               href={getRegisterEventPath(event)}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-accent/90"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-accent/90"
             >
               {registerCtaLabel}
               <ArrowRight className="h-4 w-4" />
@@ -143,7 +143,7 @@ export default async function EventPage({ params }: EventPageProps) {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-4xl border border-border bg-card shadow-[0_24px_90px_-45px_rgba(10,25,47,0.55)]">
+        <div className="overflow-hidden rounded-lg border border-border bg-card">
           <div className="relative min-h-[360px] overflow-hidden sm:min-h-[420px]">
             <Image
               src={event.cover_image || bannerFallback}
@@ -153,11 +153,12 @@ export default async function EventPage({ params }: EventPageProps) {
               sizes="100vw"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-linear-to-br from-primary/95 via-primary/75 to-accent/60" />
-            <div className="absolute -left-8 top-8 h-28 w-28 rounded-full border border-white/25 bg-secondary/70 blur-sm" />
-            <div className="absolute bottom-6 right-6 h-32 w-32 rounded-4xl border border-white/20 bg-white/10 backdrop-blur-sm" />
+            {/* A flat scrim, not a brand-coloured gradient wash: the photo
+                is the event's own image and should stay recognisable.
+                This only has to carry the headline. */}
+            <div className="absolute inset-0 bg-daa-black/55" />
             {event.square_image && (
-              <div className="absolute right-6 top-6 h-28 w-28 overflow-hidden rounded-[1.75rem] border border-white/20 bg-white/10 shadow-xl backdrop-blur-sm">
+              <div className="absolute right-6 top-6 h-24 w-24 overflow-hidden rounded-md border border-white/25">
                 <Image
                   src={event.square_image}
                   alt={`${event.title} square cover`}
@@ -168,14 +169,11 @@ export default async function EventPage({ params }: EventPageProps) {
               </div>
             )}
 
-            <div className="relative flex h-full flex-col justify-end p-6 text-primary-foreground sm:p-10">
+            <div className="relative flex h-full flex-col justify-end p-6 text-white sm:p-10">
               <div className="max-w-4xl space-y-5">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs uppercase tracking-[0.35em]">
-                    Public Event
-                  </span>
                   {club?.name && (
-                    <span className="rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs font-semibold">
+                    <span className="rounded-full border border-white/40 px-4 py-1 text-xs font-bold">
                       {club.name}
                     </span>
                   )}
@@ -185,7 +183,7 @@ export default async function EventPage({ params }: EventPageProps) {
                   <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
                     {event.title}
                   </h1>
-                  <p className="max-w-3xl text-sm leading-7 text-primary-foreground/85 sm:text-base">
+                  <p className="max-w-3xl text-sm leading-7 text-white/85 sm:text-base">
                     {event.description?.trim() ||
                       "Open the registration form to save your place and auto-fill your details if you are signed in."}
                   </p>
@@ -197,7 +195,7 @@ export default async function EventPage({ params }: EventPageProps) {
           <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
             <div className="space-y-6">
               <div className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+                <p className="annot">
                   About This Event
                 </p>
                 <p className="text-sm leading-7 text-muted-foreground sm:text-base">
@@ -207,8 +205,8 @@ export default async function EventPage({ params }: EventPageProps) {
               </div>
 
               {club?.slug && (
-                <div className="rounded-3xl border border-border bg-muted/35 p-5">
-                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                <div className="rounded-lg border border-border bg-muted/35 p-5">
+                  <p className="annot">
                     Hosted by
                   </p>
                   <h2 className="mt-3 text-2xl font-bold">{club.name}</h2>
@@ -222,18 +220,18 @@ export default async function EventPage({ params }: EventPageProps) {
               )}
             </div>
 
-            <aside className="space-y-4 rounded-3xl border border-border bg-background p-5">
-              <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+            <aside className="space-y-4 rounded-lg border border-border bg-background p-5">
+              <p className="annot">
                 Event Snapshot
               </p>
 
-              <div className="rounded-2xl bg-muted/45 p-4">
+              <div className="rounded-lg bg-muted/45 p-4">
                 <div className="flex items-start gap-3">
-                  <div className="rounded-xl bg-primary/10 p-2 text-primary">
+                  <div className="rounded-md bg-primary/10 p-2 text-primary">
                     <CalendarDays className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+                    <p className="annot">
                       Schedule
                     </p>
                     <p className="mt-2 text-sm font-semibold leading-6">
@@ -243,13 +241,13 @@ export default async function EventPage({ params }: EventPageProps) {
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-muted/45 p-4">
+              <div className="rounded-lg bg-muted/45 p-4">
                 <div className="flex items-start gap-3">
-                  <div className="rounded-xl bg-accent/10 p-2 text-accent">
+                  <div className="rounded-md bg-accent/10 p-2 text-accent">
                     <MapPin className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+                    <p className="annot">
                       Location
                     </p>
                     <p className="mt-2 text-sm font-semibold leading-6">
@@ -259,14 +257,14 @@ export default async function EventPage({ params }: EventPageProps) {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-border bg-card p-5">
+              <div className="rounded-lg border border-border bg-card p-5">
                 <h3 className="text-lg font-bold">{registerPanelTitle}</h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {registerPanelCopy}
                 </p>
                 <Link
                   href={getRegisterEventPath(event)}
-                  className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-accent/90"
+                  className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md bg-accent px-5 text-sm font-semibold text-accent-foreground transition hover:bg-accent/90"
                 >
                   {registerPanelButtonLabel}
                   <ArrowRight className="h-4 w-4" />
@@ -274,7 +272,7 @@ export default async function EventPage({ params }: EventPageProps) {
               </div>
 
               {canManageCheckIns && (
-                <div className="rounded-2xl border border-border bg-card p-5">
+                <div className="rounded-lg border border-border bg-card p-5">
                   <h3 className="text-lg font-bold">Organizer access</h3>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     You can open the check-in desk for this event and scan
@@ -282,7 +280,7 @@ export default async function EventPage({ params }: EventPageProps) {
                   </p>
                   <Link
                     href={getEventCheckInPath(event)}
-                    className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
+                    className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-5 text-sm font-semibold text-foreground transition hover:border-primary hover:text-primary"
                   >
                     Open check-in desk
                     <QrCode className="h-4 w-4" />

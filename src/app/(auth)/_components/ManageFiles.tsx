@@ -79,22 +79,19 @@ export default function ManageFiles({ initialFiles }: ManageFilesProps) {
   }, [files, search]);
 
   return (
-    <div className="relative min-h-screen w-full bg-background text-foreground">
+    <div className="relative min-h-[100dvh] w-full bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-br from-primary/10 via-background to-secondary/10" />
-        <div className="absolute -top-24 right-10 h-64 w-64 rounded-full bg-secondary/20 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-primary/15 blur-3xl" />
       </div>
 
       {files === null ? (
-        <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col items-center justify-center gap-4 px-6 py-10">
+        <div className="mx-auto flex min-h-[100dvh] w-full max-w-4xl flex-col items-center justify-center gap-4 px-6 py-10">
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
           <p className="text-sm text-muted-foreground">Loading posts…</p>
         </div>
       ) : (
         <div className="mx-auto w-full max-w-7xl space-y-8 px-6 py-10">
           <header className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+            <p className="annot">
               Admin
             </p>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
@@ -105,7 +102,7 @@ export default function ManageFiles({ initialFiles }: ManageFilesProps) {
             </p>
           </header>
 
-          <section className="rounded-3xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70">
+          <section className="rounded-lg border border-border bg-card p-4">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="relative w-full md:max-w-md">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

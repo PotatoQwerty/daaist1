@@ -78,8 +78,8 @@ function ParticipantExtraAnswers({ participant }: { participant: Participant }) 
   }
 
   return (
-    <div className="mt-3 rounded-2xl border border-border bg-muted/25 p-3">
-      <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+    <div className="mt-3 rounded-lg border border-border bg-muted/25 p-3">
+      <p className="annot">
         Extra answers
       </p>
       <div className="mt-3 space-y-2 text-sm leading-6">
@@ -177,7 +177,7 @@ export default function EventCheckInClient({
   const lastScannedTokenRef = useRef<string | null>(null);
   const lastScannedAtRef = useRef(0);
   const selectClassName =
-    "h-12 w-full rounded-xl border border-border bg-background px-4 text-sm outline-none transition focus:border-ring focus:ring-[3px] focus:ring-ring/50";
+    "h-12 w-full rounded-md border border-border bg-background px-4 text-sm outline-none transition focus:border-ring focus:ring-[3px] focus:ring-ring/50";
 
   const stopScanner = useCallback(() => {
     if (frameRef.current !== null) {
@@ -727,14 +727,14 @@ export default function EventCheckInClient({
         <div
           className={`rounded-[1.5rem] border p-5 ${
             autoCheckInState.status === "success"
-              ? "border-green-200 bg-green-50 text-green-900 dark:border-green-900/40 dark:bg-green-950/30 dark:text-green-100"
+              ? "border-success/30 bg-success/10 text-foreground"
               : autoCheckInState.status === "error"
                 ? "border-destructive/30 bg-destructive/10 text-foreground"
                 : "border-border bg-muted/40"
           }`}
         >
           <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-white/70 p-2 dark:bg-black/20">
+            <div className="rounded-md bg-white/70 p-2 dark:bg-black/20">
               {autoCheckInState.status === "loading" ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : autoCheckInState.status === "success" ? (
@@ -771,7 +771,7 @@ export default function EventCheckInClient({
       <div className="rounded-[1.5rem] border border-border bg-card p-5">
         <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+            <p className="annot">
               Live Scanner
             </p>
             <h3 className="text-2xl font-bold">Check in with one camera view</h3>
@@ -785,7 +785,7 @@ export default function EventCheckInClient({
           <Button
             type="button"
             variant={scannerEnabled ? "outline" : "default"}
-            className="h-11 rounded-xl px-5"
+            className="h-11 rounded-md px-5"
             onClick={() => setScannerEnabled((prev) => !prev)}
           >
             {scannerEnabled ? (
@@ -830,14 +830,14 @@ export default function EventCheckInClient({
 
               {(scannerStatus === "active" || scannerStatus === "starting") && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <div className="h-48 w-48 rounded-[2rem] border-2 border-white/80 shadow-[0_0_0_9999px_rgba(15,23,42,0.15)]" />
+                  <div className="h-48 w-48 rounded-lg border-2 border-white/80 shadow-[0_0_0_9999px_rgba(15,23,42,0.15)]" />
                 </div>
               )}
             </div>
           </div>
 
           <div className="rounded-[1.5rem] border border-border bg-background p-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+            <p className="annot">
               Scanner status
             </p>
             <p className="mt-3 text-lg font-semibold">
@@ -855,7 +855,7 @@ export default function EventCheckInClient({
               {scannerMessage}
             </p>
 
-            <div className="mt-5 rounded-2xl border border-border bg-muted/35 p-4 text-sm leading-6 text-muted-foreground">
+            <div className="mt-5 rounded-lg border border-border bg-muted/35 p-4 text-sm leading-6 text-muted-foreground">
               The camera keeps scanning while this page stays open. If the same
               QR code remains in view, the desk waits briefly before reading it
               again so attendees are not checked in twice by accident.
@@ -866,7 +866,7 @@ export default function EventCheckInClient({
 
       <div className="rounded-[1.5rem] border border-border bg-card p-5">
         <div className="mb-4 space-y-2">
-          <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+          <p className="annot">
             Manual Fallback
           </p>
           <h3 className="text-2xl font-bold">Search registrations</h3>
@@ -877,26 +877,26 @@ export default function EventCheckInClient({
         </div>
 
         <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-border bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+          <div className="rounded-lg border border-border bg-muted/30 p-4">
+            <p className="annot">
               Loaded
             </p>
             <p className="mt-2 text-2xl font-bold">{participantStats.total}</p>
           </div>
-          <div className="rounded-2xl border border-border bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+          <div className="rounded-lg border border-border bg-muted/30 p-4">
+            <p className="annot">
               Pending
             </p>
             <p className="mt-2 text-2xl font-bold">{participantStats.pending}</p>
           </div>
-          <div className="rounded-2xl border border-border bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+          <div className="rounded-lg border border-border bg-muted/30 p-4">
+            <p className="annot">
               Checked In
             </p>
             <p className="mt-2 text-2xl font-bold">{participantStats.checkedIn}</p>
           </div>
-          <div className="rounded-2xl border border-border bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+          <div className="rounded-lg border border-border bg-muted/30 p-4">
+            <p className="annot">
               Invited Only
             </p>
             <p className="mt-2 text-2xl font-bold">
@@ -912,7 +912,7 @@ export default function EventCheckInClient({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search name, email, phone, university, year, or registration number..."
-              className="h-12 rounded-xl pl-11"
+              className="h-12 rounded-md pl-11"
             />
           </div>
 
@@ -963,16 +963,16 @@ export default function EventCheckInClient({
 
         <div className="mt-5 space-y-3">
           {loading ? (
-            <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/35 p-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/35 p-4 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               Loading participants...
             </div>
           ) : participants.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/25 p-6 text-center text-sm text-muted-foreground">
+            <div className="rounded-lg border border-dashed border-border bg-muted/25 p-6 text-center text-sm text-muted-foreground">
               No participants match your search yet.
             </div>
           ) : filteredParticipants.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/25 p-6 text-center text-sm text-muted-foreground">
+            <div className="rounded-lg border border-dashed border-border bg-muted/25 p-6 text-center text-sm text-muted-foreground">
               No loaded participants match the current filters.
             </div>
           ) : (
@@ -990,7 +990,7 @@ export default function EventCheckInClient({
               return (
                 <div
                   key={participant.id}
-                  className="rounded-2xl border border-border bg-background p-4"
+                  className="rounded-lg border border-border bg-background p-4"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
@@ -1015,7 +1015,7 @@ export default function EventCheckInClient({
                           </span>
                         ) : null}
                         {participant.checked_in_at ? (
-                          <span className="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-green-700 dark:border-green-900/40 dark:bg-green-950/30 dark:text-green-300">
+                          <span className="rounded-full border border-success/30 bg-success/10 px-3 py-1 text-green-700 dark:border-green-900/40 dark:bg-green-950/30 dark:text-green-300">
                             Checked in
                           </span>
                         ) : (
@@ -1026,7 +1026,7 @@ export default function EventCheckInClient({
                       </div>
 
                       {participant.checked_in_at ? (
-                        <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                        <p className="text-sm font-bold text-success">
                           Checked in{" "}
                           {new Date(participant.checked_in_at).toLocaleString()} via{" "}
                           {participant.check_in_method || "manual"}
@@ -1039,7 +1039,7 @@ export default function EventCheckInClient({
                         <Button
                           type="button"
                           variant="outline"
-                          className="h-11 rounded-xl border-amber-300 px-5 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:border-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-950/30"
+                          className="h-11 rounded-md border-amber-300 px-5 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:border-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-950/30"
                           onClick={() => handleCancelCheckIn(participant)}
                           disabled={isBusy}
                         >
@@ -1055,7 +1055,7 @@ export default function EventCheckInClient({
                       ) : (
                         <Button
                           type="button"
-                          className="h-11 rounded-xl px-5"
+                          className="h-11 rounded-md px-5"
                           onClick={() => handleManualCheckIn(participant)}
                           disabled={isBusy}
                         >
@@ -1073,7 +1073,7 @@ export default function EventCheckInClient({
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-11 rounded-xl border-destructive/30 px-5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        className="h-11 rounded-md border-destructive/30 px-5 text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => handleDeleteRegistration(participant)}
                         disabled={isBusy}
                       >
@@ -1093,7 +1093,7 @@ export default function EventCheckInClient({
                       <Button
                         type="button"
                         variant="ghost"
-                        className="h-10 rounded-xl px-3 text-muted-foreground hover:text-foreground"
+                        className="h-10 rounded-md px-3 text-muted-foreground hover:text-foreground"
                         onClick={() => toggleParticipantExpanded(participant.id)}
                       >
                         {isExpanded ? "Hide details" : "Show details"}

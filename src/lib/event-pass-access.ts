@@ -18,31 +18,26 @@ function normalizeEmail(value?: string | null) {
   return value?.trim().toLowerCase() || "";
 }
 
-function normalizeRegistrationNumber(value?: string | null) {
-  return value?.trim() || "";
-}
-
+/**
+ * Whether an unclaimed registration belongs to the caller.
+ *
+ * Matches on the email only. A registration number is not proof of identity:
+ * it is typed into a public form, printed on student cards, and previously a
+ * signed-in user could pass any value here to unlock a stranger's pass and
+ * bind that stranger's registration to their own account.
+ *
+ * The email compared here is the verified address on the caller's session,
+ * because every caller that reaches this point is signed in (see
+ * canRevealParticipantCheckInToken).
+ */
 function matchesParticipantIdentity(
   participant: ParticipantAccessRecord,
   identity: ParticipantIdentity,
 ) {
   const participantEmail = normalizeEmail(participant.email);
-  const participantRegistrationNumber = normalizeRegistrationNumber(
-    participant.registration_number,
-  );
   const email = normalizeEmail(identity.email);
-  const registrationNumber = normalizeRegistrationNumber(
-    identity.registrationNumber,
-  );
 
-  return (
-    Boolean(email && participantEmail && participantEmail === email) ||
-    Boolean(
-      registrationNumber &&
-        participantRegistrationNumber &&
-        participantRegistrationNumber === registrationNumber,
-    )
-  );
+  return Boolean(email && participantEmail && participantEmail === email);
 }
 
 export function canRevealParticipantCheckInToken(

@@ -30,8 +30,8 @@ export default async function EventCheckInPage({
 
   if (!event) {
     return (
-      <section className="min-h-screen px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl rounded-4xl border border-dashed border-border bg-card px-6 py-16 text-center">
+      <section className="min-h-[100dvh] px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl rounded-lg border border-dashed border-border bg-card px-6 py-16 text-center">
           <h1 className="text-3xl font-bold">Event not found</h1>
           <p className="mt-4 text-sm leading-7 text-muted-foreground">
             This event could not be found.
@@ -57,8 +57,8 @@ export default async function EventCheckInPage({
 
   if (!user) {
     return (
-      <section className="min-h-screen bg-background px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl rounded-4xl border border-border bg-card p-8 text-center">
+      <section className="min-h-[100dvh] bg-background px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl rounded-lg border border-border bg-card p-8 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
             <ShieldCheck className="h-7 w-7" />
           </div>
@@ -72,7 +72,7 @@ export default async function EventCheckInPage({
           <div className="mt-6 flex justify-center">
             <SignInButton
               redirectTo={redirectTo}
-              className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
               Sign in to continue
             </SignInButton>
@@ -92,8 +92,8 @@ export default async function EventCheckInPage({
 
   if (!canManageEvents) {
     return (
-      <section className="min-h-screen bg-background px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl rounded-4xl border border-border bg-card p-8 text-center">
+      <section className="min-h-[100dvh] bg-background px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl rounded-lg border border-border bg-card p-8 text-center">
           <h1 className="text-3xl font-bold">Access restricted</h1>
           <p className="mt-3 text-sm leading-7 text-muted-foreground">
             You do not have permission to manage check-ins for this event.
@@ -104,7 +104,7 @@ export default async function EventCheckInPage({
   }
 
   return (
-    <section className="min-h-screen bg-background px-4 py-10 sm:px-6 lg:px-8">
+    <section className="min-h-[100dvh] bg-background px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
@@ -116,10 +116,10 @@ export default async function EventCheckInPage({
           </Link>
         </div>
 
-        <div className="rounded-4xl border border-border bg-card p-6 shadow-[0_20px_80px_-40px_rgba(10,25,47,0.35)] sm:p-8">
+        <div className="rounded-lg border border-border bg-card p-6 shadow-[0_20px_80px_-40px_rgba(10,25,47,0.35)] sm:p-8">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+              <p className="annot">
                 Organizer Check-In Desk
               </p>
               <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
@@ -132,7 +132,7 @@ export default async function EventCheckInPage({
             </div>
 
             {club?.name && (
-              <div className="rounded-2xl bg-muted/35 px-4 py-3 text-sm text-muted-foreground">
+              <div className="rounded-lg bg-muted/35 px-4 py-3 text-sm text-muted-foreground">
                 Hosted by{" "}
                 <span className="font-semibold text-foreground">
                   {club.name}

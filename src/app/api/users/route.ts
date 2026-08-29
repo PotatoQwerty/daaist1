@@ -10,7 +10,14 @@ export async function GET() {
 
   if (!user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  } 
+  }
+
+  // This returns every profile, registration numbers included. Being signed
+  // in is not enough.
+  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
+  if (!isAdmin && !isSuperAdmin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { data, error } = await supabaseServer.from("profiles").select(`
       user_id,

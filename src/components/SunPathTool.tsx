@@ -205,7 +205,7 @@ function SunPathTool({ variant }: SunPathToolProps) {
 
   return (
     <div className="flex w-full flex-col gap-6 text-foreground">
-      <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 md:p-8">
+      <div className="rounded-lg border border-border bg-card p-6 md:p-8">
         <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Enter DMS coordinates, timezone, year, and output format.
@@ -223,7 +223,7 @@ function SunPathTool({ variant }: SunPathToolProps) {
               placeholder={`36\u00B044'44.5"N 3\u00B001'12.4"E`}
               value={location}
               onChange={(event) => setLocation(event.target.value)}
-              className="w-full rounded-xl border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition"
+              className="w-full rounded-md border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition"
             />
           </div>
 
@@ -239,7 +239,7 @@ function SunPathTool({ variant }: SunPathToolProps) {
                 max={MAX_ALLOWED_YEAR}
                 value={year}
                 onChange={handleYearChange}
-                className="w-full rounded-xl border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition"
+                className="w-full rounded-md border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition"
               />
               <p className="text-xs text-muted-foreground">
                 Current year ({CURRENT_YEAR}) is blocked. Use {MAX_ALLOWED_YEAR} or earlier.
@@ -256,7 +256,7 @@ function SunPathTool({ variant }: SunPathToolProps) {
                 value={tz}
                 disabled
                 readOnly
-                className="w-full rounded-xl border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition"
+                className="w-full rounded-md border border-border bg-background/80 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring transition"
               />
               <p className="text-xs text-muted-foreground">
                 Timezone is fixed for this tool.
@@ -269,7 +269,7 @@ function SunPathTool({ variant }: SunPathToolProps) {
             <div className="flex flex-wrap items-center gap-4">
               <label
                 htmlFor={`svg-${variant}`}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-background/70 px-4 py-2 text-sm font-medium hover:bg-muted/50"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background/70 px-4 py-2 text-sm font-medium hover:bg-muted/50"
               >
                 <input
                   type="radio"
@@ -284,7 +284,7 @@ function SunPathTool({ variant }: SunPathToolProps) {
 
               <label
                 htmlFor={`png-${variant}`}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-background/70 px-4 py-2 text-sm font-medium hover:bg-muted/50"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background/70 px-4 py-2 text-sm font-medium hover:bg-muted/50"
               >
                 <input
                   type="radio"
@@ -304,7 +304,7 @@ function SunPathTool({ variant }: SunPathToolProps) {
               onClick={handleGenerate}
               type="button"
               disabled={loading}
-              className="inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Generating..." : "Generate"}
             </button>
@@ -317,7 +317,7 @@ function SunPathTool({ variant }: SunPathToolProps) {
           </div>
 
           {loading && isLongWait && (
-            <p className="rounded-xl border border-accent/30 bg-accent/10 px-3 py-2 text-sm text-foreground">
+            <p className="rounded-md border border-accent/30 bg-accent/10 px-3 py-2 text-sm text-foreground">
               This request is taking longer than usual. Please keep this tab open.
             </p>
           )}
@@ -325,18 +325,18 @@ function SunPathTool({ variant }: SunPathToolProps) {
       </div>
 
       {imgPreview && (
-        <div className="rounded-3xl border border-border/60 bg-card/80 p-4 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/70 md:p-6">
+        <div className="rounded-lg border border-border bg-card p-4 md:p-6">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-lg font-semibold">Preview</h3>
             <a
               href={imgPreview}
               download={`sunpath-${variant}-${Date.now()}.${generatedType}`}
-              className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
             >
               Download
             </a>
           </div>
-          <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-background/60 p-3">
+          <div className="mt-4 overflow-hidden rounded-lg border border-border bg-background/60 p-3">
             <img
               src={imgPreview}
               alt={`Sunpath ${variant} preview`}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
 import { ThemeProvider } from "next-themes";
-import { Josefin_Sans } from "next/font/google";
+import { Josefin_Sans, IBM_Plex_Mono } from "next/font/google";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/app/(auth)/_components/AppSideBar";
 import { Toaster } from "react-hot-toast";
@@ -12,7 +12,16 @@ import { getUserContext } from "@/lib/supabase/user-context";
 const josefin = Josefin_Sans({
   subsets: ["latin"],
   variable: "--font-josefin",
+  display: "swap",
 });
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-plex-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: `Daa'ist | Admin Dashboard`,
   robots: {
@@ -20,6 +29,7 @@ export const metadata: Metadata = {
     index: false,
   },
 };
+
 export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -27,9 +37,22 @@ export default async function AdminLayout({
 
   if (!userContext.session?.user?.id) notFound();
   if (!userContext.isAdmin && !userContext.isSuperAdmin) notFound();
+
   return (
-    <html lang="en" suppressHydrationWarning className={`${josefin.variable}`}>
-      <body>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${josefin.variable} ${plexMono.variable}`}
+    >
+      {/* Admin is a separate document root, so it needs its own copy of
+          the font wiring. Without this the Typekit kit never loads here
+          and the dashboard falls back to Josefin. */}
+      <head>
+        <link rel="preconnect" href="https://use.typekit.net" crossOrigin="" />
+        <link rel="preconnect" href="https://p.typekit.net" crossOrigin="" />
+        <link rel="stylesheet" href="https://use.typekit.net/eef1cbb.css" />
+      </head>
+      <body className="kabel-reg antialiased">
         <ThemeProvider
           enableSystem={true}
           attribute="class"
@@ -37,9 +60,10 @@ export default async function AdminLayout({
         >
           <SidebarProvider defaultOpen>
             <AppSidebar />
-            <main className="kabel-reg w-full flex flex-col min-h-screen bg-background">
-              <div className="p-4 bg-background">
+            <main className="flex min-h-[100dvh] w-full flex-col bg-background">
+              <div className="rule-b flex items-center gap-3 px-4 py-3">
                 <SidebarTrigger />
+                <span className="annot">Admin</span>
               </div>
               <Toaster position="top-right" />
               <UserProvider

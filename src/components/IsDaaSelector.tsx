@@ -24,7 +24,7 @@ const RadioOption = ({
       onChange={() => onChange(value)}
       className="peer sr-only"
     />
-    <div className="min-w-[120px] rounded-xl border border-border bg-background/80 p-3 text-sm font-semibold text-foreground ring-2 ring-transparent ring-offset-2 ring-offset-background transition hover:bg-muted/50 hover:shadow-sm peer-checked:border-primary/40 peer-checked:bg-primary/10 peer-checked:ring-primary">
+    <div className="min-w-[120px] rounded-md border border-border bg-background/80 p-3 text-sm font-semibold text-foreground ring-2 ring-transparent ring-offset-2 ring-offset-background transition hover:bg-muted/50 hover:shadow-sm peer-checked:border-primary/40 peer-checked:bg-primary/10 peer-checked:ring-primary">
       <div className="flex gap-1 items-center justify-center">
         <p>{label}</p>
         {value === true ? (

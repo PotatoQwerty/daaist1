@@ -1,27 +1,27 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+/**
+ * Matches the shape of ClubCard exactly, so the layout does not shift
+ * when real data arrives.
+ */
 function ClubCardSkeleton() {
   return (
-    <div className="bg-chart-5 rounded-lg overflow-hidden flex flex-col min-w-2xs">
-      {/* Banner skeleton */}
-      <div className="relative h-32">
-        <Skeleton className="h-full w-full rounded-none" />
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-lg border border-border bg-card">
+      <Skeleton className="h-36 w-full rounded-none" />
 
-        {/* Avatar skeleton */}
-        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2">
-          <Skeleton className="h-18 w-18 rounded-full ring-4 ring-chart-5" />
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-10 shrink-0 rounded-full" />
+          <Skeleton className="h-5 w-2/3" />
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="pt-10 px-4 pb-4 flex flex-col flex-1 gap-3">
-        <Skeleton className="h-5 w-2/3 mx-auto" />
+        <div className="mt-4 flex flex-col gap-2">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-4/5" />
+        </div>
 
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-4/5" />
-
-        <Skeleton className="mt-auto h-9 w-full rounded-md" />
+        <Skeleton className="mt-5 h-4 w-24" />
       </div>
     </div>
   );

@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
 import {
   Menu,
@@ -16,7 +15,7 @@ import {
   Building,
   Library,
   School,
-  PlusCircle,
+  Plus,
   PenTool,
   QrCode,
 } from "lucide-react";
@@ -24,10 +23,10 @@ import DaaistLogoHor from "../../public/images/DAAIST-LOGO-HOR.svg";
 import DaaistLogoHorDark from "../../public/images/daalogodarkhor.svg";
 import { ThemeSwitch } from "./ThemeSwitch";
 import { useUser } from "@/context/user-context";
+import { canAdminister, canUploadResources } from "@/lib/roles";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -43,24 +42,21 @@ import {
 import ImageSkeleton from "./ImageSkeleton";
 
 const NAV_LINKS = [
-  { href: "/", label: "Home", icon: <Home /> },
-  { href: "/courses", label: "Courses", icon: <Book /> },
-  { href: "/projects", label: "Projects", icon: <Building /> },
-  { href: "/club", label: "Clubs", icon: <School /> },
-  { href: "/docs", label: "Documents", icon: <Library /> },
+  { href: "/", label: "Home", icon: Home },
+  { href: "/courses", label: "Courses", icon: Book },
+  { href: "/projects", label: "Projects", icon: Building },
+  { href: "/club", label: "Clubs", icon: School },
+  { href: "/docs", label: "Documents", icon: Library },
 ];
 
 export default function Navbar() {
-  const { resolvedTheme } = useTheme();
   const pathname = usePathname();
-  const { isAdmin, user, loading, isSuperAdmin, session } = useUser();
+  const { user, loading, session, roles } = useUser();
+  const canUpload = canUploadResources(roles);
+  const showAdminDashboard = canAdminister(roles);
   const supabase = createClient();
 
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (href: string) =>
     href === "/"
@@ -85,207 +81,252 @@ export default function Navbar() {
     });
   };
 
-  if (!mounted) return null;
-
   return (
-    <nav className="flex justify-between items-center w-full p-4 bg-background/60 backdrop-blur-xl border-b border-white/10 shadow-sm sticky top-0 left-0 right-0 z-50 supports-backdrop-filter:bg-background/60">
-      {/* Logo */}
-      <Link
-        href="/"
-        className="flex items-center gap-2 hover:scale-110 transition duration-300 ease-in-out"
-      >
-        <Image
-          src={resolvedTheme === "dark" ? DaaistLogoHorDark : DaaistLogoHor}
-          width={150}
-          alt="Daaist Logo"
-          priority
-        />
-      </Link>
-
-      {/* Desktop Links */}
-      <div className="hidden md:flex items-center gap-8 text-sm">
-        {NAV_LINKS.map((link) => (
-          <Link
-            prefetch={false}
-            key={link.href}
-            href={link.href}
-            aria-current={isActive(link.href) ? "page" : undefined}
-            className={`flex items-center gap-2 transition duration-300 ease-in-out ${
-              isActive(link.href)
-                ? "text-accent scale-125 text-lg font-extrabold"
-                : "hover:text-accent hover:scale-105"
-            }`}
-          >
-            {link.icon}
-            {link.label}
-          </Link>
-        ))}
+    <header className="sticky top-0 z-50 w-full bg-background">
+      {/* The mark's three lenses plus its dot, run as a rule across the
+          full width. The brand reads as structure rather than as a logo
+          parked in a corner. */}
+      <div className="brand-band" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-3">
-        <ThemeSwitch />
+      <nav
+        aria-label="Main"
+        className="rule-b mx-auto flex h-[68px] w-full max-w-[1400px] items-center justify-between gap-6 px-4 sm:px-6"
+      >
+        <Link
+          href="/"
+          className="shrink-0 opacity-95 transition-opacity duration-200 hover:opacity-100"
+        >
+          <Image
+            src={DaaistLogoHor}
+            width={128}
+            alt="Daa'ist"
+            priority
+            className="dark:hidden"
+          />
+          <Image
+            src={DaaistLogoHorDark}
+            width={128}
+            alt=""
+            aria-hidden="true"
+            priority
+            className="hidden dark:block"
+          />
+        </Link>
 
-        {/* Admin Upload */}
-        {(isAdmin || isSuperAdmin) && (
-          <Link
-            href="/upload"
-            className="hidden md:flex items-center justify-center gap-1 bg-accent text-white rounded-sm p-2 hover:bg-secondary transition duration-300"
-          >
-            <PlusCircle className="mr-1 h-4 w-4" />
-            Upload
-          </Link>
-        )}
-
-        {/* Session / Profile */}
-        {loading ? (
-          <button
-            title="Loading..."
-            type="button"
-            className="relative w-9 h-9 rounded-full overflow-hidden border border-border animate-pulse bg-muted"
-          >
-            <ImageSkeleton />
-          </button>
-        ) : session ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                title="Menu"
-                type="button"
-                className="relative w-9 h-9 rounded-full overflow-hidden border border-border hover:ring-2 hover:ring-ring transition-all focus:outline-none"
+        {/* Desktop links. Text only: the icons duplicated the labels and
+            crowded the row. Active state is a colour change plus a rule
+            underneath, so navigating never shifts the layout. */}
+        <div className="hidden items-center gap-7 md:flex">
+          {NAV_LINKS.map((link) => {
+            const active = isActive(link.href);
+            return (
+              <Link
+                prefetch={false}
+                key={link.href}
+                href={link.href}
+                aria-current={active ? "page" : undefined}
+                className={`relative py-2 text-[15px] transition-colors duration-200 ${
+                  active
+                    ? "font-bold text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
               >
-                <Image
-                  src={
-                    user?.image ||
-                    session?.user?.user_metadata?.avatar_url ||
-                    "/images/placeholder.png"
-                  }
-                  alt="Profile"
-                  sizes="36px"
-                  fill
-                  className="object-cover"
-                />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {user?.firstname && user?.lastname
-                      ? `${user.firstname} ${user.lastname}`
-                      : user?.name ||
-                        session?.user?.user_metadata?.name ||
-                        session?.user?.email}
-                  </p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email || session?.user?.email}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/profile" className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/register" className="cursor-pointer">
-                  <QrCode className="mr-2 h-4 w-4" />
-                  <span>My Event Passes</span>
-                </Link>
-              </DropdownMenuItem>
+                {link.label}
+                {active && (
+                  <span className="absolute inset-x-0 -bottom-px h-[3px] bg-accent" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
 
-              <DropdownMenuItem>
-                <PenTool className="w-5 h-5" />
-                <Link href="/tools">Useful Tools</Link>
-              </DropdownMenuItem>
-              {(isAdmin || isSuperAdmin) && (
+        <div className="flex items-center gap-2">
+          <ThemeSwitch />
+
+          {canUpload && (
+            <Link
+              href="/upload"
+              className="hidden items-center gap-1.5 rounded-md bg-accent px-3 py-2 text-sm font-bold text-accent-foreground transition-transform duration-150 hover:brightness-110 active:scale-[0.98] md:inline-flex"
+            >
+              <Plus className="size-4" strokeWidth={2.5} />
+              Upload
+            </Link>
+          )}
+
+          {loading ? (
+            <div
+              title="Loading"
+              className="size-9 overflow-hidden rounded-full border border-border bg-muted"
+            >
+              <ImageSkeleton />
+            </div>
+          ) : session ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  title="Account menu"
+                  type="button"
+                  className="relative size-9 overflow-hidden rounded-full border border-border transition-colors hover:border-accent"
+                >
+                  <Image
+                    src={
+                      user?.image ||
+                      session?.user?.user_metadata?.avatar_url ||
+                      "/images/placeholder.png"
+                    }
+                    alt="Your profile"
+                    sizes="36px"
+                    fill
+                    className="object-cover"
+                  />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-60 rounded-lg">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm leading-none font-bold">
+                      {user?.firstname && user?.lastname
+                        ? `${user.firstname} ${user.lastname}`
+                        : user?.name ||
+                          session?.user?.user_metadata?.name ||
+                          session?.user?.email}
+                    </p>
+                    <p className="truncate text-xs leading-none text-muted-foreground">
+                      {user?.email || session?.user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/admin" className="cursor-pointer">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>Admin Dashboard</span>
+                  <Link href="/profile" className="cursor-pointer">
+                    <User className="mr-2 size-4" />
+                    <span>Profile</span>
                   </Link>
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-red-600 focus:text-white cursor-pointer"
-                onClick={handleSignOut}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Sign out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <button
-            type="button"
-            onClick={handleSignIn}
-            className="p-2 bg-accent rounded-lg hover:bg-primary/90 text-white transition-all ease-in-out duration-150"
-          >
-            Sign In
-          </button>
-        )}
-
-        {/* Mobile Dictionary */}
-        <div className="md:hidden">
-          <Sheet>
-            <SheetTrigger asChild>
-              <button
-                type="button"
-                title="Menu"
-                className="p-2 -mr-2 text-foreground/80 hover:text-foreground"
-              >
-                <Menu size={24} />
-              </button>
-            </SheetTrigger>
-            <SheetContent
-              side="right"
-              className="w-[200px] sm:w-[250px] p-2 flex flex-col items-center bg-background/60 backdrop-blur-xl border-white/10 shadow-sm supports-backdrop-filter:bg-background/60"
+                <DropdownMenuItem asChild>
+                  <Link href="/register" className="cursor-pointer">
+                    <QrCode className="mr-2 size-4" />
+                    <span>My event passes</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/tools" className="cursor-pointer">
+                    <PenTool className="mr-2 size-4" />
+                    <span>Tools</span>
+                  </Link>
+                </DropdownMenuItem>
+                {showAdminDashboard && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin" className="cursor-pointer">
+                      <LayoutDashboard className="mr-2 size-4" />
+                      <span>Admin dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="cursor-pointer text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="mr-2 size-4" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSignIn}
+              className="rounded-md bg-accent px-4 py-2 text-sm font-bold text-accent-foreground transition-transform duration-150 hover:brightness-110 active:scale-[0.98]"
             >
-              <SheetDescription aria-description="Menu" />
-              <SheetHeader>
-                <SheetTitle>Menu</SheetTitle>
-              </SheetHeader>
-              <div className="flex flex-col gap-2 mt-8 items-start">
-                {NAV_LINKS.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`flex items&-center gap-2 text-lg font-bold transition-colors ${
-                      isActive(link.href)
-                        ? "text-primary scale-115"
-                        : "text-foreground/60 hover:text-foreground"
-                    }`}
-                  >
-                    {link.icon}
-                    {link.label}
-                  </Link>
-                ))}
-                {(isAdmin || isSuperAdmin) && (
-                  <Link
-                    href="/upload"
-                    className="flex items-center justify-center gap-1 text-lg font-bold hover:text-foreground bg-accent p-2 w-full rounded-lg text-white "
-                  >
-                    <PlusCircle className="mr-1 h-4 w-4" />
-                    <span>Upload</span>
-                  </Link>
-                )}
-                {!session && (
-                  <button
-                    type="button"
-                    onClick={handleSignIn}
-                    className="text-lg font-medium text-left text-foreground/60 hover:text-foreground"
-                  >
-                    Sign In
-                  </button>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
+              Sign in
+            </button>
+          )}
+
+          <div className="md:hidden">
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <button
+                  type="button"
+                  title="Open menu"
+                  aria-label="Open menu"
+                  className="p-2 text-foreground"
+                >
+                  <Menu size={22} />
+                </button>
+              </SheetTrigger>
+              <SheetContent
+                side="right"
+                className="w-[min(84vw,320px)] border-l border-border bg-background p-0"
+              >
+                <div className="brand-band" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <SheetHeader className="rule-b px-5 py-4">
+                  <SheetTitle className="text-left text-base">Menu</SheetTitle>
+                </SheetHeader>
+
+                <nav className="flex flex-col px-2 py-3">
+                  {NAV_LINKS.map((link) => {
+                    const Icon = link.icon;
+                    const active = isActive(link.href);
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setMobileOpen(false)}
+                        aria-current={active ? "page" : undefined}
+                        className={`flex items-center gap-3 rounded-md px-3 py-3 text-base transition-colors ${
+                          active
+                            ? "bg-subtle font-bold text-foreground"
+                            : "text-muted-foreground hover:bg-subtle hover:text-foreground"
+                        }`}
+                      >
+                        <Icon
+                          className={`size-5 ${active ? "text-accent" : ""}`}
+                          strokeWidth={1.75}
+                        />
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                <div className="rule-t mt-1 px-4 py-4">
+                  {canUpload ? (
+                    <Link
+                      href="/upload"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex w-full items-center justify-center gap-2 rounded-md bg-accent px-4 py-3 font-bold text-accent-foreground"
+                    >
+                      <Plus className="size-4" strokeWidth={2.5} />
+                      Upload
+                    </Link>
+                  ) : null}
+
+                  {!session && (
+                    <button
+                      type="button"
+                      onClick={handleSignIn}
+                      className="w-full rounded-md bg-accent px-4 py-3 font-bold text-accent-foreground"
+                    >
+                      Sign in
+                    </button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 }
