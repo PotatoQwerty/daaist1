@@ -14,6 +14,19 @@ import {
   getEventSlug,
 } from "@/lib/event-path";
 import { createClient } from "@/lib/supabase/server";
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/site";
+
+/**
+ * Organiser-only, and the URL carries a check-in token.
+ *
+ * Set on the page rather than a layout: the only layout above it also
+ * wraps /events/[eventId], which is public and indexed.
+ */
+export const metadata: Metadata = {
+  title: "Event check-in",
+  robots: NOINDEX,
+};
 
 type EventCheckInPageProps = {
   params: Promise<{ eventId: string }>;

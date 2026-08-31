@@ -25,6 +25,8 @@ import {
 } from "@/lib/event-path";
 import { createClient } from "@/lib/supabase/server";
 import { getUserContext } from "@/lib/supabase/user-context";
+import JsonLd from "@/components/JsonLd";
+import { SITE_NAME, absoluteUrl, metaDescription } from "@/lib/site";
 
 type EventPageProps = {
   params: Promise<{ eventId: string }>;
@@ -40,15 +42,36 @@ export async function generateMetadata({
 
   if (!event) {
     return {
-      title: "Event Not Found - Daa'ist",
+      title: "Event not found",
+      robots: { index: false, follow: false },
     };
   }
 
+  const description = metaDescription(
+    event.description,
+    `${event.title}, hosted at the Département d'Architecture d'Alger.`,
+  );
+  // Canonicalise onto the slug the page itself redirects to, never onto
+  // the event UUID - the id must not appear in a public URL.
+  const url = absoluteUrl(getEventPath(event));
+  const image = event.cover_image || event.square_image || undefined;
+
   return {
-    title: `${event.title} - Daa'ist`,
-    description:
-      event.description ||
-      `View the details for ${event.title} and open the registration form.`,
+    title: event.title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      // "article" carries a published time; this is an event page, and the
+      // dates are expressed in the JSON-LD below instead.
+      type: "website",
+      url,
+      title: `${event.title} | ${SITE_NAME}`,
+      description,
+      ...(image ? { images: [{ url: image, alt: event.title }] } : {}),
+    },
+    ...(image
+      ? { twitter: { card: "summary_large_image" as const, images: [image] } }
+      : {}),
   };
 }
 
@@ -102,6 +125,29 @@ export default async function EventPage({ params }: EventPageProps) {
       })
     : [];
   const existingPass = userPasses.find((pass) => pass.event_id === event.id);
+  /* Structured data for the public event.
+     Only fields the row actually has: title, dates, free-text location,
+     the cover image and the canonical URL. Nothing is invented - no
+     offers, no organiser address, no attendance mode, no performer. The
+     optional keys are omitted rather than filled with placeholders,
+     because an Event with a wrong startDate is worse than one with none. */
+  const eventJsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: event.title,
+    url: absoluteUrl(getEventPath(event)),
+    ...(event.start_date ? { startDate: event.start_date } : {}),
+    ...(event.end_date ? { endDate: event.end_date } : {}),
+    ...(event.description
+      ? { description: metaDescription(event.description, event.title, 300) }
+      : {}),
+    ...(event.location ? { location: { "@type": "Place", name: event.location } } : {}),
+    ...(event.cover_image ? { image: [event.cover_image] } : {}),
+    ...(club?.name
+      ? { organizer: { "@type": "Organization", name: club.name } }
+      : {}),
+  };
+
   const registerCtaLabel = existingPass ? "View event pass" : "Register now";
   const registerPanelTitle = existingPass ? "Your pass is ready" : "Ready to join?";
   const registerPanelCopy = existingPass
@@ -112,6 +158,8 @@ export default async function EventPage({ params }: EventPageProps) {
     : "Go to registration";
 
   return (
+    <>
+    <JsonLd data={eventJsonLd} />
     <section className="min-h-[100dvh] bg-background px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -292,5 +340,6 @@ export default async function EventPage({ params }: EventPageProps) {
         </div>
       </div>
     </section>
+    </>
   );
 }

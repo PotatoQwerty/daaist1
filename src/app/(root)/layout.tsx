@@ -6,8 +6,15 @@ import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "next-themes";
 import Footer from "@/components/Footer";
 import ChatBubble from "@/components/ChatBubble";
+import JsonLd from "@/components/JsonLd";
 import { UserProvider } from "@/context/user-context";
 import { getUserContext } from "@/lib/supabase/user-context";
+import {
+  OG_IMAGE,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/site";
 
 const josefin = Josefin_Sans({
   subsets: ["latin"],
@@ -25,24 +32,69 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Daa'ist",
-  description:
-    "Discover courses, past exams, design resources, documents, and club activities for architecture students at the Département d’Architecture d’Alger. Daa’ist brings academic content and student creativity together in one platform.",
+  // Lets every nested page express canonical and OG URLs as relative paths
+  // and have them resolved against the real origin.
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_NAME,
+    // Pages set a bare name ("Clubs") and get "Clubs | Daa'ist".
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  // Kept short and specific. A longer list was here before; terms nobody
+  // searches for do nothing, and search engines have ignored this tag for
+  // years - it is retained only because it is cheap and occasionally read
+  // by non-Google crawlers.
   keywords: [
-    "architecture students",
-    "daaist",
-    "Daa",
-    "courses",
-    "past exams",
-    "design resources",
-    "documents",
-    "Alger architecture school",
-    "Département d’Architecture d’Alger",
+    "Daa'ist",
+    "Département d'Architecture d'Alger",
+    "architecture students Algiers",
+    "architecture course material",
     "student clubs",
-    "architecture projects",
-    "studio materials",
   ],
-  alternates: { canonical: "https://daaist.com/" },
+  // No social accounts are invented here; only what is verifiable.
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  // The default for the public shell. Private pages override it, either
+  // through their own layout or inline.
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    locale: "fr_DZ",
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    // No @handle is claimed - none is known to exist.
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE.url],
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/images/DAAIST-LOGO.svg",
+  },
+  /* No `alternates.canonical` here on purpose.
+     A canonical set on this layout is inherited by every page under it,
+     including the gated ones - which then rendered
+     <link rel="canonical" href="https://daaist.com"> on /courses, /profile
+     and the rest, telling crawlers those pages are duplicates of the home
+     page. Each public page declares its own; the private ones declare none,
+     which is the correct answer for a noindexed page. */
 };
 
 // maximumScale and userScalable were removed: locking zoom breaks
@@ -81,6 +133,32 @@ export default async function RootLayout({
         </noscript>
       </head>
       <body className="kabel-reg antialiased">
+        {/* Only facts that are actually true of this site: its name, its
+            origin, and a logo that exists. No address, no social profiles,
+            no contact points are asserted. */}
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "WebSite",
+                "@id": `${SITE_URL}/#website`,
+                name: SITE_NAME,
+                url: SITE_URL,
+                description: SITE_DESCRIPTION,
+                inLanguage: "fr",
+                publisher: { "@id": `${SITE_URL}/#organization` },
+              },
+              {
+                "@type": "Organization",
+                "@id": `${SITE_URL}/#organization`,
+                name: SITE_NAME,
+                url: SITE_URL,
+                logo: `${SITE_URL}/images/DAAIST-LOGO.svg`,
+              },
+            ],
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

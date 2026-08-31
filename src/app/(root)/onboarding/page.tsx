@@ -3,6 +3,7 @@ import OnboardingForm from "@/components/OnboardingForm";
 import { isOnboarded } from "@/lib/supabase/actions";
 import { redirect } from "next/navigation";
 import BrandMark from "@/components/BrandMark";
+import { NOINDEX } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -10,10 +11,7 @@ export const fetchCache = "force-no-store";
 export const metadata = {
   title: "Daa'ist - Onboarding",
   description: "Complete your profile to start using Daa'ist",
-  robots: {
-    index: false,
-    follow: false,
-  },
+  robots: NOINDEX,
 };
 
 // What the form actually asks for, in the order it asks. This is the

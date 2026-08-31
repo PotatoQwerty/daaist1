@@ -1,6 +1,8 @@
 import WindRose from "@/components/WindRose";
 import SunPathTool from "@/components/SunPathTool";
 import PageHeader from "@/components/PageHeader";
+import type { Metadata } from "next";
+import { SITE_NAME, absoluteUrl } from "@/lib/site";
 import {
   Accordion,
   AccordionContent,
@@ -8,10 +10,19 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-export const metadata = {
-  title: "Daa'ist - Tools",
-  description:
-    "Site analysis generators for studio work: wind rose and sun path diagrams.",
+const TOOLS_DESCRIPTION =
+  "Site analysis generators for studio work: wind rose and sun path diagrams.";
+
+export const metadata: Metadata = {
+  title: "Tools",
+  description: TOOLS_DESCRIPTION,
+  alternates: { canonical: absoluteUrl("/tools") },
+  openGraph: {
+    type: "website",
+    url: absoluteUrl("/tools"),
+    title: `Tools | ${SITE_NAME}`,
+    description: TOOLS_DESCRIPTION,
+  },
 };
 
 const TOOLS = [

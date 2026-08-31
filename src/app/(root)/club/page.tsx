@@ -3,14 +3,23 @@ import ClubCard from "@/components/ClubCard";
 import PageHeader from "@/components/PageHeader";
 import Reveal from "@/components/Reveal";
 import { getClubs, getPublicEvents } from "@/lib/supabase/actions";
+import type { Metadata } from "next";
+import { SITE_NAME, absoluteUrl } from "@/lib/site";
 
-export async function generateMetadata() {
-  return {
-    title: "Daa'ist - Clubs",
-    description:
-      "The student clubs running at the Département d'Architecture d'Alger, and the events they have coming up.",
-  };
-}
+const CLUBS_DESCRIPTION =
+  "The student clubs running at the Département d'Architecture d'Alger, and the events they have coming up.";
+
+export const metadata: Metadata = {
+  title: "Clubs",
+  description: CLUBS_DESCRIPTION,
+  alternates: { canonical: absoluteUrl("/club") },
+  openGraph: {
+    type: "website",
+    url: absoluteUrl("/club"),
+    title: `Clubs | ${SITE_NAME}`,
+    description: CLUBS_DESCRIPTION,
+  },
+};
 
 export const revalidate = 30;
 

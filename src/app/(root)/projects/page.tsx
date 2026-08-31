@@ -1,10 +1,15 @@
 import Link from "next/link";
+import { NOINDEX } from "@/lib/site";
 
 export async function generateMetadata() {
   return {
-    title: "Daa'ist - Projects",
+    title: "Projects",
     description:
       "Studio work from students at the Département d'Architecture d'Alger. This section is still being built.",
+    // Public, but a placeholder with no content yet. Indexing an empty page
+    // earns nothing and dilutes the rest of the site; drop the noindex when
+    // there is real work to show.
+    robots: NOINDEX,
   };
 }
 
