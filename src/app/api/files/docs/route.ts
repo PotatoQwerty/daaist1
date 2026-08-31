@@ -20,10 +20,14 @@ export async function GET() {
       .select("*")
       .eq("category", "doc");
 
-    if (error) throw new TypeError(error.message);
+    if (error) throw error;
 
     return NextResponse.json({ files }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: error }, { status: 500 });
+    console.error("Docs fetch failed:", error);
+    return NextResponse.json(
+      { error: "Could not load documents" },
+      { status: 500 },
+    );
   }
 }

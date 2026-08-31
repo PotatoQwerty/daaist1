@@ -5,10 +5,19 @@ import {
 } from "@/lib/event-extra";
 import { getEventByEventId, getUserClubRole } from "@/lib/supabase/actions";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { buildIlikeOrFilter, sanitizeSearchTerm } from "@/lib/search-filter";
 
-function sanitizeSearchTerm(value: string) {
-  return value.replace(/[%_,]/g, " ").trim();
-}
+/** Columns the participant search looks through. */
+const PARTICIPANT_SEARCH_COLUMNS = [
+  "first_name",
+  "last_name",
+  "email",
+  "phone",
+  "university",
+  "study_year",
+  "registration_number",
+] as const;
 
 async function ensureEventManagerAccess(eventId: string) {
   const supabase = await createClient();
@@ -43,7 +52,7 @@ async function ensureEventManagerAccess(eventId: string) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const eventId = searchParams.get("event_id")?.trim();
-  const query = sanitizeSearchTerm(searchParams.get("q") || "");
+  const query = sanitizeSearchTerm(searchParams.get("q"));
 
   if (!eventId) {
     return NextResponse.json({ error: "Event ID is required." }, { status: 400 });
@@ -64,18 +73,11 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false })
     .limit(query ? 100 : 200);
 
-  if (query) {
-    participantsQuery = participantsQuery.or(
-      [
-        `first_name.ilike.%${query}%`,
-        `last_name.ilike.%${query}%`,
-        `email.ilike.%${query}%`,
-        `phone.ilike.%${query}%`,
-        `university.ilike.%${query}%`,
-        `study_year.ilike.%${query}%`,
-        `registration_number.ilike.%${query}%`,
-      ].join(","),
-    );
+  // Built through the shared helper, which sanitizes on the way in, so the
+  // term cannot contribute PostgREST filter syntax.
+  const orFilter = buildIlikeOrFilter(PARTICIPANT_SEARCH_COLUMNS, query);
+  if (orFilter) {
+    participantsQuery = participantsQuery.or(orFilter);
   }
 
   const { data, error: participantsError } = await participantsQuery;
@@ -133,6 +135,17 @@ export async function DELETE(request: Request) {
   if (accessError) {
     return accessError;
   }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const limited = enforceRateLimit(request, RATE_LIMITS.clubEventWrite, {
+    bucket: "club-participant-remove",
+    userId: user?.id ?? null,
+  });
+  if (limited) return limited;
 
   const { data: participant, error: participantError } = await supabaseServer
     .schema("public")

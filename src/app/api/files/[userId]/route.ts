@@ -25,7 +25,11 @@ export async function GET(
     .eq("uploaded_by", userId);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("User file fetch failed:", error);
+    return NextResponse.json(
+      { error: "Could not load those files" },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({ files }, { status: 200 });

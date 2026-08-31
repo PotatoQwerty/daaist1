@@ -5,6 +5,17 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getUserRoles } from "@/lib/supabase/actions";
 import { createClient } from "@/lib/supabase/server";
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import {
+  buildUploadKey,
+  parseDeclaredSize,
+  resolveStoredContentType,
+} from "@/lib/upload-policy";
+
+/**
+ * Five minutes, not an hour. The URL is used immediately by the form that
+ * asked for it, so a long window only widens the reuse opportunity.
+ */
+const SIGNED_URL_TTL_SECONDS = 300;
 
 export const PUT = async (request: Request) => {
   const supabase = await createClient();
@@ -27,37 +38,72 @@ export const PUT = async (request: Request) => {
 
   try {
     const formData = await request.formData();
-    const title = formData.get("title") as string | null;
-    const category = formData.get("category") as string | null;
-    const level = formData.get("level") as string | null;
-    const subject = formData.get("subject") as string | null;
-    const safeTitle = title?.replace(/ /g, "-") || "untitled";
-    const contentType = formData.get("type") as string;
 
-    // Build object key
-    const pathParts = [category];
-    if (level) pathParts.push(level);
-    if (subject) pathParts.push(subject);
-    const key = `${pathParts
-      .filter(Boolean)
-      .join("/")}/${crypto.randomUUID()}-${safeTitle || "untitled"}`;
+    // Size is signed into the URL below, so R2 itself rejects a PUT that
+    // does not match. The old 50 MB limit lived only in the browser and was
+    // trivially skipped by calling this route directly.
+    const declaredSize = parseDeclaredSize(formData.get("size"));
+    if (!declaredSize.ok) {
+      return NextResponse.json(
+        { message: declaredSize.error },
+        { status: declaredSize.status },
+      );
+    }
+
+    // The caller no longer picks an arbitrary prefix, and the title can no
+    // longer contribute path separators.
+    const keyResult = buildUploadKey({
+      category: formData.get("category"),
+      level: formData.get("level"),
+      subject: formData.get("subject"),
+      title: formData.get("title"),
+      userId: user.id,
+      uuid: crypto.randomUUID(),
+    });
+    if (!keyResult.ok) {
+      return NextResponse.json(
+        { message: keyResult.error },
+        { status: keyResult.status },
+      );
+    }
+    const key = keyResult.key;
+
+    // An unrecognised type is stored as an opaque attachment instead of
+    // being refused, so uploads keep working while nothing the CDN serves
+    // can execute as script.
+    const { contentType, contentDisposition } = resolveStoredContentType(
+      formData.get("type"),
+    );
 
     const command = new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME!,
       Key: key,
-      ContentType: contentType || "application/octet-stream",
+      ContentType: contentType,
+      ContentLength: declaredSize.size,
+      ...(contentDisposition
+        ? { ContentDisposition: contentDisposition }
+        : {}),
     });
-    const url = await getSignedUrl(r2Client, command, { expiresIn: 3600 });
+    const url = await getSignedUrl(r2Client, command, {
+      expiresIn: SIGNED_URL_TTL_SECONDS,
+    });
     const publicUrl = `${process.env.R2_PUBLIC_DOMAIN}/${key}`;
 
+    // These headers are part of the signature, so the PUT has to send them
+    // back verbatim. Returning them keeps the callers from having to
+    // reconstruct the server's decision.
+    const headers: Record<string, string> = { "Content-Type": contentType };
+    if (contentDisposition) headers["Content-Disposition"] = contentDisposition;
+
     return NextResponse.json(
-      { uploadUrl: url, publicUrl: publicUrl },
-      { status: 200 }
+      { uploadUrl: url, publicUrl, headers },
+      { status: 200 },
     );
-  } catch (error: any) {
+  } catch (error) {
+    console.error("Presigned upload URL failed:", error);
     return NextResponse.json(
-      { message: "something went Wrong", error: error.message },
-      { status: 500 }
+      { message: "Could not prepare the upload." },
+      { status: 500 },
     );
   }
 };

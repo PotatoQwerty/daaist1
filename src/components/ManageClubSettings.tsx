@@ -102,6 +102,8 @@ const ManageClubSettings = ({ club }: ManageClubSettingsProps) => {
       formData.append("title", file.name);
       formData.append("category", category);
       formData.append("type", file.type);
+      // The server signs this size into the URL, so R2 rejects a mismatch.
+      formData.append("size", String(file.size));
 
       const uploadUrlRes = await fetch("/api/upload-url", {
         method: "PUT",
@@ -112,15 +114,14 @@ const ManageClubSettings = ({ club }: ManageClubSettingsProps) => {
         throw new Error("Failed to get signed upload URL");
       }
 
-      const { uploadUrl, publicUrl } = await uploadUrlRes.json();
+      const { uploadUrl, publicUrl, headers } = await uploadUrlRes.json();
 
-      // Upload file to R2 using signed URL
+      // Upload file to R2 using signed URL. The server decides the stored
+      // content type; these headers are part of the signature.
       const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
+        headers,
       });
 
       if (!uploadRes.ok) {

@@ -1,6 +1,27 @@
 "use server";
+import { headers } from "next/headers";
 import { createClient } from "./supabase/auth/server";
 import { supabaseServer } from "./supabase/server";
+import { enforceRateLimit, RATE_LIMITS } from "./rate-limit";
+
+/**
+ * Longest message the shared chat accepts.
+ *
+ * There was no ceiling at all: `content` was trimmed for emptiness and
+ * inserted. Comfortably above a normal message, well below anything that
+ * would bloat the table or the payload every reader downloads.
+ */
+const MAX_MESSAGE_LENGTH = 1000;
+
+/**
+ * How much history a reader gets.
+ *
+ * getChatMessages selected the whole table with no limit, so every open of
+ * the chat downloaded every message ever sent and that cost grew forever.
+ * The newest slice is fetched and then flipped back into chronological
+ * order, so the rendering is unchanged.
+ */
+const CHAT_HISTORY_LIMIT = 100;
 
 export async function getChatMessages() {
   try {
@@ -35,11 +56,14 @@ export async function getChatMessages() {
       .schema("public")
       .from("messages")
       .select("*")
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false })
+      .limit(CHAT_HISTORY_LIMIT);
 
     if (error) throw error;
 
-    return messages ?? [];
+    // Fetched newest-first to get the most recent slice, then reversed so
+    // callers still receive oldest-first as before.
+    return (messages ?? []).slice().reverse();
   } catch (error) {
     console.error("Error fetching chat messages:", error);
     return null;
@@ -48,8 +72,11 @@ export async function getChatMessages() {
 export async function addChatMessage(message: {
   content: string;
 }) {
-  const content = message.content.trim();
+  const content = typeof message?.content === "string"
+    ? message.content.trim()
+    : "";
   if (!content) return null;
+  if (content.length > MAX_MESSAGE_LENGTH) return null;
 
   try {
     const supabase = await createClient();
@@ -78,6 +105,17 @@ export async function addChatMessage(message: {
     }
 
     if (!enrollment?.isdaa) return null;
+
+    /* Server Actions have no Request object, so the limiter is handed the
+       incoming headers. It keys on the user id anyway; the headers only
+       matter for the IP fallback, which cannot be reached here because this
+       point is past the auth check. */
+    const limited = enforceRateLimit(
+      new Request("https://daaist.com/chat", { headers: await headers() }),
+      RATE_LIMITS.chatPost,
+      { bucket: "chat-post", userId: user.id },
+    );
+    if (limited) return null;
 
     const { data: profile, error: profileError } = await supabaseServer
       .schema("public")

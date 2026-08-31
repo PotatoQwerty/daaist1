@@ -4,7 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { fetchUsers, getUserRoles } from "@/lib/supabase/actions";
 
-export const revalidate = 1800;
+/* No revalidate: these pages read cookies through createClient(), which
+   makes them dynamic regardless, so the directive was inert and misleading
+   about how the page is served. */
 
 export const metadata = {
   title: "Daa'ist - Manage Users",
@@ -22,9 +24,11 @@ export default async function AdminUsersPage() {
 
   if (!user) return notFound();
 
-  const userRole = await getUserRoles(user.id);
-
-  if (!userRole) return notFound();
+  /* This checked `if (!userRole)`, but getUserRoles always resolves to an
+     object, so the condition was never true and the page relied entirely on
+     the layout's gate. The real check, stated here as well. */
+  const { isAdmin, isSuperAdmin } = await getUserRoles(user.id);
+  if (!isAdmin && !isSuperAdmin) return notFound();
 
   const users = await fetchUsers();
 

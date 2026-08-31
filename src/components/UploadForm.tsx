@@ -99,18 +99,21 @@ export default function UploadForm() {
       body.append("level", formData.level?.value || "");
       body.append("subject", formData.subject?.value || "");
       body.append("type", file.type);
+      // The server signs this size into the URL, so R2 rejects a mismatch.
+      body.append("size", String(file.size));
 
       const res = await fetch("/api/upload-url", { method: "PUT", body });
       const dataR2 = await res.json();
 
       if (!res.ok) throw new Error(dataR2.message || "Upload failed.");
-      await fetch(dataR2.uploadUrl, {
+      // The server decides the stored content type; these headers are part
+      // of the signature and must be sent back exactly as returned.
+      const uploadRes = await fetch(dataR2.uploadUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": file.type,
-        },
+        headers: dataR2.headers,
         body: file,
       });
+      if (!uploadRes.ok) throw new Error("Upload failed.");
       const supabaseBody = {
         file_name: formData.title,
         url: dataR2.publicUrl,

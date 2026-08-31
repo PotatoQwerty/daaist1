@@ -183,6 +183,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ alreadyRegistered: false }, { status: 200 });
   }
 
+  /* This handler is strictly read-only.
+
+     It used to write: it minted a check_in_token onto rows that lacked one,
+     and it bound `user_id` to the caller. Because the auth cookie is
+     SameSite=Lax, cookies ARE sent on a cross-site top-level navigation, so
+     a GET that mutates is reachable from an attacker's page - and a GET that
+     mutates is also cacheable and prefetchable, which browsers and proxies
+     are entitled to do on their own.
+
+     The identity rules are unchanged; only the writes are gone. Both writes
+     still happen in POST, which is where the form sends people anyway. */
   const participantIdentity = {
     userId: user?.id ?? null,
     email: user?.email ?? email,
@@ -192,45 +203,16 @@ export async function GET(request: Request) {
     existingParticipant,
     participantIdentity,
   );
-  const canAttachUser = canAttachParticipantToUser(
-    existingParticipant,
-    participantIdentity,
-  );
   const message = getExistingRegistrationMessage({
     canRevealToken,
     isSignedIn: Boolean(user?.id),
   });
+
+  // Only ever the stored token. A freshly generated one would not be
+  // persisted, so the QR code it produced would not scan.
   const checkInToken = canRevealToken
-    ? existingParticipant.check_in_token || randomUUID()
+    ? (existingParticipant.check_in_token ?? null)
     : null;
-  const updatePayload: {
-    check_in_token?: string;
-    user_id?: string;
-  } = {};
-
-  if (canRevealToken && !existingParticipant.check_in_token && checkInToken) {
-    updatePayload.check_in_token = checkInToken;
-  }
-
-  if (canAttachUser && user?.id) {
-    updatePayload.user_id = user.id;
-  }
-
-  if (Object.keys(updatePayload).length > 0) {
-    const { error: updateError } = await supabaseServer
-      .schema("public")
-      .from("event_participants")
-      .update(updatePayload)
-      .eq("id", existingParticipant.id);
-
-    if (updateError) {
-      console.error("Participant precheck update error:", updateError);
-      return NextResponse.json(
-        { error: "Unable to load your existing registration right now." },
-        { status: 500 },
-      );
-    }
-  }
 
   return NextResponse.json(
     {

@@ -1,4 +1,18 @@
-"use server";
+/**
+ * Not a Server Action module.
+ *
+ * `saveUserProfile` takes the user as an argument and upserts `profiles`
+ * keyed on `user.id` with the service-role client, without checking the
+ * session. Under `"use server"` that was one client-component import away
+ * from being a public "overwrite any profile" endpoint - it registered no
+ * action only because nothing currently imports this file.
+ *
+ * Same treatment as supabase/actions.ts: server-only, so a client import is
+ * a build error rather than a live endpoint. If either function is ever
+ * needed from the browser, it needs a route that derives the user from the
+ * session instead of taking it as a parameter.
+ */
+import "server-only";
 
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 import type { User } from "@supabase/supabase-js";

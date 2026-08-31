@@ -77,12 +77,10 @@ export async function POST(request: Request) {
 
     if (!res.ok) {
       const errText = await res.text();
+      // The upstream body can carry its own internals; log it, do not relay it.
+      console.error("Tools upstream error:", res.status, errText);
       return NextResponse.json(
-        {
-          error: "Upstream API error",
-          status: res.status,
-          body: errText,
-        },
+        { error: "Upstream API error", status: res.status },
         { status: 502 },
       );
     }
@@ -116,13 +114,9 @@ export async function POST(request: Request) {
       },
     });
   } catch (error: unknown) {
+    console.error("Tools request failed:", error);
     return NextResponse.json(
-      {
-        error: "Bad request / invalid JSON body",
-        details: String(
-          error instanceof Error ? error.message : "Unknown error",
-        ),
-      },
+      { error: "Bad request / invalid JSON body" },
       { status: 400 },
     );
   }

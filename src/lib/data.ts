@@ -1,16 +1,30 @@
 import { supabaseServer } from "@/lib/supabase/server";
 
+/**
+ * What a profile page is allowed to show.
+ *
+ * These functions used to `select("*")`, and the whole row was handed to a
+ * client component, so `email`, `phone` and `registration_number` were
+ * serialised into the payload of a page that had no session check. Listing
+ * the columns explicitly means a column added to `profiles` later is private
+ * by default instead of public by accident.
+ */
+const PUBLIC_PROFILE_COLUMNS =
+  "user_id, username, firstname, lastname, image, bio";
+
 export async function getUserByUsername(username: string) {
   const { data, error } = await supabaseServer
     .schema("public")
     .from("profiles")
-    .select("*")
+    .select(PUBLIC_PROFILE_COLUMNS)
     .eq("username", username)
     .single();
 
   if (error || !data) return null;
 
-  const resolvedUserId = data.user_id || data.id;
+  // `id` is not a column on profiles; user_id is the key everything else
+  // in the app joins on, and it is always projected.
+  const resolvedUserId = data.user_id;
   if (!resolvedUserId) return null;
 
   const { data: enrollmentData } = await supabaseServer
@@ -32,7 +46,7 @@ export async function getUserByUserId(userId: string) {
   const { data, error } = await supabaseServer
     .schema("public")
     .from("profiles")
-    .select("*")
+    .select(PUBLIC_PROFILE_COLUMNS)
     .eq("user_id", userId)
     .single();
 
@@ -43,7 +57,7 @@ export async function getUserByUserId(userId: string) {
     const fallback = await supabaseServer
       .schema("public")
       .from("profiles")
-      .select("*")
+      .select(PUBLIC_PROFILE_COLUMNS)
       .eq("id", userId)
       .single();
     profile = fallback.data;
@@ -52,7 +66,7 @@ export async function getUserByUserId(userId: string) {
 
   if (profileError || !profile) return null;
 
-  const resolvedUserId = profile.user_id || profile.id;
+  const resolvedUserId = profile.user_id;
   if (!resolvedUserId) return null;
 
   const { data: enrollmentData } = await supabaseServer
@@ -157,6 +171,7 @@ export async function getUserClubsByUserId(userId: string) {
           role: member.role,
         };
       })
-      .filter(Boolean) ?? []
+      .filter((club): club is NonNullable<typeof club> => club !== null) ??
+    []
   );
 }

@@ -36,8 +36,9 @@ export async function GET() {
     `);
 
   if (error) {
+    console.error("User list fetch failed:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch users" },
+      { error: "Failed to fetch users" },
       { status: 500 }
     );
   }

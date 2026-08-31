@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { parseEventExtraData } from "@/lib/event-extra";
 import { getEventByEventId, getUserClubRole } from "@/lib/supabase/actions";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
+import { buildStoragePath, validateImageUpload } from "@/lib/upload-policy";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 const serializeSupabaseError = (error: unknown) => {
   if (!error || typeof error !== "object") return error;
@@ -81,12 +83,29 @@ async function uploadEventImage({
   kind: "banner" | "square";
   file: File;
 }) {
-  const storagePath = `clubs/events/${eventId}/${kind}`;
+  const storagePath = buildStoragePath("clubs", "events", eventId, kind);
+
+  /* This took contentType straight from the uploaded file with no allowlist
+     and no size ceiling, so an event manager could serve HTML or SVG from
+     the public bucket.
+
+     The path stays extensionless on purpose. It is written with
+     upsert: true, so re-uploading replaces the object in place; adding an
+     extension would make each new type a new object and orphan the old one,
+     because only the explicit "remove image" path cleans up. */
+  const imageCheck = validateImageUpload(file);
+  if (!imageCheck.ok) {
+    return {
+      publicUrl: null,
+      storagePath,
+      error: { message: imageCheck.error, status: imageCheck.status },
+    };
+  }
 
   const { error: uploadError } = await supabaseServer.storage
     .from("daa")
     .upload(storagePath, file, {
-      contentType: file.type,
+      contentType: imageCheck.contentType,
       upsert: true,
     });
 
@@ -105,6 +124,33 @@ async function uploadEventImage({
     storagePath,
     error: null,
   };
+}
+
+/**
+ * Status for a failed image upload.
+ *
+ * A rejected type or an oversized file is the caller's problem, so it must
+ * not be reported as a 500. Storage faults still are.
+ */
+/**
+ * Message for a failed image upload.
+ *
+ * A rejected type or size is our own validation text and is useful to the
+ * caller. A storage fault is not - it carries Supabase internals - so it
+ * falls back to a generic sentence. The validation results are the ones
+ * carrying a numeric `status`.
+ */
+function uploadErrorMessage(error: unknown, fallback: string): string {
+  const candidate = error as { status?: unknown; message?: unknown } | null;
+  return typeof candidate?.status === "number" &&
+    typeof candidate?.message === "string"
+    ? candidate.message
+    : fallback;
+}
+
+function uploadFailureStatus(error: unknown): number {
+  const status = (error as { status?: unknown } | null)?.status;
+  return typeof status === "number" ? status : 500;
 }
 
 async function removeStoragePaths(paths: string[]) {
@@ -153,7 +199,11 @@ export const GET = async (request: Request) => {
     .order("start_date", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Club event list failed:", error);
+    return NextResponse.json(
+      { error: "Could not load events" },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({ data }, { status: 200 });
@@ -202,6 +252,12 @@ export const POST = async (request: Request) => {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const limited = enforceRateLimit(request, RATE_LIMITS.clubEventWrite, {
+      bucket: "club-event-create",
+      userId: user.id,
+    });
+    if (limited) return limited;
+
     let extraData = {};
     if (typeof rawExtraData === "string" && rawExtraData.trim()) {
       extraData = parseEventExtraData(JSON.parse(rawExtraData));
@@ -230,8 +286,8 @@ export const POST = async (request: Request) => {
         error: serializeSupabaseError(bannerUpload.error),
       });
       return NextResponse.json(
-        { error: bannerUpload.error?.message || "Failed to upload banner." },
-        { status: 500 },
+        { error: uploadErrorMessage(bannerUpload.error, "Failed to upload banner.") },
+        { status: uploadFailureStatus(bannerUpload.error) },
       );
     }
 
@@ -254,10 +310,12 @@ export const POST = async (request: Request) => {
         await removeStoragePaths(uploadedPaths);
         return NextResponse.json(
           {
-            error:
-              squareUpload.error?.message || "Failed to upload square image.",
+            error: uploadErrorMessage(
+              squareUpload.error,
+              "Failed to upload square image.",
+            ),
           },
-          { status: 500 },
+          { status: uploadFailureStatus(squareUpload.error) },
         );
       }
 
@@ -293,7 +351,10 @@ export const POST = async (request: Request) => {
         error: serializeSupabaseError(error),
       });
       await removeStoragePaths(uploadedPaths);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(
+        { error: "Could not create that event" },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({ data }, { status: 201 });
@@ -357,6 +418,12 @@ export const PATCH = async (request: Request) => {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const limited = enforceRateLimit(request, RATE_LIMITS.clubEventWrite, {
+      bucket: "club-event-update",
+      userId: user.id,
+    });
+    if (limited) return limited;
+
     let extraData = {};
     if (typeof rawExtraData === "string" && rawExtraData.trim()) {
       extraData = parseEventExtraData(JSON.parse(rawExtraData));
@@ -380,8 +447,8 @@ export const PATCH = async (request: Request) => {
           error: serializeSupabaseError(bannerUpload.error),
         });
         return NextResponse.json(
-          { error: bannerUpload.error?.message || "Failed to upload banner." },
-          { status: 500 },
+          { error: uploadErrorMessage(bannerUpload.error, "Failed to upload banner.") },
+          { status: uploadFailureStatus(bannerUpload.error) },
         );
       }
 
@@ -412,10 +479,12 @@ export const PATCH = async (request: Request) => {
         });
         return NextResponse.json(
           {
-            error:
-              squareUpload.error?.message || "Failed to upload square image.",
+            error: uploadErrorMessage(
+              squareUpload.error,
+              "Failed to upload square image.",
+            ),
           },
-          { status: 500 },
+          { status: uploadFailureStatus(squareUpload.error) },
         );
       }
 
@@ -455,7 +524,10 @@ export const PATCH = async (request: Request) => {
         eventId,
         error: serializeSupabaseError(error),
       });
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(
+        { error: "Could not update that event" },
+        { status: 500 },
+      );
     }
 
     const storageError = await removeStoragePaths(pathsToRemove);
@@ -516,13 +588,23 @@ export const DELETE = async (request: Request) => {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const limited = enforceRateLimit(request, RATE_LIMITS.clubEventWrite, {
+      bucket: "club-event-delete",
+      userId: user.id,
+    });
+    if (limited) return limited;
+
     const { error: dbError } = await supabaseServer
       .from("events")
       .delete()
       .eq("id", eventId);
 
     if (dbError) {
-      return NextResponse.json({ error: dbError.message }, { status: 500 });
+      console.error("Club event delete failed:", dbError);
+      return NextResponse.json(
+        { error: "Could not delete that event" },
+        { status: 500 },
+      );
     }
 
     const pathsToRemove = [

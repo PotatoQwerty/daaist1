@@ -2,6 +2,8 @@ import { getUserRoles } from "@/lib/supabase/actions";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import { validateImageUrl } from "@/lib/profile-validation";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -18,6 +20,12 @@ export async function POST(request: Request) {
     if (!isSuperAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    const limited = enforceRateLimit(request, RATE_LIMITS.adminMutation, {
+      bucket: "admin-club-create",
+      userId: user.id,
+    });
+    if (limited) return limited;
 
     // 3. Parse and validate request body
     const formData = await request.formData();
@@ -50,16 +58,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate URL format (basic check)
-    const MAX_URL_LENGTH = 2048;
-    if (
-      logo_url.length > MAX_URL_LENGTH ||
-      banner_url.length > MAX_URL_LENGTH
-    ) {
-      return NextResponse.json(
-        { error: "Invalid URL format" },
-        { status: 400 },
-      );
+    /* Only a length check before: any string was accepted and stored, then
+       rendered as a club image. Both of these come from /api/upload-url, so
+       they should be on our own CDN; the shared validator enforces https and
+       the same host allowlist used for avatars. */
+    for (const [label, value] of [
+      ["Logo", logo_url],
+      ["Banner", banner_url],
+    ] as const) {
+      const check = validateImageUrl(value);
+      if (!check.ok || !check.value) {
+        return NextResponse.json(
+          { error: `${label} URL is not valid.` },
+          { status: 400 },
+        );
+      }
     }
 
     // 4. Insert into database
@@ -82,7 +95,10 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("Database error:", error);
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json(
+        { error: "Could not create that club" },
+        { status: 400 },
+      );
     }
 
     // 5. Assign President

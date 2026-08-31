@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { buildStoragePath, validateImageUpload } from "@/lib/upload-policy";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -22,8 +23,15 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get("file") as File;
 
-  if (!file)
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  // Previously accepted anything, at any size: an .html file was stored on
+  // the public bucket and served as markup.
+  const imageCheck = validateImageUpload(file);
+  if (!imageCheck.ok) {
+    return NextResponse.json(
+      { error: imageCheck.error },
+      { status: imageCheck.status },
+    );
+  }
 
   // 🧩 Get the user's current image first
   const { data: userData, error: fetchError } = await supabaseServer
@@ -41,12 +49,22 @@ export async function POST(request: Request) {
     );
   }
 
-  // 🗑️ Delete the old image if it exists and is stored in Supabase
+  /* Delete the old image if it exists and is stored in Supabase.
+
+     This removed from a bucket called "avatars" while uploading to "daa",
+     and passed a path that still had the bucket name on the front, so it
+     never actually deleted anything and every replaced avatar was left
+     behind. Both are corrected here because the path construction below is
+     changing anyway. */
   if (userData?.image?.includes("supabase.co")) {
-    const oldImagePath = userData.image.split("/storage/v1/object/public/")[1];
+    const publicSuffix = userData.image.split("/storage/v1/object/public/")[1];
+    // publicSuffix looks like "daa/users/profile_pictures/<name>"; the
+    // bucket prefix is not part of the object path.
+    const oldImagePath = publicSuffix?.replace(/^daa\//, "");
+
     if (oldImagePath) {
       const { error: deleteError } = await supabaseServer.storage
-        .from("avatars") // Ensure this matches your bucket name
+        .from("daa")
         .remove([oldImagePath]);
 
       if (deleteError) {
@@ -56,13 +74,15 @@ export async function POST(request: Request) {
     }
   }
 
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${user.id}-${randomUUID()}.${fileExt}`;
-  const filePath = `/users/profile_pictures/${fileName}`;
+  // Extension comes from the validated content type, not from file.name.
+  const fileName = `${user.id}-${randomUUID()}.${imageCheck.extension}`;
+  // buildStoragePath drops the leading slash the old version produced, which
+  // became an empty first segment in the object key.
+  const filePath = buildStoragePath("users", "profile_pictures", fileName);
 
   const { error: uploadError } = await supabaseServer.storage
     .from("daa")
-    .upload(filePath, file);
+    .upload(filePath, file, { contentType: imageCheck.contentType });
 
   if (uploadError)
     return NextResponse.json(

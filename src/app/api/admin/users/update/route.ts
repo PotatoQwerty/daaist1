@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { getUserRoles } from "@/lib/supabase/actions";
 import { ACCOUNT_ROLES } from "@/lib/roles";
+import {
+  UNIQUE_VIOLATION,
+  uniqueViolationMessage,
+  validateProfileFields,
+} from "@/lib/profile-validation";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 // Single source of truth, shared with the invite flow and the capability
 // helpers, so the two cannot drift apart again.
@@ -29,6 +35,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const limited = enforceRateLimit(req, RATE_LIMITS.adminMutation, {
+      bucket: "admin-user-update",
+      userId: user.id,
+    });
+    if (limited) return limited;
+
     const body = await req.json();
     const { targetUserId, roles, firstname, lastname, username } = body;
 
@@ -41,20 +53,50 @@ export async function POST(req: Request) {
 
     // Update Profile Info
     if (firstname || lastname || username) {
-      const profileUpdates: any = {};
-      if (firstname) profileUpdates.firstname = firstname;
-      if (lastname) profileUpdates.lastname = lastname;
-      if (username) profileUpdates.username = username;
+      /* The roles branch below refuses to let a plain admin touch a
+         super_admin, but this branch ran first and had no such check, so an
+         admin could rename a super_admin or take their username. Same rule,
+         applied to the same targets. */
+      if (!isSuperAdmin) {
+        const { roles: targetRoles } = await getUserRoles(targetUserId);
+        if (targetRoles.some((role) => SUPER_ADMIN_ONLY_ROLES.has(role))) {
+          return NextResponse.json(
+            { error: "Only a super admin can edit a super admin's profile." },
+            { status: 403 },
+          );
+        }
+      }
+
+      // Shared with /api/profile/update and the onboarding routes, so an
+      // admin cannot write a username a user could not choose themselves.
+      const validated = validateProfileFields({
+        ...(firstname !== undefined ? { firstname } : {}),
+        ...(lastname !== undefined ? { lastname } : {}),
+        ...(username !== undefined ? { username } : {}),
+      });
+
+      if (!validated.ok) {
+        return NextResponse.json({ error: validated.error }, { status: 400 });
+      }
 
       const { error: profileError } = await supabaseServer
         .schema("public")
         .from("profiles")
-        .update(profileUpdates)
+        .update(validated.updates)
         .eq("user_id", targetUserId);
 
       if (profileError) {
+        console.error("Admin profile update failed:", profileError);
+
+        if (profileError.code === UNIQUE_VIOLATION) {
+          return NextResponse.json(
+            { error: uniqueViolationMessage(profileError.details) },
+            { status: 409 },
+          );
+        }
+
         return NextResponse.json(
-          { error: "Failed to update profile: " + profileError.message },
+          { error: "Failed to update profile" },
           { status: 500 },
         );
       }
@@ -108,8 +150,9 @@ export async function POST(req: Request) {
         .eq("user_id", targetUserId);
 
       if (deleteError) {
+        console.error("Role delete failed:", deleteError);
         return NextResponse.json(
-          { error: "Failed to delete existing roles: " + deleteError.message },
+          { error: "Failed to update roles" },
           { status: 500 },
         );
       }
@@ -126,8 +169,9 @@ export async function POST(req: Request) {
         .insert(rolesToInsert);
 
       if (insertError) {
+        console.error("Role insert failed:", insertError);
         return NextResponse.json(
-          { error: "Failed to insert roles: " + insertError.message },
+          { error: "Failed to update roles" },
           { status: 500 },
         );
       }
