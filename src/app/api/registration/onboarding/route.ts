@@ -2,6 +2,13 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/auth/server";
+import { validateUsername } from "@/lib/username";
+import {
+  UNIQUE_VIOLATION,
+  uniqueViolationMessage,
+  validateShortText,
+  PROFILE_LIMITS,
+} from "@/lib/profile-validation";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -52,6 +59,17 @@ export async function POST(request: Request) {
     isdaa,
   } = form || {};
 
+  /* The username was written straight through. The student form checks it in
+     the browser, and the invite path runs it through validateUsername, but
+     this route accepted anything - so the documented rule was skippable by
+     posting here directly. Validated before the roster lookup so a bad
+     username costs nothing. */
+  const usernameCheck = validateUsername(username);
+  if (!usernameCheck.ok) {
+    return NextResponse.json({ error: usernameCheck.error }, { status: 400 });
+  }
+  const validUsername = usernameCheck.username;
+
   // A claim of DAA membership is verified here rather than trusted from the
   // request body. The client checks the matricule against this same table
   // before submitting, so a genuine student sees no change; what this stops
@@ -91,6 +109,21 @@ export async function POST(request: Request) {
     verifiedRegistrationNumber = matricule;
     verifiedFirstname = student.firstname;
     verifiedLastname = student.lastname;
+  } else {
+    // Non-DAA accounts have no roster to check against, so the form is the
+    // only source for the name. It still has to be bounded text.
+    for (const [label, value] of [
+      ["First name", verifiedFirstname],
+      ["Last name", verifiedLastname],
+    ] as const) {
+      const check = validateShortText(value, label, PROFILE_LIMITS.name);
+      if (!check.ok) {
+        return NextResponse.json({ error: check.error }, { status: 400 });
+      }
+    }
+
+    verifiedFirstname = String(verifiedFirstname).trim();
+    verifiedLastname = String(verifiedLastname).trim();
   }
 
   const { error: profileError } = await supabaseServer
@@ -100,16 +133,17 @@ export async function POST(request: Request) {
       user_id: userId,
       firstname: verifiedFirstname,
       lastname: verifiedLastname,
-      username,
+      username: validUsername,
       registration_number: verifiedRegistrationNumber,
     });
 
   if (profileError) {
     console.error("Profile update error:", profileError);
-    // Handle Unique Violation (Username taken)
-    if (profileError.code === "23505") {
+    // Names the field that actually clashed, instead of making the person
+    // guess which of the two to change.
+    if (profileError.code === UNIQUE_VIOLATION) {
       return NextResponse.json(
-        { error: "Username or registration number already taken!" },
+        { error: uniqueViolationMessage(profileError.details) },
         { status: 409 }
       );
     }

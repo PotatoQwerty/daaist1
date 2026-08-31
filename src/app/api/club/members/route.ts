@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { getUserClubRole } from "@/lib/supabase/actions";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 const ASSIGNABLE_ROLES = ["member", "vice_president", "event_manager"] as const;
 
@@ -42,7 +43,11 @@ export const GET = async (request: Request) => {
     )
     .eq("club_id", club_id);
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Club member list failed:", error);
+    return NextResponse.json(
+      { error: "Could not load club members" },
+      { status: 500 },
+    );
   }
   return NextResponse.json({ data }, { status: 200 });
 };
@@ -60,6 +65,13 @@ export const POST = async (red: Request) => {
   if (!isPresident) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const limited = enforceRateLimit(red, RATE_LIMITS.clubMemberWrite, {
+    bucket: "club-member-add",
+    userId: user.id,
+  });
+  if (limited) return limited;
+
   if (!ASSIGNABLE_ROLES.includes(body.role)) {
     return NextResponse.json(
       { error: "Invalid role for club member" },
@@ -75,7 +87,11 @@ export const POST = async (red: Request) => {
       role: body.role,
     });
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Club member add failed:", error);
+    return NextResponse.json(
+      { error: "Could not add that member" },
+      { status: 500 },
+    );
   }
   return NextResponse.json({ data }, { status: 200 });
 };
@@ -101,6 +117,13 @@ export const DELETE = async (req: Request) => {
   if (!isPresident) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const limited = enforceRateLimit(req, RATE_LIMITS.clubMemberWrite, {
+    bucket: "club-member-remove",
+    userId: user.id,
+  });
+  if (limited) return limited;
+
   const { error } = await supabaseServer
     .schema("public")
     .from("club_members")
@@ -109,7 +132,11 @@ export const DELETE = async (req: Request) => {
     .eq("club_id", body.club_id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Club member remove failed:", error);
+    return NextResponse.json(
+      { error: "Could not remove that member" },
+      { status: 500 },
+    );
   }
   return NextResponse.json({ status: 200 });
 };

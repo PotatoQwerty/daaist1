@@ -5,7 +5,9 @@ import { notFound } from "next/navigation";
 import type { File } from "@/types/next-auth";
 import { getUserRoles } from "@/lib/supabase/actions";
 
-export const revalidate = 1800;
+/* No revalidate: these pages read cookies through createClient(), which
+   makes them dynamic regardless, so the directive was inert and misleading
+   about how the page is served. */
 
 export const metadata = {
   title: "Daa'ist - Manage Posts",

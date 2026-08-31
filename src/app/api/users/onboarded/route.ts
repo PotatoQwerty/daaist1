@@ -16,13 +16,13 @@ export async function GET() {
     .select("onboarded")
     .eq("user_id", user.id);
 
-  if (error)
+  if (error) {
+    console.error("Onboarding status lookup failed:", error);
     return NextResponse.json(
-      {
-        message: `Something went wrong, ${error.message}`,
-      },
+      { message: "Could not check onboarding status" },
       { status: 500 }
     );
+  }
 
   return NextResponse.json({ onboarded: onboarded?.[0]?.onboarded ?? false });
 }

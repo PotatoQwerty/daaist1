@@ -34,7 +34,11 @@ export async function POST(req: Request) {
     .single();
   if (selectErr && selectErr.code !== "PGRST116") {
     // (PGRST116 = no rows found)
-    return NextResponse.json({ error: selectErr.message }, { status: 500 });
+    console.error("Like lookup failed:", selectErr);
+    return NextResponse.json(
+      { error: "Could not update that favourite" },
+      { status: 500 },
+    );
   }
 
   // unlike here
@@ -45,7 +49,11 @@ export async function POST(req: Request) {
       .delete()
       .eq("id", exists.id);
     if (deleteErr)
-      return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+      console.error("Unlike failed:", deleteErr);
+      return NextResponse.json(
+        { error: "Could not update that favourite" },
+        { status: 500 },
+      );
 
     return NextResponse.json({ status: "unliked" }, { status: 200 });
   } else {
@@ -55,7 +63,13 @@ export async function POST(req: Request) {
       .from("likes")
       .insert([{ user_id: userId, post_id: fileId }])
       .select();
-    if (error) return NextResponse.json({ error: error }, { status: 500 });
+    if (error) {
+      console.error("Like insert failed:", error);
+      return NextResponse.json(
+        { error: "Could not update that favourite" },
+        { status: 500 },
+      );
+    }
     return NextResponse.json({ data }, { status: 200 });
   }
 }

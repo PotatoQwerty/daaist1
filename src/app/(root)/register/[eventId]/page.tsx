@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import RegisterForm from "@/components/RegisterForm";
 import { getEventSlug, getRegisterEventPath } from "@/lib/event-path";
 import { getPublicEventById } from "@/lib/supabase/actions";
+import { getBaseUrl } from "@/lib/base-url";
 
 type EventRegisterPageProps = {
   params: Promise<{ eventId: string }>;
@@ -19,12 +20,12 @@ export async function generateMetadata({
 
   if (!event) {
     return {
-      title: "Event Not Found - Daa'ist",
+      title: "Event not found",
     };
   }
 
   return {
-    title: `${event.title} Registration - Daa'ist`,
+    title: `${event.title} registration`,
     description:
       event.description ||
       `Register for ${event.title} and prefill your details if you are signed in.`,
@@ -36,11 +37,9 @@ export default async function EventRegisterPage({
 }: EventRegisterPageProps) {
   const { eventId } = await params;
   const event = await getPublicEventById(eventId);
-  const headerList = await headers();
-  const protocol = headerList.get("x-forwarded-proto") || "http";
-  const host =
-    headerList.get("x-forwarded-host") || headerList.get("host") || "";
-  const baseUrl = host ? `${protocol}://${host}` : "";
+  // Prefers the configured origin over the request headers: this value
+  // ends up inside the check-in QR code.
+  const baseUrl = getBaseUrl(await headers());
 
   if (!event) {
     notFound();

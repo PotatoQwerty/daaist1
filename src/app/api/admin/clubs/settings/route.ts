@@ -3,6 +3,8 @@ import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { validateImageUrl } from "@/lib/profile-validation";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -41,6 +43,12 @@ export async function POST(request: Request) {
       );
     }
 
+    const limited = enforceRateLimit(request, RATE_LIMITS.adminMutation, {
+      bucket: "admin-club-settings",
+      userId: user.id,
+    });
+    if (limited) return limited;
+
     // Prepare update object
     const updates: any = {
       description,
@@ -52,14 +60,23 @@ export async function POST(request: Request) {
       is_active,
     };
 
-    // Update logo URL if provided
-    if (logo_url) {
-      updates.logo_url = logo_url;
-    }
+    /* Validated rather than stored as given: these render as club images,
+       and the route previously accepted any string at all. */
+    for (const [label, value, column] of [
+      ["Logo", logo_url, "logo_url"],
+      ["Banner", banner_url, "banner_url"],
+    ] as const) {
+      if (!value) continue;
 
-    // Update banner URL if provided
-    if (banner_url) {
-      updates.banner_url = banner_url;
+      const check = validateImageUrl(value);
+      if (!check.ok || !check.value) {
+        return NextResponse.json(
+          { error: `${label} URL is not valid.` },
+          { status: 400 },
+        );
+      }
+
+      updates[column] = check.value;
     }
 
     // Update club in database
@@ -74,7 +91,7 @@ export async function POST(request: Request) {
     if (error) {
       console.error("Database error:", error);
       return NextResponse.json(
-        { error: `Failed to update club: ${error.message}` },
+        { error: "Failed to update club settings" },
         { status: 400 },
       );
     }

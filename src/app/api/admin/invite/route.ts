@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { getBaseUrl } from "@/lib/base-url";
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { generateInviteToken } from "@/lib/admin";
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
@@ -87,9 +89,13 @@ export async function POST(req: Request) {
     );
   }
 
-  // The raw token is returned exactly once, here. Only its hash is stored, so
-  // it cannot be recovered later.
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  /* The raw token is returned exactly once, here. Only its hash is stored,
+     so it cannot be recovered later.
+
+     NEXT_PUBLIC_BASE_URL is not set in the current environment, so this used
+     to produce "/invite/<token>" with no origin - a link an admin could not
+     paste into a message. getBaseUrl falls back to the request headers. */
+  const baseUrl = getBaseUrl(await headers());
   const inviteLink = `${baseUrl}/invite/${rawToken}`;
 
   return NextResponse.json({

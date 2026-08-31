@@ -1,6 +1,7 @@
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { canAdminister, roleLabel } from "@/lib/roles";
+import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 /** Resolves the caller and confirms they may administer invites. */
 async function requireAdmin() {
@@ -84,8 +85,14 @@ export async function GET() {
  * link fail validation immediately.
  */
 export async function DELETE(request: Request) {
-  const { response } = await requireAdmin();
-  if (response) return response;
+  const { user, response } = await requireAdmin();
+  if (response || !user) return response;
+
+  const limited = enforceRateLimit(request, RATE_LIMITS.adminMutation, {
+    bucket: "invite-revoke",
+    userId: user.id,
+  });
+  if (limited) return limited;
 
   let body: { id?: unknown };
   try {

@@ -1,11 +1,26 @@
-import { supabaseServer } from "@/lib/supabase/server";
+import { createClient, supabaseServer } from "@/lib/supabase/server";
 import FilesClient from "@/components/FilesClient";
+import AccessGate from "@/components/AccessGate";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { yearOptions, type LevelKey } from "@/constants/uploadConstants";
 
-export const revalidate = 3600; // Cache for 1 hour
+/**
+ * Gated content must never be statically cached.
+ *
+ * This page previously had `revalidate = 3600` and never read cookies, so
+ * Next rendered it once and served that one anonymous response to everybody.
+ * /courses, /docs and every /api/files/* route require a session; this page
+ * was the hole in that, and the cache made it worse than a plain missing
+ * check.
+ */
+export const dynamic = "force-dynamic";
+
+/** Only the columns the file list renders. `*` leaked internal columns. */
+const COURSE_FILE_COLUMNS =
+  "id, file_name, url, size, type, category, level, subject, issum, created_at, uploaded_by";
 
 export default async function CoursesPage({
   params,
@@ -15,10 +30,31 @@ export default async function CoursesPage({
   const { id } = await params;
   const year = id[0];
 
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return (
+      <AccessGate
+        what="the course archive"
+        redirectTo={`/courses/${encodeURIComponent(year ?? "")}`}
+      />
+    );
+  }
+
+  // Match the level against the known set instead of querying on whatever
+  // the URL happened to contain.
+  if (!yearOptions.some((option) => option.value === (year as LevelKey))) {
+    notFound();
+  }
+
   const { data: courses, error } = await supabaseServer
     .schema("public")
     .from("files")
-    .select("*")
+    .select(COURSE_FILE_COLUMNS)
     .eq("level", year);
 
   if (error) {

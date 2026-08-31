@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Select from "react-select";
-import { fetchUsers } from "@/lib/supabase/actions";
 import { toast } from "react-hot-toast";
 
 function CreateClubForm() {
@@ -35,12 +34,18 @@ function CreateClubForm() {
 
   useEffect(() => {
     const loadUsers = async () => {
-      const fetchedUsers = await fetchUsers();
+      // Was a direct `fetchUsers()` Server Action call, which returned every
+      // profile including registration numbers. This route is authorized per
+      // request and returns names and usernames only.
+      const res = await fetch("/api/users/directory");
+      if (!res.ok) return;
+
+      const { users: fetchedUsers } = await res.json();
       if (fetchedUsers) {
         setUsers(
           fetchedUsers
-            .filter((user) => user.firstname && user.lastname)
-            .map((u) => ({
+            .filter((user: any) => user.firstname && user.lastname)
+            .map((u: any) => ({
               value: u.user_id,
               label: `${u.firstname} ${u.lastname} (@${u.username})`,
             })),
@@ -207,6 +212,8 @@ function CreateClubForm() {
       formData.append("title", file.name);
       formData.append("category", category);
       formData.append("type", file.type);
+      // The server signs this size into the URL, so R2 rejects a mismatch.
+      formData.append("size", String(file.size));
 
       const uploadUrlRes = await fetch("/api/upload-url", {
         method: "PUT",
@@ -217,15 +224,14 @@ function CreateClubForm() {
         throw new Error("Failed to get signed upload URL");
       }
 
-      const { uploadUrl, publicUrl } = await uploadUrlRes.json();
+      const { uploadUrl, publicUrl, headers } = await uploadUrlRes.json();
 
-      // Upload file to R2 using signed URL
+      // Upload file to R2 using signed URL. The server decides the stored
+      // content type; these headers are part of the signature.
       const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
+        headers,
       });
 
       if (!uploadRes.ok) {

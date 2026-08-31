@@ -34,9 +34,10 @@ export async function GET(
     }
 
     return NextResponse.json({ files }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
+    console.error("Level file fetch failed:", error);
     return NextResponse.json(
-      { error: error.message || "Something went wrong" },
+      { error: "Could not load files for that level" },
       { status: 500 }
     );
   }

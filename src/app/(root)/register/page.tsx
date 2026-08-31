@@ -9,13 +9,14 @@ import Reveal from "@/components/Reveal";
 import { formatEventDate } from "@/lib/event-date";
 import { getRegisterEventPath } from "@/lib/event-path";
 import { getPublicEvents, getUserEventPasses } from "@/lib/supabase/actions";
+import { getBaseUrl } from "@/lib/base-url";
 import { getUserContext } from "@/lib/supabase/user-context";
 
 export const revalidate = 30;
 
 export async function generateMetadata() {
   return {
-    title: "Event registration - Daa'ist",
+    title: "Event registration",
     description:
       "Public DAA events open for registration, and the passes you already hold.",
   };
@@ -24,11 +25,11 @@ export async function generateMetadata() {
 async function RegisterPage() {
   const userContext = await getUserContext();
   const events = await getPublicEvents();
-  const headerList = await headers();
-  const protocol = headerList.get("x-forwarded-proto") || "http";
-  const host =
-    headerList.get("x-forwarded-host") || headerList.get("host") || "";
-  const baseUrl = host ? `${protocol}://${host}` : "";
+  // Same helper as /register/[eventId] and the invite route: the configured
+  // origin wins over the request headers, and a malformed host is refused
+  // rather than echoed. This value reaches MyEventPasses, which builds the
+  // check-in QR codes from it.
+  const baseUrl = getBaseUrl(await headers());
   const passes = userContext.session?.user?.id
     ? await getUserEventPasses({
         userId: userContext.session.user.id,

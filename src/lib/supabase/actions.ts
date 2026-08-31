@@ -1,5 +1,21 @@
-"use server";
-import { canUploadResources } from "@/lib/roles";
+/**
+ * Server-side data access.
+ *
+ * This file used to carry `"use server"`. That does not mean "runs on the
+ * server" - it registers EVERY export as a Server Action, i.e. a publicly
+ * routable endpoint reachable by POSTing to any path with a `Next-Action`
+ * header. All fourteen exports here were live RPCs, and only `fetchUsers`
+ * checked anything at all, so an unauthenticated caller could read any
+ * profile through `getUserData` and mint check-in tokens through
+ * `getUserEventPasses`.
+ *
+ * `server-only` is the opposite guarantee: importing this from a client
+ * component is a build error, so none of it can be reached from the network.
+ * Client components go through the API routes under /api, which authorize
+ * per request.
+ */
+import "server-only";
+import { canAdminister, canUploadResources } from "@/lib/roles";
 import { randomUUID } from "crypto";
 import {
   canAttachParticipantToUser,
@@ -477,12 +493,25 @@ export async function getEventById(id: string) {
   }
   return data;
 }
+/**
+ * Every profile, registration numbers included.
+ *
+ * Being signed in is not enough - this is the same dataset /api/users
+ * guards, and it was previously readable by any student because this module
+ * was exposed as a Server Action. The check is repeated here rather than
+ * left to the calling page, so the gate travels with the data.
+ */
 export const fetchUsers = async () => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
+    return [];
+  }
+
+  const { roles } = await getUserRoles(user.id);
+  if (!canAdminister(roles)) {
     return [];
   }
 

@@ -65,15 +65,40 @@ function pruneExpired(now: number) {
  * behaviour. Callers with no usable IP all collapse onto one key, which is
  * deliberate: unattributable traffic shares a single budget.
  */
+/**
+ * Whether a header value actually looks like an address.
+ *
+ * Every candidate below is a request header, and the fallbacks are settable
+ * by the caller off-Vercel. Without this an arbitrary string became a
+ * counter key, so a caller could mint unlimited distinct keys and never
+ * accumulate a count against any of them. Rejecting non-addresses collapses
+ * that back onto the shared "unknown" budget.
+ */
+function isIpAddress(value: string): boolean {
+  if (!value || value.length > 45) return false;
+
+  // IPv4, with each octet range-checked.
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(value)) {
+    return value.split(".").every((part) => Number(part) <= 255);
+  }
+
+  // IPv6, including the compressed and IPv4-mapped forms.
+  return /^[0-9a-fA-F:]+(\.\d{1,3}){0,3}$/.test(value) && value.includes(":");
+}
+
 export function getClientIp(request: Request): string {
-  const vercel = request.headers.get("x-vercel-forwarded-for");
-  if (vercel) return vercel.split(",")[0].trim();
+  const candidates = [
+    // Set by the platform and not spoofable by the caller, so it wins.
+    request.headers.get("x-vercel-forwarded-for"),
+    request.headers.get("x-real-ip"),
+    // Leftmost entry, matching Vercel's behaviour.
+    request.headers.get("x-forwarded-for")?.split(",")[0],
+  ];
 
-  const realIp = request.headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
-
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
+  for (const candidate of candidates) {
+    const value = candidate?.trim();
+    if (value && isIpAddress(value)) return value;
+  }
 
   return "unknown";
 }
@@ -197,4 +222,36 @@ export const RATE_LIMITS = {
 
   /** Event check-in scanning. Staff scan in bursts at a door. */
   checkIn: { limit: 120, windowMs: 60_000 },
+
+  /**
+   * The name/username picker. Loaded once or twice per screen, so a low
+   * ceiling is plenty, and it caps how fast the member list can be scraped.
+   */
+  userDirectory: { limit: 20, windowMs: 5 * 60_000 },
+
+  /**
+   * Deleting a file. Destructive and irreversible: it removes the object
+   * from R2, not just the row. Tight enough that a script cannot walk the
+   * archive, loose enough for an admin tidying up a batch by hand.
+   */
+  fileDelete: { limit: 30, windowMs: 10 * 60_000 },
+
+  /**
+   * Admin mutations: editing users, creating and configuring clubs. These
+   * are privileged and low-frequency by nature, so the limit exists to bound
+   * a compromised or runaway admin session rather than to shape normal use.
+   */
+  adminMutation: { limit: 60, windowMs: 10 * 60_000 },
+
+  /** Creating, editing and deleting club events. Each write can store images. */
+  clubEventWrite: { limit: 40, windowMs: 10 * 60_000 },
+
+  /** Adding and removing club members. */
+  clubMemberWrite: { limit: 60, windowMs: 10 * 60_000 },
+
+  /**
+   * Posting to the shared chat. Conversational, so this has to clear a
+   * quick back-and-forth while still stopping a flood.
+   */
+  chatPost: { limit: 20, windowMs: 60_000 },
 } as const;

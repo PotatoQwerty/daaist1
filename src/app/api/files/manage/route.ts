@@ -33,7 +33,13 @@ export async function GET() {
       )
     `);
 
-  if (error) return NextResponse.json({ error }, { status: 500 });
+  if (error) {
+    console.error("File manage list failed:", error);
+    return NextResponse.json(
+      { error: "Could not load files" },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ files: data }, { status: 200 });
 }

@@ -1,5 +1,4 @@
 "use client";
-import { fetchUsers } from "@/lib/supabase/actions";
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import { Button } from "@/components/ui/button";
@@ -36,10 +35,18 @@ const ManageClubMembers = ({ club }: { club: any }) => {
     if (!clubMembers.length) return;
 
     const getUsers = async () => {
-      const allUsers = await fetchUsers();
+      // Was a direct `fetchUsers()` Server Action call, which returned every
+      // profile including registration numbers. This route is authorized per
+      // request and returns names and usernames only.
+      const res = await fetch("/api/users/directory");
+      if (!res.ok) {
+        setUsers([]);
+        return;
+      }
+      const { users: allUsers } = await res.json();
 
       setUsers(
-        allUsers
+        (allUsers ?? [])
           .filter((u: any) => {
             const isComplete = u.firstname && u.lastname && u.username;
             const isAlreadyMember = clubMembers.some(

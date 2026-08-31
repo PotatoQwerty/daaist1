@@ -40,8 +40,13 @@ export async function GET(
     )
     .eq("user_id", userId);
 
-  if (errorFetching)
-    return NextResponse.json({ error: errorFetching.message }, { status: 500 });
+  if (errorFetching) {
+    console.error("Liked files fetch failed:", errorFetching);
+    return NextResponse.json(
+      { error: "Could not load favourites" },
+      { status: 500 },
+    );
+  }
 
   // Optionally map to only the files (if you don’t care about the "like" info)
   const likedFiles = data.map((like: any) => like.files);
