@@ -12,21 +12,48 @@ import Carossel from "@/components/Carossel";
 import ManageClub from "@/components/ManageClub";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import type { Metadata } from "next";
+import { SITE_NAME, absoluteUrl, metaDescription } from "@/lib/site";
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
-}) {
+}): Promise<Metadata> {
   const { slug } = await params;
   const club = await getClubBySlug(slug);
+
   if (!club) {
-    return {
-      title: "Club Not Found",
-    };
+    // Nothing to canonicalise onto, and nothing worth indexing.
+    return { title: "Club not found", robots: { index: false, follow: false } };
   }
+
+  const description = metaDescription(
+    club.description,
+    `${club.name} at the Département d'Architecture d'Alger.`,
+  );
+  const url = absoluteUrl(`/club/${club.slug ?? slug}`);
+
+  /* The club's own artwork, when it has some. Both columns are validated
+     on write to be https URLs on an approved host, so they are safe to
+     hand to a scraper. No fallback to a broken URL: if there is no image,
+     the tag is left out and the site-level default applies. */
+  const image = club.banner_url || club.logo_url || undefined;
+
   return {
-    title: `${club.name} - Daa'ist`,
-    description: club.description,
+    title: club.name,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      url,
+      title: `${club.name} | ${SITE_NAME}`,
+      description,
+      ...(image ? { images: [{ url: image, alt: club.name }] } : {}),
+    },
+    ...(image
+      ? { twitter: { card: "summary_large_image" as const, images: [image] } }
+      : {}),
   };
 }
 

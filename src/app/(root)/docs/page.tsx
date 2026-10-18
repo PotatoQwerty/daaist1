@@ -1,17 +1,18 @@
 import { createClient, supabaseServer } from "@/lib/supabase/server";
 import FilesClient from "@/components/FilesClient";
 import AccessGate from "@/components/AccessGate";
+import { NOINDEX } from "@/lib/site";
 import PageHeader from "@/components/PageHeader";
 
 export const revalidate = 3600; // Cache for 1 hour (ISR)
 
 export const metadata = {
-  title: "Daa'ist - Documents",
+  // Gated behind a student account: a crawler only ever sees the sign-in
+  // prompt, so there is nothing here worth indexing.
+  robots: NOINDEX,
+  title: "Documents",
   description:
     "Admin paperwork, forms and reference material for students at the Département d'Architecture d'Alger.",
-  alternates: {
-    canonical: "https://daaist.com/docs",
-  },
 };
 
 export default async function Documents() {

@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { Josefin_Sans, IBM_Plex_Mono } from "next/font/google";
 import { UserProvider } from "@/context/user-context";
 import { getUserContext } from "@/lib/supabase/user-context";
+import { NOINDEX } from "@/lib/site";
 
 const josefin = Josefin_Sans({
   subsets: ["latin"],
@@ -19,10 +20,7 @@ const plexMono = IBM_Plex_Mono({
 });
 export const metadata: Metadata = {
   title: `Daa'ist | Admin Sign up`,
-  robots: {
-    follow: false,
-    index: false,
-  },
+  robots: NOINDEX,
 };
 export default async function AdminLayout({
   children,

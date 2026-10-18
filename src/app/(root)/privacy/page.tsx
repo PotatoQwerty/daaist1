@@ -1,9 +1,10 @@
 import PageHeader from "@/components/PageHeader";
+import { absoluteUrl } from "@/lib/site";
 
 export const metadata = {
-  title: "Daa'ist - Privacy policy",
+  title: "Privacy policy",
   description: "What Daa'ist collects, why, and who it is shared with.",
-  alternates: { canonical: "https://daaist.com/privacy" },
+  alternates: { canonical: absoluteUrl("/privacy") },
 };
 
 export default function PrivacyPage() {

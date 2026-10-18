@@ -7,12 +7,9 @@ import PageHeader from "@/components/PageHeader";
 import Reveal from "@/components/Reveal";
 
 export const metadata = {
-  title: "Daa'ist - Courses by year",
+  title: "Courses",
   description:
     "Lecture notes, TDs and past exams for every year at the Département d'Architecture d'Alger, filed by year and subject.",
-  alternates: {
-    canonical: "https://daaist.com/courses",
-  },
 };
 
 export default async function Courses() {

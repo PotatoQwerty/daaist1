@@ -1,9 +1,10 @@
 import PageHeader from "@/components/PageHeader";
+import { absoluteUrl } from "@/lib/site";
 
 export const metadata = {
-  title: "Daa'ist - Terms of service",
+  title: "Terms of service",
   description: "The terms that apply to using Daa'ist.",
-  alternates: { canonical: "https://daaist.com/terms" },
+  alternates: { canonical: absoluteUrl("/terms") },
 };
 
 export default function TermsPage() {
