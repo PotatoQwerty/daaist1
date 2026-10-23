@@ -29,13 +29,13 @@ const TOOLS = [
   {
     value: "windrose",
     name: "Wind rose",
-    does: "Plots wind direction and speed frequency for a location.",
+    does: "Seasonal wind direction and speed frequencies for a station and year.",
     render: () => <WindRose />,
   },
   {
     value: "sunpath-2d",
     name: "Sun path, 2D",
-    does: "Stereographic sun path diagram for a latitude and date range.",
+    does: "True-north sun paths for representative March, summer and winter dates.",
     render: () => <SunPathTool variant="2d" />,
   },
   {

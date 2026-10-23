@@ -1,7 +1,10 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import DiagramAppearanceFields from "@/components/DiagramAppearanceFields";
+import DiagramPreview, { type GeneratedDiagram } from "@/components/DiagramPreview";
+import { WIND_ROSE_PALETTE, type DiagramAppearance } from "@/lib/diagramAppearance";
 
 const LONG_WAIT_MS = 30000;
 const COLD_START_SOUND = "/sounds/coldstart.mp3";
@@ -57,8 +60,11 @@ function WindRose() {
   const [location, setLocation] = useState("");
   const [year, setYear] = useState<number>(MAX_ALLOWED_YEAR);
   const [fileType, setFileType] = useState<FileType>("png");
-  const [imgPreview, setImgPreview] = useState<string | null>(null);
-  const [generatedType, setGeneratedType] = useState<FileType>("png");
+  const [appearance, setAppearance] = useState<DiagramAppearance>({
+    theme: "light",
+    palette: [...WIND_ROSE_PALETTE],
+  });
+  const [preview, setPreview] = useState<GeneratedDiagram | null>(null);
   const [loading, setLoading] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isLongWait, setIsLongWait] = useState(false);
@@ -93,11 +99,11 @@ function WindRose() {
 
   useEffect(() => {
     return () => {
-      if (imgPreview) {
-        URL.revokeObjectURL(imgPreview);
+      if (preview) {
+        URL.revokeObjectURL(preview.url);
       }
     };
-  }, [imgPreview]);
+  }, [preview]);
 
   const clearLoadingTimer = () => {
     if (loadingTimeoutRef.current) {
@@ -137,13 +143,10 @@ function WindRose() {
   };
 
   const handleGenerate = async () => {
+    if (loading) return;
     setLoading(true);
     setIsLongWait(false);
-    setImgPreview((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return null;
-    });
-    setGeneratedType(fileType);
+    setPreview(null);
 
     const { lat, lon } = parseDMS(location);
 
@@ -159,7 +162,7 @@ function WindRose() {
       const res = await fetch("/api/tools/windrose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lat, lon, year, fileType }),
+        body: JSON.stringify({ lat, lon, year, fileType, ...appearance }),
       });
 
       if (!res.ok) {
@@ -169,8 +172,11 @@ function WindRose() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
 
-      setImgPreview(url);
-      setGeneratedType(fileType);
+      setPreview({
+        url,
+        theme: appearance.theme,
+        filename: `windrose-${appearance.theme}-${Date.now()}.${fileType}`,
+      });
       toast.success("Windrose created successfully");
     } catch (error: unknown) {
       const message =
@@ -190,6 +196,19 @@ function WindRose() {
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Enter DMS coordinates and choose an output format.
+          </p>
+
+          <p className="mt-3 text-sm text-muted-foreground">
+            Winds come from the marked direction, clockwise from true north. Both seasonal plots share
+            a percentage scale and report prevailing direction, mean speed, calm percentage and valid-hour coverage.
+            Speeds are converted from Meteostat&apos;s km/h to m/s; calm hours below 0.5 m/s are separate,
+            and petals plus calm hours total 100% of valid samples. The 8+ m/s bin includes strong winds.
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Seasons group June–August and December–February, reversed in the southern hemisphere.
+            January, February and December all belong to the selected calendar year.
+            Captions identify the station and distance, disclose possible model-filled hours and explain missing or calm-only data.
+            This is a single station/year summary, not a long-term climate normal.
           </p>
 
           <div className="mt-6 grid gap-5">
@@ -263,6 +282,13 @@ function WindRose() {
               </div>
             </div>
 
+            <DiagramAppearanceFields
+              value={appearance}
+              onChange={setAppearance}
+              defaults={WIND_ROSE_PALETTE}
+              labels={["0.5–2 m/s", "2–4 m/s", "4–6 m/s", "6–8 m/s", "8+ m/s"]}
+            />
+
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <button
                 onClick={handleGenerate}
@@ -290,28 +316,8 @@ function WindRose() {
           </div>
         </div>
 
-      {imgPreview && (
-        <div className="rounded-lg border border-border bg-card p-4 md:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold">Preview</h2>
-            <a
-              href={imgPreview}
-              download={`windrose-${Date.now()}.${generatedType}`}
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
-            >
-              Download
-            </a>
-          </div>
-          <div className="mt-4 overflow-hidden rounded-lg border border-border bg-background/60 p-3">
-            <img
-              src={imgPreview}
-              alt="Windrose Preview"
-              width={900}
-              height={900}
-              className="mx-auto h-auto max-h-[70vh] w-full object-contain"
-            />
-          </div>
-        </div>
+      {preview && (
+        <DiagramPreview diagram={preview} width={1100} height={700} alt="Seasonal wind rose preview" />
       )}
     </div>
   );

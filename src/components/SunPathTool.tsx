@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import DiagramAppearanceFields from "@/components/DiagramAppearanceFields";
+import DiagramPreview, { type GeneratedDiagram } from "@/components/DiagramPreview";
+import { SUN_PATH_PALETTE, type DiagramAppearance } from "@/lib/diagramAppearance";
 
 const LONG_WAIT_MS = 30000;
 const COLD_START_SOUND = "/sounds/coldstart.mp3";
@@ -71,8 +74,11 @@ function SunPathTool({ variant }: SunPathToolProps) {
   const tz = DEFAULT_TZ;
   const [year, setYear] = useState<number>(MAX_ALLOWED_YEAR);
   const [fileType, setFileType] = useState<FileType>("png");
-  const [imgPreview, setImgPreview] = useState<string | null>(null);
-  const [generatedType, setGeneratedType] = useState<FileType>("png");
+  const [appearance, setAppearance] = useState<DiagramAppearance>({
+    theme: "light",
+    palette: [...SUN_PATH_PALETTE],
+  });
+  const [preview, setPreview] = useState<GeneratedDiagram | null>(null);
   const [loading, setLoading] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isLongWait, setIsLongWait] = useState(false);
@@ -107,11 +113,11 @@ function SunPathTool({ variant }: SunPathToolProps) {
 
   useEffect(() => {
     return () => {
-      if (imgPreview) {
-        URL.revokeObjectURL(imgPreview);
+      if (preview) {
+        URL.revokeObjectURL(preview.url);
       }
     };
-  }, [imgPreview]);
+  }, [preview]);
 
   const clearLoadingTimer = () => {
     if (loadingTimeoutRef.current) {
@@ -147,14 +153,10 @@ function SunPathTool({ variant }: SunPathToolProps) {
   };
 
   const handleGenerate = async () => {
+    if (loading) return;
     setLoading(true);
     setIsLongWait(false);
-    setImgPreview((prev) => {
-      if (prev) {
-        URL.revokeObjectURL(prev);
-      }
-      return null;
-    });
+    setPreview(null);
 
     const { lat, lon } = parseDMS(location);
 
@@ -180,6 +182,7 @@ function SunPathTool({ variant }: SunPathToolProps) {
           year,
           tz,
           fileType,
+          ...appearance,
         }),
       });
 
@@ -190,8 +193,11 @@ function SunPathTool({ variant }: SunPathToolProps) {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
 
-      setImgPreview(url);
-      setGeneratedType(fileType);
+      setPreview({
+        url,
+        theme: appearance.theme,
+        filename: `sunpath-${variant}-${appearance.theme}-${Date.now()}.${fileType}`,
+      });
       toast.success(`${title} created successfully`);
     } catch (error: unknown) {
       const message =
@@ -208,7 +214,19 @@ function SunPathTool({ variant }: SunPathToolProps) {
       <div className="rounded-lg border border-border bg-card p-6 md:p-8">
         <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{title}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Enter DMS coordinates, timezone, year, and output format.
+          Enter DMS coordinates and choose a year, output format and appearance.
+        </p>
+
+        <p className="mt-3 text-sm text-muted-foreground">
+          True-north bearings, altitude rings and hourly points show unobstructed solar geometry in {tz}.
+          Path endpoints label calculated sunrise and sunset when they occur; the middle labels daylight duration.
+          Reference dates are 21 March, June and December, not exact astronomical equinox or solstice instants.
+          Summer and winter switch in the southern hemisphere. This is not a shading simulation.
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {variant === "2d"
+            ? "The seasonal band follows the circular horizon, including both side gaps."
+            : "A translucent band in the summer color follows the hemisphere between the solstice paths and closes along the horizon, above a wireframe ground. It is omitted if either solstice has no sun-up path."}
         </p>
 
         <div className="mt-6 grid gap-5">
@@ -299,6 +317,13 @@ function SunPathTool({ variant }: SunPathToolProps) {
             </div>
           </div>
 
+          <DiagramAppearanceFields
+            value={appearance}
+            onChange={setAppearance}
+            defaults={SUN_PATH_PALETTE}
+            labels={["Summer solstice", "March reference", "Winter solstice"]}
+          />
+
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <button
               onClick={handleGenerate}
@@ -324,28 +349,8 @@ function SunPathTool({ variant }: SunPathToolProps) {
         </div>
       </div>
 
-      {imgPreview && (
-        <div className="rounded-lg border border-border bg-card p-4 md:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-lg font-semibold">Preview</h3>
-            <a
-              href={imgPreview}
-              download={`sunpath-${variant}-${Date.now()}.${generatedType}`}
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
-            >
-              Download
-            </a>
-          </div>
-          <div className="mt-4 overflow-hidden rounded-lg border border-border bg-background/60 p-3">
-            <img
-              src={imgPreview}
-              alt={`Sunpath ${variant} preview`}
-              width={1200}
-              height={900}
-              className="mx-auto h-auto max-h-[70vh] w-full object-contain"
-            />
-          </div>
-        </div>
+      {preview && (
+        <DiagramPreview diagram={preview} width={variant === "2d" ? 900 : 1100} height={variant === "2d" ? 900 : 700} alt={`Sun path ${variant} preview`} />
       )}
     </div>
   );

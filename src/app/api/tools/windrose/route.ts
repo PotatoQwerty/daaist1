@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseDiagramAppearance } from "@/lib/diagramAppearance";
 import { buildToolsApiUrl } from "@/lib/toolsApi";
 import { enforceRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
@@ -66,11 +67,20 @@ export async function POST(request: Request) {
       );
     }
 
+    const appearance = parseDiagramAppearance(body, 5);
+    if (!appearance) {
+      return NextResponse.json(
+        { error: "Invalid diagram colors or background" },
+        { status: 400 },
+      );
+    }
+
     const url = buildToolsApiUrl("/windrose", {
       lat: String(lat),
       lon: String(lon),
       year: String(year),
       fmt: fileType,
+      ...appearance,
     });
 
     const res = await fetch(url.toString(), { cache: "no-store" });
