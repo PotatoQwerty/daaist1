@@ -5,6 +5,19 @@ const isProduction = process.env.NODE_ENV === "production";
 const SUPABASE_ORIGIN =
   process.env.NEXT_PUBLIC_SUPABASE_URL || "https://*.supabase.co";
 
+const r2Endpoint = process.env.R2_ENDPOINT
+  ? new URL(process.env.R2_ENDPOINT)
+  : null;
+// S3 can sign either path-style or bucket-subdomain upload URLs.
+const R2_UPLOAD_ORIGINS = r2Endpoint
+  ? [
+      r2Endpoint.origin,
+      ...(process.env.R2_BUCKET_NAME
+        ? [`${r2Endpoint.protocol}//${process.env.R2_BUCKET_NAME}.${r2Endpoint.host}`]
+        : []),
+    ].join(" ")
+  : "";
+
 /**
  * Content Security Policy.
  *
@@ -29,7 +42,7 @@ function contentSecurityPolicy() {
     // in the upload and avatar forms.
     `img-src 'self' data: blob: https://cdn.daaist.com https://lh3.googleusercontent.com ${SUPABASE_ORIGIN}`,
     // wss: is required - the chat subscribes to a Supabase Realtime channel.
-    `connect-src 'self' ${SUPABASE_ORIGIN} wss://*.supabase.co https://cdn.daaist.com`,
+    `connect-src 'self' ${SUPABASE_ORIGIN} wss://*.supabase.co https://cdn.daaist.com ${R2_UPLOAD_ORIGINS}`,
     "media-src 'self'",
     "worker-src 'self' blob:",
     "frame-ancestors 'none'",
