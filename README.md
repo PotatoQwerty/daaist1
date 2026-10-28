@@ -16,7 +16,6 @@ Islam Alhallak — Cloud Based Web System Design
 - [Project report](docs/Islam%20Alhallak%20Cloud%20Based%20Web%20System%20Design%20Checkpoint.docx)
 - [Architecture diagram](docs/daaist-architecture.png)
 - [Evaluation table](docs/daaist-evaluation.png)
-- [Recording script](docs/recording-script.html)
 - [Demo event banner](docs/demo-event-assets/architecture-workshop-banner-1600x900.png)
 
 The report and evaluation table record checks from 27 October 2026: 132 passing
